@@ -14,7 +14,7 @@ public record VolunteerID(UUID value) implements Serializable {
         return new VolunteerID(UUID.randomUUID());
     }
 
-    public static VolunteerID of(String uuidString) {
+    public static VolunteerID from(String uuidString) {
         return new VolunteerID(UUID.fromString(uuidString));
     }
 
