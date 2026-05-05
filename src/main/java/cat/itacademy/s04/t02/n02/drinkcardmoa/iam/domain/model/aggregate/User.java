@@ -25,6 +25,10 @@ public class User {
         return new User(id, fullName, email, hashedPassword, role);
     }
 
+    public static User rehydrate(VolunteerID id, FullName fullName, Email email, HashedPassword hashedPassword, Role role) {
+        return new User(id, fullName, email, hashedPassword, role);
+    }
+
     public VolunteerID getId() {
         return id;
     }
