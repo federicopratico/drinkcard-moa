@@ -12,13 +12,17 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullN
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
-import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
+
 public class RegisterUserService implements RegisterUserUseCase {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    public RegisterUserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public RegisterUserResult execute(RegisterUserCommand cmd) {
