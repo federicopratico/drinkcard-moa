@@ -13,6 +13,10 @@ public record FullName(String firstName, String lastName) {
         lastName = lastName.trim();
     }
 
+    public static FullName from(String firstName, String lastName) {
+        return new FullName(firstName, lastName);
+    }
+
     public String asString() {
         return firstName + " " + lastName;
     }
