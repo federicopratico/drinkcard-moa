@@ -6,7 +6,8 @@ public record RegisterUserResult(
         String id,
         String firstName,
         String lastName,
-        String email
+        String email,
+        String role
 )
 {
     public static RegisterUserResult from(User user) {
@@ -14,7 +15,8 @@ public record RegisterUserResult(
                 user.getId().asString(),
                 user.getFullName().firstName(),
                 user.getFullName().lastName(),
-                user.getEmail().asString()
+                user.getEmail().asString(),
+                user.getRole().name()
         );
     }
 }
