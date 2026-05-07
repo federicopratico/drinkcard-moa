@@ -19,7 +19,7 @@ public class AuthMapper {
                 request.lastName(),
                 request.email(),
                 request.password(),
-                request.role().toUpperCase() // Good place for small logic!
+                "VOLUNTEER"
         );
     }
 
