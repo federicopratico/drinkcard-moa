@@ -1,0 +1,29 @@
+# src/main/resources/application.yml
+spring:
+  application:
+    name: festival-drinks
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/festival
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  secret: "z6B98vN2qR5sT8uW1xZ4A7dGjKmNpQtReGuHwJxKzM5P7S9YbcEeFhJkMnPrStUw"
+  expiration-minutes: 1440
+
+# Logging
+logging:
+  level:
+    com.festival: DEBUG
+    org.springframework.security: DEBUG
