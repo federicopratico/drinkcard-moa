@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: drinkcard-postgres
+    environment:
+      POSTGRES_DB: festival
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - drinkcard-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  drinkcard-postgres-data:
