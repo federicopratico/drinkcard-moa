@@ -16,7 +16,7 @@ public record Email(String value) {
         value = value.trim().toLowerCase();
 
         if(!EMAIL_PATTERN.matcher(value).matches()) {
-            throw new InvalidEmailException("Invalid email format" + value);
+            throw new InvalidEmailException("Invalid email format " + value);
         }
 
     }

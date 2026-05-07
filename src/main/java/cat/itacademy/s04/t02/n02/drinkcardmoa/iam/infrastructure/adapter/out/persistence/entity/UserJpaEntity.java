@@ -18,19 +18,19 @@ public class UserJpaEntity {
     @Id
     private String id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "first_name")
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "last_name")
     private String lastName;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, name = "email")
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "password")
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "role")
     private String role;
 
     private UserJpaEntity(String id, String firstName, String lastName, String email,

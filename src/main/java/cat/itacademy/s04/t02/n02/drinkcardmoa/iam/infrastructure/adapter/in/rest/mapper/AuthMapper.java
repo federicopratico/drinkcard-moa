@@ -33,8 +33,8 @@ public class AuthMapper {
 
     public LoginUserCommand toCommand(LoginRequest request) {
         return new LoginUserCommand(
-                request.password(),
-                request.email()
+                request.email(),
+                request.password()
         );
     }
 
