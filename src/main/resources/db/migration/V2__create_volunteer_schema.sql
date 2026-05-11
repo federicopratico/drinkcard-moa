@@ -1,0 +1,9 @@
+CREATE SEQUENCE id_persistence_seq START WITH 1 INCREMENT BY 50;
+
+CREATE TABLE volunteers (
+    id BIGINT PRIMARY KEY,
+    volunteer_id VARCHAR(50) NOT NULL UNIQUE,
+    credits INTEGER NOT NULL,
+    last_purchase TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
