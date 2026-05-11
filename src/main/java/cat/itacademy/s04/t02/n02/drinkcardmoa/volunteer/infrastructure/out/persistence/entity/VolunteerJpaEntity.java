@@ -23,7 +23,7 @@ public class VolunteerJpaEntity {
             sequenceName = "id_persistence_seq",
             allocationSize = 50
     )
-    private long id;
+    private Long id;
 
     @Column(name = "volunteer_id", nullable = false, unique = true)
     private String volunteerId;

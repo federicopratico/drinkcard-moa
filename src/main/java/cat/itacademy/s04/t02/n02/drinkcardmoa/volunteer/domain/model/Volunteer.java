@@ -10,7 +10,7 @@ import java.util.Objects;
 
 public class Volunteer {
 
-    private long id;
+    private Long id;
     private VolunteerID volunteerID;
     private int credits;
     private Instant lastPurchaseTimestamp;
@@ -18,7 +18,7 @@ public class Volunteer {
 
     private final List<DomainEvent> domainEvents = new ArrayList<>();
 
-    private Volunteer(long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+    private Volunteer(Long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
         this.id = id;
         this.volunteerID = Objects.requireNonNull(volunteerID);
         this. credits = credits;
@@ -28,7 +28,7 @@ public class Volunteer {
 
     public static Volunteer create(VolunteerID volunteerID) {
         return new Volunteer(
-                0,
+                null,
                 volunteerID,
                 0,
                 null,
@@ -36,7 +36,7 @@ public class Volunteer {
         );
     }
 
-    public static Volunteer rehydrate(long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+    public static Volunteer rehydrate(Long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
         return new Volunteer(
                 id,
                 volunteerID,
@@ -46,7 +46,7 @@ public class Volunteer {
         );
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
     public VolunteerID getVolunteerID() {
