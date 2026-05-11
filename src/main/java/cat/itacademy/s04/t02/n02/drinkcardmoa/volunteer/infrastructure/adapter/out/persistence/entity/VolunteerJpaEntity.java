@@ -14,8 +14,6 @@ import java.time.Instant;
 @NoArgsConstructor
 public class VolunteerJpaEntity {
 
-    // create the sequence generator in the sql script file to make it work
-    // maybe it's better to treat the id as a string, also in the domain aggregate
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "my_gen")
     @SequenceGenerator(
@@ -37,7 +35,7 @@ public class VolunteerJpaEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    private VolunteerJpaEntity(long id, String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+    private VolunteerJpaEntity(Long id, String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
         this.id = id;
         this.volunteerId = volunteerId;
         this.credits = credits;
@@ -47,7 +45,7 @@ public class VolunteerJpaEntity {
 
     public static VolunteerJpaEntity create(String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
         return new VolunteerJpaEntity(
-                0,
+                null,
                 volunteerId,
                 credits,
                 lastPurchaseTimestamp,
