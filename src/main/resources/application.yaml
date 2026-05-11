@@ -27,3 +27,6 @@ logging:
   level:
     com.festival: DEBUG
     org.springframework.security: DEBUG
+    org.springframework.transaction: DEBUG
+    org.springframework.orm.jpa: DEBUG
+    org.hibernate.resource.transaction: DEBUG
