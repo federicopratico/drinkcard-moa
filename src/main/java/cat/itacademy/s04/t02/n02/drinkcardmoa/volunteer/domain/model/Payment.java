@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 public class Payment {
-    private TransactionID transactionId;
+    private PaymentID paymentId;
     private VolunteerID volunteerId;
     private String idempotencyKey;
     private BigDecimal amount;
@@ -17,7 +17,7 @@ public class Payment {
     private Instant createdAt;
 
     private Payment(
-            TransactionID transactionId,
+            PaymentID paymentId,
             VolunteerID volunteerId,
             String idempotencyKey,
             BigDecimal amount,
@@ -25,7 +25,7 @@ public class Payment {
             String providerCheckoutId,
             Instant paidAt,
             Instant createdAt) {
-        this.transactionId = transactionId;
+        this.paymentId = paymentId;
         this.volunteerId = volunteerId;
         this.idempotencyKey = idempotencyKey;
         this.amount = amount;
@@ -37,7 +37,7 @@ public class Payment {
 
     public static Payment pending(VolunteerID volunteerId, BigDecimal amount, String idempotencyKey) {
         return new Payment(
-                TransactionID.generate(),
+                PaymentID.generate(),
                 volunteerId,
                 idempotencyKey,
                 amount,
@@ -49,7 +49,7 @@ public class Payment {
     }
 
     public static Payment rehydrate(
-            TransactionID transactionId,
+            PaymentID paymentId,
             VolunteerID volunteerId,
             String idempotencyKey,
             BigDecimal amount,
@@ -59,7 +59,7 @@ public class Payment {
             Instant createdAt
     ) {
         return new Payment(
-                transactionId,
+                paymentId,
                 volunteerId,
                 idempotencyKey,
                 amount,
@@ -111,8 +111,8 @@ public class Payment {
         return this.status == PaymentStatus.FAILED;
     }
 
-    public TransactionID getTransactionId() {
-        return transactionId;
+    public PaymentID getTransactionId() {
+        return paymentId;
     }
     public VolunteerID getVolunteerId() {
         return volunteerId;
