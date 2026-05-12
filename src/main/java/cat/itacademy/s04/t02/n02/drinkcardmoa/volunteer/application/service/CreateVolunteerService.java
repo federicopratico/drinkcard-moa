@@ -41,7 +41,7 @@ public class CreateVolunteerService implements CreateVolunteerUseCase {
 
         Volunteer savedVolunteer = volunteerRepository.save(volunteer);
 
-        log.info("Successfully created volunteer: {}", savedVolunteer.getVolunteerID().asString());
+        log.info("Successfully created volunteer: {}", savedVolunteer.getVolunteerId().asString());
 
         return CreateVolunteerResult.from(savedVolunteer);
     }

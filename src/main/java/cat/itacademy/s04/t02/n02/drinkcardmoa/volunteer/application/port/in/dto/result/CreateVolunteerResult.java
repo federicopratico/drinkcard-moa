@@ -9,7 +9,7 @@ public record CreateVolunteerResult(
 {
     public static CreateVolunteerResult from(Volunteer volunteer) {
         return new CreateVolunteerResult(
-                volunteer.getVolunteerID().asString(),
+                volunteer.getVolunteerId().asString(),
                 volunteer.getCredits()
         );
     }

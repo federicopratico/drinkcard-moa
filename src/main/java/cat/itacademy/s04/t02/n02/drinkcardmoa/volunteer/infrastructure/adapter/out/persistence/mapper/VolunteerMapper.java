@@ -10,7 +10,7 @@ public class VolunteerMapper {
 
     public VolunteerJpaEntity toEntity(Volunteer volunteer) {
         VolunteerJpaEntity entity = VolunteerJpaEntity.create(
-                volunteer.getVolunteerID().asString(),
+                volunteer.getVolunteerId().asString(),
                 volunteer.getCredits(),
                 volunteer.getLastPurchaseTimestamp(),
                 volunteer.getCreatedAt()
