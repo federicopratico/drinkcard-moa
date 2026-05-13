@@ -14,6 +14,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.exception.Volunte
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Volunteer;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -30,6 +31,7 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
         this.volunteerRepository = volunteerRepository;
     }
 
+    @Transactional
     @Override
     public CreatePaymentCheckoutResult execute(CreatePaymentCheckoutCommand cmd) {
 
@@ -38,12 +40,7 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
         if (existingPayment.isPresent()) {
             Payment payment = existingPayment.get();
 
-            return new CreatePaymentCheckoutResult(
-                    payment.getPaymentId().asString(),
-                    payment.getProviderCheckoutId(),
-                    payment.getStatus().name(),
-                    payment.getAmount()
-            );
+            return toPaymentCheckoutResult(payment);
         }
 
         Volunteer volunteer = volunteerRepository
@@ -77,6 +74,10 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
         payment.attachProviderCheckoutId(hostedCheckout.providerCheckoutId());
         payment = paymentRepository.save(payment);
 
+        return toPaymentCheckoutResult(payment);
+    }
+
+    private CreatePaymentCheckoutResult toPaymentCheckoutResult(Payment payment) {
         return new CreatePaymentCheckoutResult(
                 payment.getPaymentId().asString(),
                 payment.getProviderCheckoutId(),
