@@ -1,0 +1,87 @@
+package cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.service;
+
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.dto.command.CreatePaymentCheckoutCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.dto.result.CreatePaymentCheckoutResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.usecase.CreatePaymentCheckoutUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.out.PaymentRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.out.VolunteerRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.out.payment.HostedCheckout;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.out.payment.HostedCheckoutRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.out.payment.PaymentGateway;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.exception.PurchaseLimitExceededException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.exception.VolunteerNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Card;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Payment;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Volunteer;
+
+import java.time.Instant;
+import java.util.Optional;
+
+public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCase {
+
+    PaymentRepository paymentRepository;
+    PaymentGateway paymentGateway;
+    VolunteerRepository volunteerRepository;
+
+    public CreatePaymentCheckoutService(PaymentRepository paymentRepository, PaymentGateway paymentGateway, VolunteerRepository volunteerRepository) {
+        this.paymentRepository = paymentRepository;
+        this.paymentGateway = paymentGateway;
+        this.volunteerRepository = volunteerRepository;
+    }
+
+    @Override
+    public CreatePaymentCheckoutResult execute(CreatePaymentCheckoutCommand cmd) {
+
+        Optional<Payment> existingPayment = paymentRepository.findByIdempotencyKey(cmd.idempotencyKey());
+
+        if (existingPayment.isPresent()) {
+            Payment payment = existingPayment.get();
+
+            return new CreatePaymentCheckoutResult(
+                    payment.getPaymentId().asString(),
+                    payment.getProviderCheckoutId(),
+                    payment.getStatus().name(),
+                    payment.getAmount()
+            );
+        }
+
+        Volunteer volunteer = volunteerRepository
+                .findByVolunteerId(VolunteerID.from(cmd.volunteerId()))
+                .orElseThrow(() -> new VolunteerNotFoundException("Volunteer not found with id: " + cmd.volunteerId()));
+
+        if (!volunteer.canPurchaseCard(Instant.now())) {
+            throw new PurchaseLimitExceededException("Volunteer has exceeded the purchase limit for today.");
+        }
+
+        Card card = Card.newCard();
+
+        Payment payment = Payment.pending(
+                VolunteerID.from(cmd.volunteerId()),
+                card.getPrice(),
+                cmd.idempotencyKey()
+                );
+
+        payment = paymentRepository.save(payment);
+
+        HostedCheckout hostedCheckout = paymentGateway.createHostedCheckout(
+                new HostedCheckoutRequest(
+                        payment.getPaymentId().asString(),
+                        payment.getAmount(),
+                        "EUR",
+                        "Drink card - 5 credits",
+                        cmd.redirectUrl()
+                )
+        );
+
+        payment.attachProviderCheckoutId(hostedCheckout.providerCheckoutId());
+        payment = paymentRepository.save(payment);
+
+        return new CreatePaymentCheckoutResult(
+                payment.getPaymentId().asString(),
+                payment.getProviderCheckoutId(),
+                payment.getStatus().name(),
+                payment.getAmount()
+        );
+    }
+}
