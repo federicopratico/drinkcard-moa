@@ -10,7 +10,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.i
 import org.springframework.stereotype.Component;
 
 @Component
-public class PaymentMapper {
+public class PaymentControllerMapper {
 
     public CreatePaymentCheckoutCommand toCommand(CreatePaymentCheckoutRequest request, String redirectUrl) {
         return new CreatePaymentCheckoutCommand(

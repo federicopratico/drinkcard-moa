@@ -7,7 +7,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.usec
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.dto.request.CreatePaymentCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.dto.response.ConfirmPaymentResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.dto.response.CreatePaymentCheckoutResponse;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.mapper.PaymentMapper;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.mapper.PaymentControllerMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +18,12 @@ public class PaymentController {
 
     private final CreatePaymentCheckoutUseCase createPaymentCheckoutUseCase;
     private final ConfirmPaymentUseCase confirmPaymentUseCase;
-    private final PaymentMapper mapper;
+    private final PaymentControllerMapper mapper;
     private final String paymentRedirectUrl;
 
     public PaymentController(CreatePaymentCheckoutUseCase createPaymentCheckoutUseCase,
                              ConfirmPaymentUseCase confirmPaymentUseCase,
-                             PaymentMapper mapper,
+                             PaymentControllerMapper mapper,
                              @Value("${app.payment.frontend-success-url}") String paymentRedirectUrl) {
         this.createPaymentCheckoutUseCase = createPaymentCheckoutUseCase;
         this.confirmPaymentUseCase = confirmPaymentUseCase;
