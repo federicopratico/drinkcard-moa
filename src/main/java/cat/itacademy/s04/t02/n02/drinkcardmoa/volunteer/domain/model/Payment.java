@@ -16,6 +16,7 @@ public class Payment {
     private Instant paidAt;
     private Instant createdAt;
 
+
     private Payment(
             PaymentID paymentId,
             VolunteerID volunteerId,
@@ -99,15 +100,20 @@ public class Payment {
         this.status = PaymentStatus.EXPIRED;
     }
 
-    boolean isExpired() {
+    public boolean isFinalized() {
+        return this.status == PaymentStatus.SUCCESS || this.status == PaymentStatus.FAILED
+                || this.status == PaymentStatus.EXPIRED;
+    }
+
+    public boolean isExpired() {
         return this.status == PaymentStatus.EXPIRED;
     }
 
-    boolean isSuccess() {
+    public boolean isSuccess() {
         return this.status == PaymentStatus.SUCCESS;
     }
 
-    boolean isFailed() {
+    public boolean isFailed() {
         return this.status == PaymentStatus.FAILED;
     }
 
