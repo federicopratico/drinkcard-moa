@@ -111,7 +111,7 @@ public class Payment {
         return this.status == PaymentStatus.FAILED;
     }
 
-    public PaymentID getTransactionId() {
+    public PaymentID getPaymentId() {
         return paymentId;
     }
     public VolunteerID getVolunteerId() {
