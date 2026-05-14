@@ -49,7 +49,7 @@ public class Volunteer {
     }
 
     public boolean canPurchaseCard(Instant now) {
-        return hasPurchasedInLast24Hours(now);
+        return !hasPurchasedInLast24Hours(now);
     }
 
     public void purchaseCard(Card card, Instant purchaseTimestamp) {
