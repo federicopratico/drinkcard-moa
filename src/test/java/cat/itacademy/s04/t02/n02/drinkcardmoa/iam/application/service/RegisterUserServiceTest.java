@@ -2,6 +2,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RegisterUserCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RegisterUserResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.EventPublisher;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.PasswordEncoder;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.EmailAlreadyExistsException;
@@ -27,6 +28,9 @@ class RegisterUserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private EventPublisher eventPublisher;
 
     @InjectMocks
     private RegisterUserService registerUserService;

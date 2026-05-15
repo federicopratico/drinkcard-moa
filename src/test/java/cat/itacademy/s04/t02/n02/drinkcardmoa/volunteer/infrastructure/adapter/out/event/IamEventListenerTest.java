@@ -1,6 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.out.event;
 
-import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.integration.UserRegisteredEvent;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.UserRegisteredEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.dto.command.CreateVolunteerCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.dto.result.CreateVolunteerResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.usecase.CreateVolunteerUseCase;

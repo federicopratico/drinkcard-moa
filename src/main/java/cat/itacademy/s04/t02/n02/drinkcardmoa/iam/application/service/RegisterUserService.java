@@ -13,7 +13,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullN
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.integration.UserRegisteredEvent;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.UserRegisteredEvent;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;

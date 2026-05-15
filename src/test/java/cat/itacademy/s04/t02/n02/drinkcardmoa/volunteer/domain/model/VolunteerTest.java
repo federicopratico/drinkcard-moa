@@ -1,6 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.DomainEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.event.CardPurchasedEvent;
 import org.junit.jupiter.api.Test;
 
@@ -130,7 +131,7 @@ class VolunteerTest {
 
         volunteer.purchaseCard(card, purchaseTimestamp);
 
-        List<Object> domainEvents = volunteer.getDomainEvents();
+        List<DomainEvent> domainEvents = volunteer.getDomainEvents();
 
         assertEquals(1, domainEvents.size());
         assertInstanceOf(CardPurchasedEvent.class, domainEvents.getFirst());
@@ -141,7 +142,7 @@ class VolunteerTest {
                 () -> assertEquals(volunteerId.asString(), event.volunteerId()),
                 () -> assertEquals(card.getCredits(), event.creditsAdded()),
                 () -> assertEquals(card.getPrice(), event.paidAmount()),
-                () -> assertEquals(purchaseTimestamp, event.timestamp())
+                () -> assertEquals(purchaseTimestamp, event.occurredOn())
         );
     }
 
@@ -151,8 +152,8 @@ class VolunteerTest {
 
         volunteer.purchaseCard(Card.newCard(), Instant.now());
 
-        List<Object> firstCall = volunteer.getDomainEvents();
-        List<Object> secondCall = volunteer.getDomainEvents();
+        List<DomainEvent> firstCall = volunteer.getDomainEvents();
+        List<DomainEvent> secondCall = volunteer.getDomainEvents();
 
         assertAll(
                 () -> assertEquals(1, firstCall.size()),

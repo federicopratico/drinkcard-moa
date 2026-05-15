@@ -1,6 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.DomainEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.event.CardPurchasedEvent;
 
 import java.time.Instant;
@@ -18,7 +19,7 @@ public class Volunteer {
     private Instant lastPurchaseTimestamp;
     private Instant createdAt;
 
-    private final List<Object> domainEvents = new ArrayList<>();
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     private Volunteer(Long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
         this.id = id;
@@ -83,8 +84,8 @@ public class Volunteer {
     public Instant getCreatedAt() {
         return createdAt;
     }
-    public List<Object> getDomainEvents() {
-        List<Object> eventsToFire = new ArrayList<>(this.domainEvents);
+    public List<DomainEvent> getDomainEvents() {
+        List<DomainEvent> eventsToFire = new ArrayList<>(this.domainEvents);
         this.domainEvents.clear();
         return eventsToFire;
     }
@@ -103,7 +104,7 @@ public class Volunteer {
         return lastPurchaseDate.equals(currentDate);
     }
 
-    private void registerEvent(Object event) {
+    private void registerEvent(DomainEvent event) {
         domainEvents.add(event);
     }
 }
