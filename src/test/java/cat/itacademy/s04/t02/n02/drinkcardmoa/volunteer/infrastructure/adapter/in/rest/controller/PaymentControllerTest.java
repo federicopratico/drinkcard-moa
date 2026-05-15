@@ -8,6 +8,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.usecase.ConfirmPaymentUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.application.port.in.usecase.CreatePaymentCheckoutUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.mapper.PaymentControllerMapper;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.config.PaymentProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PaymentController.class)
-@Import(PaymentControllerMapper.class)
+@Import({PaymentControllerMapper.class, PaymentProperties.class})
 @AutoConfigureMockMvc(addFilters = false)
 @TestPropertySource(properties = "app.payment.frontend-success-url=http://localhost:3000/payment/success")
 class PaymentControllerTest {
