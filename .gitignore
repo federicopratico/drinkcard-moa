@@ -36,3 +36,6 @@ build/
 mvnw.cmd
 mvnw
 notes.txt
+.env
+.env.*
+!.env.example

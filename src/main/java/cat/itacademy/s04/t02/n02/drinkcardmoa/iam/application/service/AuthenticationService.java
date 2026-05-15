@@ -9,7 +9,9 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepos
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidCredentialsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
+import org.springframework.stereotype.Service;
 
+@Service
 public class AuthenticationService implements AuthenticateUserUseCase {
 
     private final TokenService tokenService;

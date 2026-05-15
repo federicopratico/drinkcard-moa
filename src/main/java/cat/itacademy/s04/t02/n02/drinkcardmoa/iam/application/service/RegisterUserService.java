@@ -3,6 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RegisterUserCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RegisterUserResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RegisterUserUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.EventPublisher;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.PasswordEncoder;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.EmailAlreadyExistsException;
@@ -12,16 +13,22 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullN
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.UserRegisteredEvent;
+import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 
+@Service
 public class RegisterUserService implements RegisterUserUseCase {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EventPublisher eventPublisher;
 
-    public RegisterUserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public RegisterUserService(UserRepository userRepository, PasswordEncoder passwordEncoder, EventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -31,6 +38,13 @@ public class RegisterUserService implements RegisterUserUseCase {
 
         User user = mapToDomain(cmd);
         User savedUser = userRepository.save(user);
+
+        eventPublisher.publish(new UserRegisteredEvent(
+                savedUser.getId().asString(),
+                savedUser.getEmail().asString(),
+                savedUser.getRole().name(),
+                Instant.now()
+        ));
 
         return mapToResult(savedUser);
     }

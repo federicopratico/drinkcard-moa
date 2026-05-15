@@ -1,0 +1,19 @@
+package cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.out.payment.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.math.BigDecimal;
+
+public record SumUpCreateCheckoutRequest(
+        @JsonProperty("checkout_reference") String checkoutReference,
+        BigDecimal amount,
+        String currency,
+        @JsonProperty("merchant_code") String merchantCode,
+        String description,
+        @JsonProperty("redirect_url") String redirectUrl,
+        @JsonProperty("hosted_checkout") HostedCheckout hostedCheckout
+) {
+    public record HostedCheckout(
+            boolean enabled
+    ) {}
+}

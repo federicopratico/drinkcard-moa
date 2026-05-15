@@ -1,29 +1,27 @@
-# src/main/resources/application.yml
 spring:
   application:
     name: festival-drinks
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/festival
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+  config:
+    import: optional:file:.env[.properties]
 
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
 jwt:
-  secret: "z6B98vN2qR5sT8uW1xZ4A7dGjKmNpQtReGuHwJxKzM5P7S9YbcEeFhJkMnPrStUw"
-  expiration-minutes: 1440
+  secret: ${JWT_SECRET}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:1440}
 
-# Logging
+app:
+  payment:
+    frontend-success-url: ${PAYMENT_FRONTEND_SUCCESS_URL}
+
+sumup:
+  base-url: ${SUMUP_BASE_URL}
+  api-key: ${SUMUP_API_KEY}
+  merchant-code: ${SUMUP_MERCHANT_CODE}
+
 logging:
   level:
-    com.festival: DEBUG
-    org.springframework.security: DEBUG
+    cat.itacademy.s04.t02.n02.drinkcardmoa: INFO
+    org.springframework.security: WARN
