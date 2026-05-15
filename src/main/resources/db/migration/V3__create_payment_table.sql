@@ -5,6 +5,7 @@ CREATE TABLE payments (
     amount NUMERIC(10, 2) NOT NULL,
     status VARCHAR(30) NOT NULL,
     provider_checkout_id VARCHAR(255) UNIQUE,
+    provider_checkout_url VARCHAR(255),
     paid_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL
 );

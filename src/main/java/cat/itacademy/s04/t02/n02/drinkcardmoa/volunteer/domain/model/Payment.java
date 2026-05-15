@@ -13,6 +13,7 @@ public class Payment {
     private BigDecimal amount;
     private PaymentStatus status;
     private String providerCheckoutId;
+    private String providerCheckoutUrl;
     private Instant paidAt;
     private Instant createdAt;
 
@@ -24,6 +25,7 @@ public class Payment {
             BigDecimal amount,
             PaymentStatus status,
             String providerCheckoutId,
+            String providerCheckoutUrl,
             Instant paidAt,
             Instant createdAt) {
         this.paymentId = paymentId;
@@ -32,6 +34,7 @@ public class Payment {
         this.amount = amount;
         this.status = status;
         this.providerCheckoutId = providerCheckoutId;
+        this.providerCheckoutUrl = providerCheckoutUrl;
         this.paidAt = paidAt;
         this.createdAt = createdAt;
     }
@@ -45,6 +48,7 @@ public class Payment {
                 PaymentStatus.PENDING,
                 null,
                 null,
+                null,
                 Instant.now()
         );
     }
@@ -56,6 +60,7 @@ public class Payment {
             BigDecimal amount,
             PaymentStatus status,
             String providerCheckoutId,
+            String providerCheckoutUrl,
             Instant paidAt,
             Instant createdAt
     ) {
@@ -66,6 +71,7 @@ public class Payment {
                 amount,
                 status,
                 providerCheckoutId,
+                providerCheckoutUrl,
                 paidAt,
                 createdAt);
     }
@@ -75,6 +81,13 @@ public class Payment {
             throw new InvalidPaymentStateException("Payment already has a provider checkout ID");
 
         this.providerCheckoutId = providerCheckoutId;
+    }
+
+    public void attachProviderCheckoutUrl(String providerCheckoutUrl) {
+        if (this.providerCheckoutUrl != null && !providerCheckoutUrl.isBlank())
+            throw new InvalidPaymentStateException("Payment already has a provider checkout URL");
+
+        this.providerCheckoutUrl = providerCheckoutUrl;
     }
 
     public void markAsSuccess() {
@@ -92,7 +105,7 @@ public class Payment {
         this.status = PaymentStatus.FAILED;
     }
 
-    // is it possible to pass from failed to expired?
+
     public void markAsExpired() {
         if(this.status != PaymentStatus.PENDING)
             throw new InvalidPaymentStateException("Payment is not in pending state");
@@ -134,6 +147,9 @@ public class Payment {
     }
     public String getProviderCheckoutId() {
         return providerCheckoutId;
+    }
+    public String getProviderCheckoutUrl() {
+        return providerCheckoutUrl;
     }
     public Instant getPaidAt() {
         return paidAt;

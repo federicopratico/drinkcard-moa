@@ -18,6 +18,7 @@ public class PaymentMapper {
                 payment.getAmount(),
                 payment.getStatus().name(),
                 payment.getProviderCheckoutId(),
+                payment.getProviderCheckoutUrl(),
                 payment.getPaidAt(),
                 payment.getCreatedAt()
         );
@@ -31,6 +32,7 @@ public class PaymentMapper {
                 entity.getAmount(),
                 PaymentStatus.valueOf(entity.getStatus().toUpperCase()),
                 entity.getProviderCheckoutId(),
+                entity.getProviderCheckoutUrl(),
                 entity.getPaidAt(),
                 entity.getCreatedAt()
         );

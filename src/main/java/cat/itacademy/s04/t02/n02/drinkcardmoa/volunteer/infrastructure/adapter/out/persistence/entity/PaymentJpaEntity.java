@@ -38,24 +38,28 @@ public class PaymentJpaEntity {
     @Column(name = "provider_checkout_id", unique = true)
     private String providerCheckoutId;
 
+    @Column(name = "provider_checkout_url")
+    private String providerCheckoutUrl;
+
     @Column(name = "paid_at")
     private Instant paidAt;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    private PaymentJpaEntity(UUID paymentId, UUID volunteerId, String idempotencyKey, BigDecimal amount, String status, String providerCheckoutId, Instant paidAt, Instant createdAt) {
+    private PaymentJpaEntity(UUID paymentId, UUID volunteerId, String idempotencyKey, BigDecimal amount, String status, String providerCheckoutId, String providerCheckoutUrl,Instant paidAt, Instant createdAt) {
         this.paymentId = paymentId;
         this.volunteerId = volunteerId;
         this.idempotencyKey = idempotencyKey;
         this.amount = amount;
         this.status = status;
         this.providerCheckoutId = providerCheckoutId;
+        this.providerCheckoutUrl = providerCheckoutUrl;
         this.paidAt = paidAt;
         this.createdAt = createdAt;
     }
 
-    public static PaymentJpaEntity create(UUID paymentId, UUID volunteerId, String idempotencyKey, BigDecimal amount, String status, String providerCheckoutId, Instant paidAt, Instant createdAt) {
-        return new PaymentJpaEntity(paymentId, volunteerId, idempotencyKey, amount, status, providerCheckoutId, paidAt, createdAt);
+    public static PaymentJpaEntity create(UUID paymentId, UUID volunteerId, String idempotencyKey, BigDecimal amount, String status, String providerCheckoutId, String providerCheckoutUrl, Instant paidAt, Instant createdAt) {
+        return new PaymentJpaEntity(paymentId, volunteerId, idempotencyKey, amount, status, providerCheckoutId, providerCheckoutUrl, paidAt, createdAt);
     }
 }
