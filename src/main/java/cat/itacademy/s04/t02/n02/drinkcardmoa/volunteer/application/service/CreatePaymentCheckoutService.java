@@ -72,6 +72,7 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
         );
 
         payment.attachProviderCheckoutId(hostedCheckout.providerCheckoutId());
+        payment.attachProviderCheckoutUrl(hostedCheckout.checkoutUrl());
         payment = paymentRepository.save(payment);
 
         return toPaymentCheckoutResult(payment);
@@ -80,7 +81,7 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
     private CreatePaymentCheckoutResult toPaymentCheckoutResult(Payment payment) {
         return new CreatePaymentCheckoutResult(
                 payment.getPaymentId().asString(),
-                payment.getProviderCheckoutId(),
+                payment.getProviderCheckoutUrl(),
                 payment.getStatus().name(),
                 payment.getAmount()
         );
