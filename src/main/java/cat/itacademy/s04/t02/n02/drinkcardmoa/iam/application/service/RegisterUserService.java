@@ -14,10 +14,11 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Hashe
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.integration.UserRegisteredEvent;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 
-
+@Service
 public class RegisterUserService implements RegisterUserUseCase {
 
     private final UserRepository userRepository;

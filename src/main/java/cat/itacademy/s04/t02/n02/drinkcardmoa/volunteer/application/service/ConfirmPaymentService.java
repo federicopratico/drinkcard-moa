@@ -13,10 +13,12 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.PaymentID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Volunteer;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+@Service
 public class ConfirmPaymentService implements ConfirmPaymentUseCase {
 
     private final PaymentGateway paymentGateway;

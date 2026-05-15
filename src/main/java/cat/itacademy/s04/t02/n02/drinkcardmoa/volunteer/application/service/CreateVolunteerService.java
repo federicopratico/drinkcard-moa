@@ -9,8 +9,9 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Volunteer;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
-@Transactional
+@Service
 public class CreateVolunteerService implements CreateVolunteerUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(CreateVolunteerService.class);
@@ -21,6 +22,7 @@ public class CreateVolunteerService implements CreateVolunteerUseCase {
         this.volunteerRepository = volunteerRepository;
     }
 
+    @Transactional
     @Override
     public CreateVolunteerResult execute(CreateVolunteerCommand cmd) {
         log.info("Creating volunteer for volunteerId: {}", cmd.volunteerId());
