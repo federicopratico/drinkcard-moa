@@ -8,6 +8,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.i
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.dto.response.ConfirmPaymentResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.dto.response.CreatePaymentCheckoutResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.mapper.PaymentControllerMapper;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.config.PaymentProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,22 +20,22 @@ public class PaymentController {
     private final CreatePaymentCheckoutUseCase createPaymentCheckoutUseCase;
     private final ConfirmPaymentUseCase confirmPaymentUseCase;
     private final PaymentControllerMapper mapper;
-    private final String paymentRedirectUrl;
+    private final PaymentProperties paymentProperties;
 
     public PaymentController(CreatePaymentCheckoutUseCase createPaymentCheckoutUseCase,
                              ConfirmPaymentUseCase confirmPaymentUseCase,
                              PaymentControllerMapper mapper,
-                             @Value("${app.payment.frontend-success-url}") String paymentRedirectUrl) {
+                             PaymentProperties paymentProperties) {
         this.createPaymentCheckoutUseCase = createPaymentCheckoutUseCase;
         this.confirmPaymentUseCase = confirmPaymentUseCase;
         this.mapper = mapper;
-        this.paymentRedirectUrl = paymentRedirectUrl;
+        this.paymentProperties = paymentProperties;
     }
 
     @PostMapping("/checkout")
     public ResponseEntity<CreatePaymentCheckoutResponse> createCheckout(@RequestBody CreatePaymentCheckoutRequest request) {
 
-        CreatePaymentCheckoutResult result = createPaymentCheckoutUseCase.execute(mapper.toCommand(request, paymentRedirectUrl));
+        CreatePaymentCheckoutResult result = createPaymentCheckoutUseCase.execute(mapper.toCommand(request, paymentProperties.getFrontendSuccessUrl()));
 
         return ResponseEntity.status(201).body(mapper.toResponse(result));
     }
