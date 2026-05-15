@@ -11,6 +11,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -25,19 +28,69 @@ class CreateVolunteerServiceTest {
     private CreateVolunteerService volunteerService;
 
     @Test
-    void execute_WhenVolunteerDoesNotExist_CreateNewVolunteer() {
+    void execute_WhenVolunteerDoesNotExist_ShouldCreateAndSaveNewVolunteer() {
+        VolunteerID volunteerID = VolunteerID.generate();
+        CreateVolunteerCommand command = new CreateVolunteerCommand(volunteerID.asString());
 
-        String volunteerId = VolunteerID.generate().asString();
-        CreateVolunteerCommand cmd = new CreateVolunteerCommand(volunteerId);
+        when(volunteerRepository.existsByVolunteerId(volunteerID)).thenReturn(false);
+        when(volunteerRepository.save(any(Volunteer.class))).thenAnswer(i -> i.getArgument(0));
 
-        when(volunteerRepository.save(any(Volunteer.class))).thenAnswer(i -> i.getArguments()[0]);
+        CreateVolunteerResult result = volunteerService.execute(command);
 
-        CreateVolunteerResult result = volunteerService.execute(cmd);
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(volunteerID.asString(), result.volunteerID()),
+                () -> assertEquals(0, result.credits())
+        );
 
-        assertNotNull(result);
-        assertEquals(volunteerId, result.volunteerID());
-        assertEquals(0, result.credits());
-
+        verify(volunteerRepository, times(1)).existsByVolunteerId(volunteerID);
         verify(volunteerRepository, times(1)).save(any(Volunteer.class));
     }
-}
+
+    @Test
+    void execute_WhenVolunteerAlreadyExists_ShouldReturnExistingVolunteer() {
+        VolunteerID volunteerID = VolunteerID.generate();
+        CreateVolunteerCommand command = new CreateVolunteerCommand(volunteerID.asString());
+
+        Volunteer existingVolunteer = Volunteer.rehydrate(1L, volunteerID, 5, Instant.now(), Instant.now());
+
+        when(volunteerRepository.existsByVolunteerId(volunteerID)).thenReturn(true);
+        when(volunteerRepository.findByVolunteerId(volunteerID)).thenReturn(java.util.Optional.of(existingVolunteer));
+
+        CreateVolunteerResult result = volunteerService.execute(command);
+
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(volunteerID.asString(), result.volunteerID()),
+                () -> assertEquals(5, result.credits())
+        );
+
+        verify(volunteerRepository, times(1)).existsByVolunteerId(volunteerID);
+        verify(volunteerRepository, times(1)).findByVolunteerId(volunteerID);
+        verify(volunteerRepository, never()).save(any(Volunteer.class));
+    }
+
+    @Test
+    void execute_WhenVolunteerAlreadyExistsButCannotBeFound_ShouldThrowException() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        CreateVolunteerCommand command = new CreateVolunteerCommand(volunteerId.asString());
+
+        when(volunteerRepository.existsByVolunteerId(volunteerId)).thenReturn(true);
+        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> volunteerService.execute(command));
+
+        verify(volunteerRepository).existsByVolunteerId(volunteerId);
+        verify(volunteerRepository).findByVolunteerId(volunteerId);
+        verify(volunteerRepository, never()).save(any(Volunteer.class));
+    }
+
+    @Test
+    void execute_WhenVolunteerIdIsInvalid_ShouldThrowException() {
+        CreateVolunteerCommand command = new CreateVolunteerCommand("invalid-uuid");
+
+        assertThrows(IllegalArgumentException.class, () -> volunteerService.execute(command));
+
+        verifyNoInteractions(volunteerRepository);
+    }
+ }

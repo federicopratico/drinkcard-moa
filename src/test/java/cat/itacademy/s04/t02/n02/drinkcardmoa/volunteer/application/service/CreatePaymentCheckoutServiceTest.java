@@ -50,14 +50,14 @@ class CreatePaymentCheckoutServiceTest {
     void execute_WhenPaymentExistsForIdempotencyKey_ReturnsExistingPaymentWithoutCreatingCheckout() {
         VolunteerID volunteerId = VolunteerID.generate();
         Payment existingPayment = Payment.pending(volunteerId, Card.newCard().getPrice(), IDEMPOTENCY_KEY);
-        existingPayment.attachProviderCheckoutId("checkout-existing");
+        existingPayment.attachProviderCheckoutUrl("checkout-existing");
 
         when(paymentRepository.findByIdempotencyKey(IDEMPOTENCY_KEY))
                 .thenReturn(Optional.of(existingPayment));
 
         CreatePaymentCheckoutResult result = service.execute(command(volunteerId));
 
-        assertEquals(existingPayment.getPaymentId().asString(), result.paymentId());
+        assertEquals(existingPayment.getPaymentId().asString(), result.paymentId());;
         assertEquals("checkout-existing", result.checkoutUrl());
         assertEquals(PaymentStatus.PENDING.name(), result.status());
         assertEquals(Card.newCard().getPrice(), result.amount());
@@ -70,7 +70,7 @@ class CreatePaymentCheckoutServiceTest {
     @Test
     void execute_WhenVolunteerCanPurchase_CreatesPendingPaymentAndHostedCheckout() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = Volunteer.rehydrate(1L, volunteerId, 0, Instant.now(), Instant.now());
+        Volunteer volunteer = Volunteer.create(volunteerId);
 
         HostedCheckout hostedCheckout = new HostedCheckout(
                 "checkout-123",
@@ -85,7 +85,7 @@ class CreatePaymentCheckoutServiceTest {
         CreatePaymentCheckoutResult result = service.execute(command(volunteerId));
 
         assertNotNull(result.paymentId());
-        assertEquals("checkout-123", result.checkoutUrl());
+        assertEquals("https://checkout.sumup.com/checkout-123", result.checkoutUrl());
         assertEquals(PaymentStatus.PENDING.name(), result.status());
         assertEquals(Card.newCard().getPrice(), result.amount());
 
@@ -121,7 +121,7 @@ class CreatePaymentCheckoutServiceTest {
     @Test
     void execute_WhenVolunteerCannotPurchase_ThrowsPurchaseLimitExceededException() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = Volunteer.create(volunteerId);
+        Volunteer volunteer = Volunteer.rehydrate(1L, volunteerId, 0, Instant.now(), Instant.now());
 
         when(paymentRepository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.empty());
         when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(volunteer));

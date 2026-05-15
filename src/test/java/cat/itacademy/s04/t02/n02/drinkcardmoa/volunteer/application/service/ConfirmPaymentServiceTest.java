@@ -36,6 +36,7 @@ class ConfirmPaymentServiceTest {
 
     private static final String IDEMPOTENCY_KEY = "checkout-request-123";
     private static final String PROVIDER_CHECKOUT_ID = "checkout-123";
+    private static final String PROVIDER_CHECOUT_URL = "https://checkout.com/checkout-123";
 
     @Mock
     private PaymentGateway paymentGateway;
@@ -206,6 +207,7 @@ class ConfirmPaymentServiceTest {
                 Card.newCard().getPrice(),
                 status,
                 PROVIDER_CHECKOUT_ID,
+                PROVIDER_CHECOUT_URL,
                 status == PaymentStatus.SUCCESS ? Instant.now() : null,
                 Instant.now()
         );
