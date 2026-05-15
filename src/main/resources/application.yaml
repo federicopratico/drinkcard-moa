@@ -2,19 +2,11 @@ spring:
   application:
     name: festival-drinks
 
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/festival}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
+  config:
+    import: optional:file:.env[.properties]
 
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
 jwt:
   secret: ${JWT_SECRET}
@@ -22,14 +14,14 @@ jwt:
 
 app:
   payment:
-    frontend-success-url: ${PAYMENT_FRONTEND_SUCCESS_URL:http://localhost:3000/payment/success}
+    frontend-success-url: ${PAYMENT_FRONTEND_SUCCESS_URL}
 
 sumup:
-  base-url: ${SUMUP_BASE_URL:https://api.sumup.com}
+  base-url: ${SUMUP_BASE_URL}
   api-key: ${SUMUP_API_KEY}
   merchant-code: ${SUMUP_MERCHANT_CODE}
 
 logging:
   level:
-    cat.itacademy.s04.t02.n02.drinkcardmoa: DEBUG
-    org.springframework.security: DEBUG
+    cat.itacademy.s04.t02.n02.drinkcardmoa: INFO
+    org.springframework.security: WARN

@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/festival}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  payment:
+    frontend-success-url: ${PAYMENT_FRONTEND_SUCCESS_URL:http://localhost:3000/payment/success}
+
+sumup:
+  base-url: ${SUMUP_BASE_URL:https://api.sumup.com}
+
+logging:
+  level:
+    cat.itacademy.s04.t02.n02.drinkcardmoa: DEBUG
+    org.springframework.security: DEBUG
