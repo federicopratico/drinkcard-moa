@@ -9,7 +9,9 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.i
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.dto.response.ConsumeDrinkTicketResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.dto.response.CreateDrinkTicketResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.infrastructure.adapter.in.rest.mapper.DrinkTicketControllerMapper;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,16 +36,17 @@ public class DrinkTicketController {
     }
 
     @PostMapping
-    public ResponseEntity<CreateDrinkTicketResponse> createDrinkTicket(@RequestBody CreateDrinkTicketRequest request) {
+    public ResponseEntity<CreateDrinkTicketResponse> createDrinkTicket(@Valid @RequestBody CreateDrinkTicketRequest request) {
         CreateDrinkTicketResult result = createDrinkTickerUseCase.execute(mapper.toCommand(request));
 
         return ResponseEntity.status(201).body(mapper.toResponse(result));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/{ticketId}/consume")
     public ResponseEntity<ConsumeDrinkTicketResponse> consumeDrinkTicket(
             @PathVariable String ticketId,
-            @RequestBody ConsumeDrinkTicketRequest request) {
+            @Valid @RequestBody ConsumeDrinkTicketRequest request) {
         ConsumeDrinkTicketResult result = consumeDrinkTicketUseCase.execute(mapper.toCommand(ticketId, request));
 
         return ResponseEntity.ok(mapper.toResponse(result));
