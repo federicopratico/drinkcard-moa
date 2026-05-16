@@ -12,6 +12,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.DrinkTicket
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.DrinkType;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model.Volunteer;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CreateDrinkTicketService implements CreateDrinkTickerUseCase {
@@ -24,6 +25,7 @@ public class CreateDrinkTicketService implements CreateDrinkTickerUseCase {
         this.volunteerRepository = volunteerRepository;
     }
 
+    @Transactional
     @Override
     public CreateDrinkTicketResult execute(CreateDrinkTicketCommand cmd) {
         Volunteer volunteer = volunteerRepository.findByVolunteerId(VolunteerID.from(cmd.volunteerId()))
