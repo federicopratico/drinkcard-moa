@@ -39,3 +39,4 @@ notes.txt
 .env
 .env.*
 !.env.example
+/docs
