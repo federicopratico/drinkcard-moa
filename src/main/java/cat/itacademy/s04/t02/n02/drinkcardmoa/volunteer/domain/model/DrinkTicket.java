@@ -26,8 +26,8 @@ public class DrinkTicket {
         this.volunteerId = Objects.requireNonNull(volunteerId);
         this.drinkType = Objects.requireNonNull(drinkType);
         this.status = Objects.requireNonNull(status);
-        this.expiresAt = Objects.requireNonNull(expiresAt);
         this.createdAt = Objects.requireNonNull(createdAt);
+        this.expiresAt = Objects.requireNonNull(expiresAt);
         this.consumedAt = consumedAt;
         this.consumedByStaffId = consumedByStaffId;
     }
@@ -47,8 +47,8 @@ public class DrinkTicket {
         );
     }
 
-    public static DrinkTicket rehydrate(DrinkTicketID drinkTicketId, VolunteerID volunteerId, DrinkType drinkType, DrinkTicketStatus status, Instant expiresAt, Instant createdAt, Instant consumedAt, String consumedByStaffId) {
-        return new DrinkTicket(drinkTicketId, volunteerId, drinkType, status, expiresAt, createdAt, consumedAt, consumedByStaffId);
+    public static DrinkTicket rehydrate(DrinkTicketID drinkTicketId, VolunteerID volunteerId, DrinkType drinkType, DrinkTicketStatus status, Instant createdAt, Instant expiresAt, Instant consumedAt, String consumedByStaffId) {
+        return new DrinkTicket(drinkTicketId, volunteerId, drinkType, status, createdAt, expiresAt, consumedAt, consumedByStaffId);
     }
 
     public boolean isExpired(Instant now) {
