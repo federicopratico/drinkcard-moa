@@ -4,7 +4,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usec
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreatePaymentCheckoutUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.EventPublisher;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.VolunteerRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.PaymentGateway;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service.ConfirmPaymentService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service.CreatePaymentCheckoutService;

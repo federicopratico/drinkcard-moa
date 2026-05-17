@@ -5,12 +5,12 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreateDrinkTickerUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.VolunteerRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.VolunteerNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicket;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkType;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Volunteer;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccount;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,24 +18,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateDrinkTicketService implements CreateDrinkTickerUseCase {
 
     private final DrinkTicketRepository drinkTicketRepository;
-    private final VolunteerRepository volunteerRepository;
+    private final DrinkCardAccountRepository drinkCardAccountRepository;
 
-    public CreateDrinkTicketService(DrinkTicketRepository drinkTicketRepository, VolunteerRepository volunteerRepository) {
+    public CreateDrinkTicketService(DrinkTicketRepository drinkTicketRepository, DrinkCardAccountRepository drinkCardAccountRepository) {
         this.drinkTicketRepository = drinkTicketRepository;
-        this.volunteerRepository = volunteerRepository;
+        this.drinkCardAccountRepository = drinkCardAccountRepository;
     }
 
     @Transactional
     @Override
     public CreateDrinkTicketResult execute(CreateDrinkTicketCommand cmd) {
-        Volunteer volunteer = volunteerRepository.findByVolunteerId(VolunteerID.from(cmd.volunteerId()))
-                .orElseThrow(() -> new VolunteerNotFoundException("Volunteer not found with id: " + cmd.volunteerId()));
+        DrinkCardAccount drinkCardAccount = drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(cmd.volunteerId()))
+                .orElseThrow(() -> new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + cmd.volunteerId()));
 
-        if (!volunteer.canConsumeCredit())
-            throw new InsufficientCreditsException("Volunteer has insufficient credits");
+        if (!drinkCardAccount.canConsumeCredit())
+            throw new InsufficientCreditsException("DrinkCardAccount has insufficient credits");
 
         DrinkTicket drinkTicket = DrinkTicket.pending(
-                volunteer.getVolunteerId(),
+                drinkCardAccount.getVolunteerId(),
                 DrinkType.valueOf(cmd.drinkType().toUpperCase())
         );
 

@@ -13,30 +13,30 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class VolunteerTest {
+class DrinkCardAccountTest {
 
     @Test
-    void create_ShouldCreateVolunteerWithInitialValues() {
+    void create_ShouldCreateDrinkCardAccountWithInitialValues() {
         VolunteerID volunteerId = VolunteerID.generate();
 
         Instant beforeCreation = Instant.now();
-        Volunteer volunteer = Volunteer.create(volunteerId);
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
         Instant afterCreation = Instant.now();
 
         assertAll(
-                () -> assertNull(volunteer.getId()),
-                () -> assertEquals(volunteerId, volunteer.getVolunteerId()),
-                () -> assertEquals(0, volunteer.getCredits()),
-                () -> assertNull(volunteer.getLastPurchaseTimestamp()),
-                () -> assertNotNull(volunteer.getCreatedAt()),
-                () -> assertFalse(volunteer.getCreatedAt().isBefore(beforeCreation)),
-                () -> assertFalse(volunteer.getCreatedAt().isAfter(afterCreation))
+                () -> assertNull(drinkCardAccount.getId()),
+                () -> assertEquals(volunteerId, drinkCardAccount.getVolunteerId()),
+                () -> assertEquals(0, drinkCardAccount.getCredits()),
+                () -> assertNull(drinkCardAccount.getLastPurchaseTimestamp()),
+                () -> assertNotNull(drinkCardAccount.getCreatedAt()),
+                () -> assertFalse(drinkCardAccount.getCreatedAt().isBefore(beforeCreation)),
+                () -> assertFalse(drinkCardAccount.getCreatedAt().isAfter(afterCreation))
         );
     }
 
     @Test
     void create_WhenVolunteerIdIsNull_ShouldThrowNullPointerException() {
-        assertThrows(NullPointerException.class, () -> Volunteer.create(null));
+        assertThrows(NullPointerException.class, () -> DrinkCardAccount.create(null));
     }
 
     @Test
@@ -45,7 +45,7 @@ class VolunteerTest {
         Instant lastPurchaseTimestamp = Instant.now();
         Instant createdAt = Instant.now();
 
-        Volunteer volunteer = Volunteer.rehydrate(
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
                 1L,
                 volunteerId,
                 10,
@@ -54,19 +54,19 @@ class VolunteerTest {
         );
 
         assertAll(
-                () -> assertEquals(1L, volunteer.getId()),
-                () -> assertEquals(volunteerId, volunteer.getVolunteerId()),
-                () -> assertEquals(10, volunteer.getCredits()),
-                () -> assertEquals(lastPurchaseTimestamp, volunteer.getLastPurchaseTimestamp()),
-                () -> assertEquals(createdAt, volunteer.getCreatedAt())
+                () -> assertEquals(1L, drinkCardAccount.getId()),
+                () -> assertEquals(volunteerId, drinkCardAccount.getVolunteerId()),
+                () -> assertEquals(10, drinkCardAccount.getCredits()),
+                () -> assertEquals(lastPurchaseTimestamp, drinkCardAccount.getLastPurchaseTimestamp()),
+                () -> assertEquals(createdAt, drinkCardAccount.getCreatedAt())
         );
     }
 
     @Test
     void canPurchaseCard_WhenVolunteerHasNeverPurchased_ShouldReturnTrue() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
-        boolean canPurchase = volunteer.canPurchaseCard(Instant.now());
+        boolean canPurchase = drinkCardAccount.canPurchaseCard(Instant.now());
 
         assertTrue(canPurchase);
     }
@@ -75,7 +75,7 @@ class VolunteerTest {
     void canPurchaseCard_WhenVolunteerAlreadyPurchasedToday_ShouldReturnFalse() {
         Instant now = Instant.now();
 
-        Volunteer volunteer = Volunteer.rehydrate(
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
                 1L,
                 VolunteerID.generate(),
                 5,
@@ -83,7 +83,7 @@ class VolunteerTest {
                 now.minusSeconds(3600)
         );
 
-        boolean canPurchase = volunteer.canPurchaseCard(now);
+        boolean canPurchase = drinkCardAccount.canPurchaseCard(now);
 
         assertFalse(canPurchase);
     }
@@ -96,7 +96,7 @@ class VolunteerTest {
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant();
 
-        Volunteer volunteer = Volunteer.rehydrate(
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
                 1L,
                 VolunteerID.generate(),
                 5,
@@ -104,35 +104,35 @@ class VolunteerTest {
                 now.minusSeconds(3600)
         );
 
-        boolean canPurchase = volunteer.canPurchaseCard(now);
+        boolean canPurchase = drinkCardAccount.canPurchaseCard(now);
 
         assertTrue(canPurchase);
     }
 
     @Test
     void purchaseCard_ShouldAddCardCreditsAndUpdateLastPurchaseTimestamp() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
         Card card = Card.newCard();
         Instant purchaseTimestamp = Instant.now();
 
-        volunteer.purchaseCard(card, purchaseTimestamp);
+        drinkCardAccount.purchaseCard(card, purchaseTimestamp);
 
         assertAll(
-                () -> assertEquals(5, volunteer.getCredits()),
-                () -> assertEquals(purchaseTimestamp, volunteer.getLastPurchaseTimestamp())
+                () -> assertEquals(5, drinkCardAccount.getCredits()),
+                () -> assertEquals(purchaseTimestamp, drinkCardAccount.getLastPurchaseTimestamp())
         );
     }
 
     @Test
     void purchaseCard_ShouldRegisterCardPurchasedEvent() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = Volunteer.create(volunteerId);
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
         Card card = Card.newCard();
         Instant purchaseTimestamp = Instant.now();
 
-        volunteer.purchaseCard(card, purchaseTimestamp);
+        drinkCardAccount.purchaseCard(card, purchaseTimestamp);
 
-        List<DomainEvent> domainEvents = volunteer.getDomainEvents();
+        List<DomainEvent> domainEvents = drinkCardAccount.getDomainEvents();
 
         assertEquals(1, domainEvents.size());
         assertInstanceOf(CardPurchasedEvent.class, domainEvents.getFirst());
@@ -149,12 +149,12 @@ class VolunteerTest {
 
     @Test
     void getDomainEvents_ShouldReturnEventsAndClearThem() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
-        volunteer.purchaseCard(Card.newCard(), Instant.now());
+        drinkCardAccount.purchaseCard(Card.newCard(), Instant.now());
 
-        List<DomainEvent> firstCall = volunteer.getDomainEvents();
-        List<DomainEvent> secondCall = volunteer.getDomainEvents();
+        List<DomainEvent> firstCall = drinkCardAccount.getDomainEvents();
+        List<DomainEvent> secondCall = drinkCardAccount.getDomainEvents();
 
         assertAll(
                 () -> assertEquals(1, firstCall.size()),
@@ -164,60 +164,60 @@ class VolunteerTest {
 
     @Test
     void purchaseCard_WhenCardIsNull_ShouldThrowNullPointerException() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
         assertThrows(
                 NullPointerException.class,
-                () -> volunteer.purchaseCard(null, Instant.now())
+                () -> drinkCardAccount.purchaseCard(null, Instant.now())
         );
     }
 
     @Test
     void purchaseCard_WhenPurchaseTimestampIsNull_ShouldThrowNullPointerException() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
         assertThrows(
                 NullPointerException.class,
-                () -> volunteer.purchaseCard(Card.newCard(), null)
+                () -> drinkCardAccount.purchaseCard(Card.newCard(), null)
         );
     }
 
     @Test
     void canConsumeCredits_WhenVolunteerHasCredits_ShouldReturnTrue() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
         Card card = Card.newCard();
 
-        volunteer.purchaseCard(card, Instant.now());
+        drinkCardAccount.purchaseCard(card, Instant.now());
 
-        assertTrue(volunteer.canConsumeCredit());
+        assertTrue(drinkCardAccount.canConsumeCredit());
     }
 
     @Test
     void canConsumeCredits_WhenVolunteerHasNoCredits_ShouldReturnFalse() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
-        assertFalse(volunteer.canConsumeCredit());
+        assertFalse(drinkCardAccount.canConsumeCredit());
     }
 
     @Test
     void consumeCredits_WhenVolunteerHasCredits_ShouldDecreaseCredits() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
         Card card = Card.newCard();
 
-        volunteer.purchaseCard(card, Instant.now());
+        drinkCardAccount.purchaseCard(card, Instant.now());
 
-        assertEquals(5, volunteer.getCredits());
-        volunteer.consumeCredit();
-        assertEquals(4, volunteer.getCredits());
+        assertEquals(5, drinkCardAccount.getCredits());
+        drinkCardAccount.consumeCredit();
+        assertEquals(4, drinkCardAccount.getCredits());
     }
 
     @Test
     void consumeCredits_WhenVolunteerHasNoCredits_ThrowInsufficientCreditsException() {
-        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
         assertThrows(
                 InsufficientCreditsException.class,
-                volunteer::consumeCredit
+                drinkCardAccount::consumeCredit
         );
     }
 }

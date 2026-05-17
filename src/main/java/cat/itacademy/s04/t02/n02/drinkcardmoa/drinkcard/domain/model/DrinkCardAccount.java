@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Volunteer {
+public class DrinkCardAccount {
 
     private Long id;
     private VolunteerID volunteerId;
@@ -22,7 +22,7 @@ public class Volunteer {
 
     private final List<DomainEvent> domainEvents = new ArrayList<>();
 
-    private Volunteer(Long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+    private DrinkCardAccount(Long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
         this.id = id;
         this.volunteerId = Objects.requireNonNull(volunteerID);
         this. credits = credits;
@@ -30,8 +30,8 @@ public class Volunteer {
         this.createdAt = createdAt;
     }
 
-    public static Volunteer create(VolunteerID volunteerID) {
-        return new Volunteer(
+    public static DrinkCardAccount create(VolunteerID volunteerID) {
+        return new DrinkCardAccount(
                 null,
                 volunteerID,
                 0,
@@ -40,8 +40,8 @@ public class Volunteer {
         );
     }
 
-    public static Volunteer rehydrate(Long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
-        return new Volunteer(
+    public static DrinkCardAccount rehydrate(Long id, VolunteerID volunteerID, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+        return new DrinkCardAccount(
                 id,
                 volunteerID,
                 credits,

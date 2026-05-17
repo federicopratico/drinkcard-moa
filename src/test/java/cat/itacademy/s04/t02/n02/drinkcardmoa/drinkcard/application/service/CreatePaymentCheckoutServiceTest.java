@@ -4,16 +4,16 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreatePaymentCheckoutCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.VolunteerRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.HostedCheckout;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.HostedCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.PaymentGateway;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PurchaseLimitExceededException;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.VolunteerNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentStatus;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Volunteer;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccount;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -41,7 +41,7 @@ class CreatePaymentCheckoutServiceTest {
     private PaymentGateway paymentGateway;
 
     @Mock
-    private VolunteerRepository volunteerRepository;
+    private DrinkCardAccountRepository drinkCardAccountRepository;
 
     @InjectMocks
     private CreatePaymentCheckoutService service;
@@ -62,7 +62,7 @@ class CreatePaymentCheckoutServiceTest {
         assertEquals(PaymentStatus.PENDING.name(), result.status());
         assertEquals(Card.newCard().getPrice(), result.amount());
 
-        verify(volunteerRepository, never()).findByVolunteerId(any());
+        verify(drinkCardAccountRepository, never()).findByVolunteerId(any());
         verify(paymentGateway, never()).createHostedCheckout(any());
         verify(paymentRepository, never()).save(any());
     }
@@ -70,7 +70,7 @@ class CreatePaymentCheckoutServiceTest {
     @Test
     void execute_WhenVolunteerCanPurchase_CreatesPendingPaymentAndHostedCheckout() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = Volunteer.create(volunteerId);
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
 
         HostedCheckout hostedCheckout = new HostedCheckout(
                 "checkout-123",
@@ -78,7 +78,7 @@ class CreatePaymentCheckoutServiceTest {
         );
 
         when(paymentRepository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.empty());
-        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(paymentGateway.createHostedCheckout(any(HostedCheckoutRequest.class))).thenReturn(hostedCheckout);
 
@@ -106,13 +106,13 @@ class CreatePaymentCheckoutServiceTest {
     }
 
     @Test
-    void execute_WhenVolunteerDoesNotExist_ThrowsVolunteerNotFoundException() {
+    void execute_WhenVolunteerDoesNotExist_ThrowsDrinkCardAccountNotFoundException() {
         VolunteerID volunteerId = VolunteerID.generate();
 
         when(paymentRepository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.empty());
-        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.empty());
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.empty());
 
-        assertThrows(VolunteerNotFoundException.class, () -> service.execute(command(volunteerId)));
+        assertThrows(DrinkCardAccountNotFoundException.class, () -> service.execute(command(volunteerId)));
 
         verify(paymentGateway, never()).createHostedCheckout(any());
         verify(paymentRepository, never()).save(any());
@@ -121,10 +121,10 @@ class CreatePaymentCheckoutServiceTest {
     @Test
     void execute_WhenVolunteerCannotPurchase_ThrowsPurchaseLimitExceededException() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = Volunteer.rehydrate(1L, volunteerId, 0, Instant.now(), Instant.now());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(1L, volunteerId, 0, Instant.now(), Instant.now());
 
         when(paymentRepository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.empty());
-        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
 
         assertThrows(PurchaseLimitExceededException.class, () -> service.execute(command(volunteerId)));
 

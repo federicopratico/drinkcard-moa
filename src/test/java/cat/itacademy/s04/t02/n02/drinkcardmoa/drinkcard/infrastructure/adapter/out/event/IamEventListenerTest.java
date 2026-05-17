@@ -1,9 +1,9 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.event;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.UserRegisteredEvent;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreateVolunteerCommand;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateVolunteerResult;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreateVolunteerUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreateDrinkCardAccountCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateDrinkCardAccountResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreateDrinkCardAccountUseCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -23,13 +23,13 @@ import static org.mockito.Mockito.when;
 class IamEventListenerTest {
 
     @Mock
-    private CreateVolunteerUseCase createVolunteerUseCase;
+    private CreateDrinkCardAccountUseCase createDrinkCardAccountUseCase;
 
     @InjectMocks
     private IamEventListener iamEventListener;
 
     @Test
-    void onUserRegistered_WhenEventIsValid_CreateVolunteer() {
+    void onUserRegistered_WhenEventIsValid_CreateDrinkCardAccount() {
         UserRegisteredEvent event = new UserRegisteredEvent(
                 "volunteer-id",
                 "volunteer@email.com",
@@ -37,17 +37,17 @@ class IamEventListenerTest {
                 Instant.now()
         );
 
-        when(createVolunteerUseCase.execute(org.mockito.ArgumentMatchers.any(CreateVolunteerCommand.class)))
-                .thenReturn(new CreateVolunteerResult("volunteer-id", 0));
+        when(createDrinkCardAccountUseCase.execute(org.mockito.ArgumentMatchers.any(CreateDrinkCardAccountCommand.class)))
+                .thenReturn(new CreateDrinkCardAccountResult("volunteer-id", 0));
 
         iamEventListener.onUserRegistered(event);
 
-        ArgumentCaptor<CreateVolunteerCommand> commandCaptor =
-                ArgumentCaptor.forClass(CreateVolunteerCommand.class);
+        ArgumentCaptor<CreateDrinkCardAccountCommand> commandCaptor =
+                ArgumentCaptor.forClass(CreateDrinkCardAccountCommand.class);
 
-        verify(createVolunteerUseCase, times(1)).execute(commandCaptor.capture());
+        verify(createDrinkCardAccountUseCase, times(1)).execute(commandCaptor.capture());
 
-        CreateVolunteerCommand capturedCommand = commandCaptor.getValue();
+        CreateDrinkCardAccountCommand capturedCommand = commandCaptor.getValue();
 
         assertEquals(event.volunteerId(), capturedCommand.volunteerId());
     }
@@ -61,9 +61,9 @@ class IamEventListenerTest {
                 Instant.now()
         );
 
-        RuntimeException exception = new RuntimeException("Could not create volunteer");
+        RuntimeException exception = new RuntimeException("Could not create drink card account");
 
-        when(createVolunteerUseCase.execute(org.mockito.ArgumentMatchers.any(CreateVolunteerCommand.class)))
+        when(createDrinkCardAccountUseCase.execute(org.mockito.ArgumentMatchers.any(CreateDrinkCardAccountCommand.class)))
                 .thenThrow(exception);
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
@@ -72,7 +72,7 @@ class IamEventListenerTest {
 
         assertEquals(exception, thrown);
 
-        verify(createVolunteerUseCase, times(1))
-                .execute(org.mockito.ArgumentMatchers.any(CreateVolunteerCommand.class));
+        verify(createDrinkCardAccountUseCase, times(1))
+                .execute(org.mockito.ArgumentMatchers.any(CreateDrinkCardAccountCommand.class));
     }
 }

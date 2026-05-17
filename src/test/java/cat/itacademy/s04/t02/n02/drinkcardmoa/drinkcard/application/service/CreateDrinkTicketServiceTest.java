@@ -4,14 +4,14 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreateDrinkTicketCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.VolunteerRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.VolunteerNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicket;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicketStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkType;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Volunteer;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccount;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -38,7 +38,7 @@ class CreateDrinkTicketServiceTest {
     private DrinkTicketRepository drinkTicketRepository;
 
     @Mock
-    private VolunteerRepository volunteerRepository;
+    private DrinkCardAccountRepository drinkCardAccountRepository;
 
     @InjectMocks
     private CreateDrinkTicketService service;
@@ -46,15 +46,15 @@ class CreateDrinkTicketServiceTest {
     @Test
     void execute_WhenVolunteerHasCredits_ShouldCreateAndSavePendingDrinkTicket() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = createVolunteerWithCredits(volunteerId);
+        DrinkCardAccount drinkCardAccount = createVolunteerWithCredits(volunteerId);
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
                 "BEER"
         );
 
-        when(volunteerRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
-                .thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
+                .thenReturn(Optional.of(drinkCardAccount));
 
         when(drinkTicketRepository.save(any(DrinkTicket.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -63,7 +63,7 @@ class CreateDrinkTicketServiceTest {
 
         ArgumentCaptor<DrinkTicket> drinkTicketCaptor = ArgumentCaptor.forClass(DrinkTicket.class);
 
-        verify(volunteerRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
+        verify(drinkCardAccountRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
         verify(drinkTicketRepository).save(drinkTicketCaptor.capture());
 
         DrinkTicket savedDrinkTicket = drinkTicketCaptor.getValue();
@@ -85,15 +85,15 @@ class CreateDrinkTicketServiceTest {
     @Test
     void execute_WhenDrinkTypeIsLowercase_ShouldCreateDrinkTicket() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = createVolunteerWithCredits(volunteerId);
+        DrinkCardAccount drinkCardAccount = createVolunteerWithCredits(volunteerId);
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
                 "water"
         );
 
-        when(volunteerRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
-                .thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
+                .thenReturn(Optional.of(drinkCardAccount));
 
         when(drinkTicketRepository.save(any(DrinkTicket.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -113,7 +113,7 @@ class CreateDrinkTicketServiceTest {
     }
 
     @Test
-    void execute_WhenVolunteerDoesNotExist_ShouldThrowVolunteerNotFoundException() {
+    void execute_WhenVolunteerDoesNotExist_ShouldThrowDrinkCardAccountNotFoundException() {
         VolunteerID volunteerId = VolunteerID.generate();
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
@@ -121,67 +121,67 @@ class CreateDrinkTicketServiceTest {
                 "BEER"
         );
 
-        when(volunteerRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
+        when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                VolunteerNotFoundException.class,
+                DrinkCardAccountNotFoundException.class,
                 () -> service.execute(command)
         );
 
-        verify(volunteerRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
+        verify(drinkCardAccountRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
         verify(drinkTicketRepository, never()).save(any(DrinkTicket.class));
     }
 
     @Test
     void execute_WhenVolunteerHasNoCredits_ShouldThrowInsufficientCreditsException() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = Volunteer.create(volunteerId);
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
                 "BEER"
         );
 
-        when(volunteerRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
-                .thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
+                .thenReturn(Optional.of(drinkCardAccount));
 
         assertThrows(
                 InsufficientCreditsException.class,
                 () -> service.execute(command)
         );
 
-        verify(volunteerRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
+        verify(drinkCardAccountRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
         verify(drinkTicketRepository, never()).save(any(DrinkTicket.class));
     }
 
     @Test
     void execute_WhenDrinkTypeIsInvalid_ShouldThrowIllegalArgumentException() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Volunteer volunteer = createVolunteerWithCredits(volunteerId);
+        DrinkCardAccount drinkCardAccount = createVolunteerWithCredits(volunteerId);
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
                 "INVALID_DRINK"
         );
 
-        when(volunteerRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
-                .thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
+                .thenReturn(Optional.of(drinkCardAccount));
 
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.execute(command)
         );
 
-        verify(volunteerRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
+        verify(drinkCardAccountRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
         verify(drinkTicketRepository, never()).save(any(DrinkTicket.class));
     }
 
-    private Volunteer createVolunteerWithCredits(VolunteerID volunteerId) {
-        Volunteer volunteer = Volunteer.create(volunteerId);
-        volunteer.purchaseCard(Card.newCard(), Instant.now());
-        volunteer.getDomainEvents();
+    private DrinkCardAccount createVolunteerWithCredits(VolunteerID volunteerId) {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
+        drinkCardAccount.purchaseCard(Card.newCard(), Instant.now());
+        drinkCardAccount.getDomainEvents();
 
-        return volunteer;
+        return drinkCardAccount;
     }
 }

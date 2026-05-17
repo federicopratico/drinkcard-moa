@@ -12,7 +12,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-public class VolunteerJpaEntity {
+public class DrinkCardAccountJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "my_gen")
@@ -35,7 +35,7 @@ public class VolunteerJpaEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    private VolunteerJpaEntity(Long id, String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+    private DrinkCardAccountJpaEntity(Long id, String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
         this.id = id;
         this.volunteerId = volunteerId;
         this.credits = credits;
@@ -43,8 +43,8 @@ public class VolunteerJpaEntity {
         this.createdAt = createdAt;
     }
 
-    public static VolunteerJpaEntity create(String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
-        return new VolunteerJpaEntity(
+    public static DrinkCardAccountJpaEntity create(String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+        return new DrinkCardAccountJpaEntity(
                 null,
                 volunteerId,
                 credits,

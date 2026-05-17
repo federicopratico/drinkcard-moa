@@ -5,7 +5,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConfirmPaymentResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.EventPublisher;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.VolunteerRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.PaymentGateway;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.PaymentGatewayStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PaymentNotFoundException;
@@ -13,7 +13,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentStatus;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Volunteer;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccount;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,7 +48,7 @@ class ConfirmPaymentServiceTest {
     private EventPublisher eventPublisher;
 
     @Mock
-    private VolunteerRepository volunteerRepository;
+    private DrinkCardAccountRepository drinkCardAccountRepository;
 
     @InjectMocks
     private ConfirmPaymentService service;
@@ -64,10 +64,10 @@ class ConfirmPaymentServiceTest {
                 () -> service.execute(new ConfirmPaymentCommand(paymentId.asString()))
         );
 
-        verify(volunteerRepository, never()).findByVolunteerId(any());
+        verify(drinkCardAccountRepository, never()).findByVolunteerId(any());
         verify(paymentGateway, never()).fetchCheckoutStatus(any());
         verify(paymentRepository, never()).save(any());
-        verify(volunteerRepository, never()).save(any());
+        verify(drinkCardAccountRepository, never()).save(any());
         verify(eventPublisher, never()).publish(any());
     }
 
@@ -75,10 +75,10 @@ class ConfirmPaymentServiceTest {
     void execute_WhenPaymentIsAlreadyFinalized_ReturnsCurrentResultWithoutCallingGatewayOrSaving() {
         VolunteerID volunteerId = VolunteerID.generate();
         Payment payment = finalizedPayment(volunteerId, PaymentStatus.SUCCESS);
-        Volunteer volunteer = Volunteer.rehydrate(1L, volunteerId, 10, Instant.now(), Instant.now());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(1L, volunteerId, 10, Instant.now(), Instant.now());
 
         when(paymentRepository.findByPaymentId(payment.getPaymentId())).thenReturn(Optional.of(payment));
-        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
 
         ConfirmPaymentResult result = service.execute(new ConfirmPaymentCommand(payment.getPaymentId().asString()));
 
@@ -89,7 +89,7 @@ class ConfirmPaymentServiceTest {
 
         verify(paymentGateway, never()).fetchCheckoutStatus(any());
         verify(paymentRepository, never()).save(any());
-        verify(volunteerRepository, never()).save(any());
+        verify(drinkCardAccountRepository, never()).save(any());
         verify(eventPublisher, never()).publish(any());
     }
 
@@ -97,12 +97,12 @@ class ConfirmPaymentServiceTest {
     void execute_WhenProviderStatusIsPaid_MarksPaymentAsSuccessAddsCreditsAndPublishesEvent() {
         VolunteerID volunteerId = VolunteerID.generate();
         Payment payment = pendingPayment(volunteerId);
-        Volunteer volunteer = Volunteer.rehydrate(1L, volunteerId, 0, null, Instant.now());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(1L, volunteerId, 0, null, Instant.now());
 
         when(paymentRepository.findByPaymentId(payment.getPaymentId())).thenReturn(Optional.of(payment));
-        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
         when(paymentGateway.fetchCheckoutStatus(PROVIDER_CHECKOUT_ID)).thenReturn(PaymentGatewayStatus.PAID);
-        when(volunteerRepository.save(volunteer)).thenReturn(volunteer);
+        when(drinkCardAccountRepository.save(drinkCardAccount)).thenReturn(drinkCardAccount);
         when(paymentRepository.save(payment)).thenReturn(payment);
 
         ConfirmPaymentResult result = service.execute(new ConfirmPaymentCommand(payment.getPaymentId().asString()));
@@ -113,7 +113,7 @@ class ConfirmPaymentServiceTest {
         assertEquals(Card.newCard().getPrice(), result.amount());
 
         verify(paymentGateway).fetchCheckoutStatus(PROVIDER_CHECKOUT_ID);
-        verify(volunteerRepository).save(volunteer);
+        verify(drinkCardAccountRepository).save(drinkCardAccount);
         verify(paymentRepository).save(payment);
         verify(eventPublisher, times(1)).publish(any());
     }
@@ -122,12 +122,12 @@ class ConfirmPaymentServiceTest {
     void execute_WhenProviderStatusIsFailed_MarksPaymentAsFailedWithoutAddingCredits() {
         VolunteerID volunteerId = VolunteerID.generate();
         Payment payment = pendingPayment(volunteerId);
-        Volunteer volunteer = Volunteer.rehydrate(1L, volunteerId, 0, null, Instant.now());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(1L, volunteerId, 0, null, Instant.now());
 
         when(paymentRepository.findByPaymentId(payment.getPaymentId())).thenReturn(Optional.of(payment));
-        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
         when(paymentGateway.fetchCheckoutStatus(PROVIDER_CHECKOUT_ID)).thenReturn(PaymentGatewayStatus.FAILED);
-        when(volunteerRepository.save(volunteer)).thenReturn(volunteer);
+        when(drinkCardAccountRepository.save(drinkCardAccount)).thenReturn(drinkCardAccount);
         when(paymentRepository.save(payment)).thenReturn(payment);
 
         ConfirmPaymentResult result = service.execute(new ConfirmPaymentCommand(payment.getPaymentId().asString()));
@@ -138,7 +138,7 @@ class ConfirmPaymentServiceTest {
         assertEquals(Card.newCard().getPrice(), result.amount());
 
         verify(paymentGateway).fetchCheckoutStatus(PROVIDER_CHECKOUT_ID);
-        verify(volunteerRepository).save(volunteer);
+        verify(drinkCardAccountRepository).save(drinkCardAccount);
         verify(paymentRepository).save(payment);
         verify(eventPublisher, never()).publish(any());
     }
@@ -147,12 +147,12 @@ class ConfirmPaymentServiceTest {
     void execute_WhenProviderStatusIsExpired_MarksPaymentAsExpiredWithoutAddingCredits() {
         VolunteerID volunteerId = VolunteerID.generate();
         Payment payment = pendingPayment(volunteerId);
-        Volunteer volunteer = Volunteer.rehydrate(1L, volunteerId, 0, null, Instant.now());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(1L, volunteerId, 0, null, Instant.now());
 
         when(paymentRepository.findByPaymentId(payment.getPaymentId())).thenReturn(Optional.of(payment));
-        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
         when(paymentGateway.fetchCheckoutStatus(PROVIDER_CHECKOUT_ID)).thenReturn(PaymentGatewayStatus.EXPIRED);
-        when(volunteerRepository.save(volunteer)).thenReturn(volunteer);
+        when(drinkCardAccountRepository.save(drinkCardAccount)).thenReturn(drinkCardAccount);
         when(paymentRepository.save(payment)).thenReturn(payment);
 
         ConfirmPaymentResult result = service.execute(new ConfirmPaymentCommand(payment.getPaymentId().asString()));
@@ -163,7 +163,7 @@ class ConfirmPaymentServiceTest {
         assertEquals(Card.newCard().getPrice(), result.amount());
 
         verify(paymentGateway).fetchCheckoutStatus(PROVIDER_CHECKOUT_ID);
-        verify(volunteerRepository).save(volunteer);
+        verify(drinkCardAccountRepository).save(drinkCardAccount);
         verify(paymentRepository).save(payment);
         verify(eventPublisher, never()).publish(any());
     }
@@ -172,12 +172,12 @@ class ConfirmPaymentServiceTest {
     void execute_WhenProviderStatusIsPending_KeepsPaymentPendingWithoutAddingCredits() {
         VolunteerID volunteerId = VolunteerID.generate();
         Payment payment = pendingPayment(volunteerId);
-        Volunteer volunteer = Volunteer.rehydrate(1L, volunteerId, 0, null, Instant.now());
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(1L, volunteerId, 0, null, Instant.now());
 
         when(paymentRepository.findByPaymentId(payment.getPaymentId())).thenReturn(Optional.of(payment));
-        when(volunteerRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(volunteer));
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
         when(paymentGateway.fetchCheckoutStatus(PROVIDER_CHECKOUT_ID)).thenReturn(PaymentGatewayStatus.PENDING);
-        when(volunteerRepository.save(volunteer)).thenReturn(volunteer);
+        when(drinkCardAccountRepository.save(drinkCardAccount)).thenReturn(drinkCardAccount);
         when(paymentRepository.save(payment)).thenReturn(payment);
 
         ConfirmPaymentResult result = service.execute(new ConfirmPaymentCommand(payment.getPaymentId().asString()));
@@ -188,7 +188,7 @@ class ConfirmPaymentServiceTest {
         assertEquals(Card.newCard().getPrice(), result.amount());
 
         verify(paymentGateway).fetchCheckoutStatus(PROVIDER_CHECKOUT_ID);
-        verify(volunteerRepository).save(volunteer);
+        verify(drinkCardAccountRepository).save(drinkCardAccount);
         verify(paymentRepository).save(payment);
         verify(eventPublisher, never()).publish(any());
     }

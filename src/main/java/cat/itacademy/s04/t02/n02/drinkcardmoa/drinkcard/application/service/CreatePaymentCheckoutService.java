@@ -5,15 +5,15 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreatePaymentCheckoutUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.VolunteerRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.HostedCheckout;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.HostedCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.PaymentGateway;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PurchaseLimitExceededException;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.VolunteerNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Payment;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Volunteer;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccount;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +25,12 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
 
     PaymentRepository paymentRepository;
     PaymentGateway paymentGateway;
-    VolunteerRepository volunteerRepository;
+    DrinkCardAccountRepository drinkCardAccountRepository;
 
-    public CreatePaymentCheckoutService(PaymentRepository paymentRepository, PaymentGateway paymentGateway, VolunteerRepository volunteerRepository) {
+    public CreatePaymentCheckoutService(PaymentRepository paymentRepository, PaymentGateway paymentGateway, DrinkCardAccountRepository drinkCardAccountRepository) {
         this.paymentRepository = paymentRepository;
         this.paymentGateway = paymentGateway;
-        this.volunteerRepository = volunteerRepository;
+        this.drinkCardAccountRepository = drinkCardAccountRepository;
     }
 
     @Transactional
@@ -45,12 +45,12 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
             return toPaymentCheckoutResult(payment);
         }
 
-        Volunteer volunteer = volunteerRepository
+        DrinkCardAccount drinkCardAccount = drinkCardAccountRepository
                 .findByVolunteerId(VolunteerID.from(cmd.volunteerId()))
-                .orElseThrow(() -> new VolunteerNotFoundException("Volunteer not found with id: " + cmd.volunteerId()));
+                .orElseThrow(() -> new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + cmd.volunteerId()));
 
-        if (!volunteer.canPurchaseCard(Instant.now())) {
-            throw new PurchaseLimitExceededException("Volunteer has exceeded the purchase limit for today.");
+        if (!drinkCardAccount.canPurchaseCard(Instant.now())) {
+            throw new PurchaseLimitExceededException("DrinkCardAccount has exceeded the purchase limit for today.");
         }
 
         Card card = Card.newCard();

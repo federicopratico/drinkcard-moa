@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-public class VolunteerSpringEventPublisherAdapter implements EventPublisher {
+public class DrinkCardSpringEventPublisherAdapter implements EventPublisher {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
