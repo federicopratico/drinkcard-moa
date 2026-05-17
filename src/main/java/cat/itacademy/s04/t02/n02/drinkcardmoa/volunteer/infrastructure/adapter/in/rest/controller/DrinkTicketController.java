@@ -42,7 +42,7 @@ public class DrinkTicketController {
         return ResponseEntity.status(201).body(mapper.toResponse(result));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+
     @PostMapping("/{ticketId}/consume")
     public ResponseEntity<ConsumeDrinkTicketResponse> consumeDrinkTicket(
             @PathVariable String ticketId,

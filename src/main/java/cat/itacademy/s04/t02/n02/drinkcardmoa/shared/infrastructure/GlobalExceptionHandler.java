@@ -8,6 +8,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.exception.Insuffi
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.exception.PaymentNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -63,6 +64,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientCreditsException.class)
     public ResponseEntity<Map<String, Object>> handleInsufficientCredits(InsufficientCreditsException ex) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
+        return error(HttpStatus.FORBIDDEN, "Access denied");
     }
 
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String message) {
