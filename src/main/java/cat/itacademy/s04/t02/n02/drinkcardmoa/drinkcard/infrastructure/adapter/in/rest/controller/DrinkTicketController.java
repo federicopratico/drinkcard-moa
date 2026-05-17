@@ -3,7 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConsumeDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ConsumeDrinkTicketUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreateDrinkTickerUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreateDrinkTicketUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.ConsumeDrinkTicketRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.CreateDrinkTicketRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.ConsumeDrinkTicketResponse;
@@ -22,22 +22,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/drink-tickets")
 public class DrinkTicketController {
 
-    private final CreateDrinkTickerUseCase createDrinkTickerUseCase;
+    private final CreateDrinkTicketUseCase createDrinkTicketUseCase;
     private final ConsumeDrinkTicketUseCase consumeDrinkTicketUseCase;
     private final DrinkTicketControllerMapper mapper;
 
     public DrinkTicketController(
-            CreateDrinkTickerUseCase createDrinkTickerUseCase,
+            CreateDrinkTicketUseCase createDrinkTicketUseCase,
             ConsumeDrinkTicketUseCase consumeDrinkTicketUseCase,
             DrinkTicketControllerMapper mapper) {
-        this.createDrinkTickerUseCase = createDrinkTickerUseCase;
+        this.createDrinkTicketUseCase = createDrinkTicketUseCase;
         this.consumeDrinkTicketUseCase = consumeDrinkTicketUseCase;
         this.mapper = mapper;
     }
 
     @PostMapping
     public ResponseEntity<CreateDrinkTicketResponse> createDrinkTicket(@Valid @RequestBody CreateDrinkTicketRequest request) {
-        CreateDrinkTicketResult result = createDrinkTickerUseCase.execute(mapper.toCommand(request));
+        CreateDrinkTicketResult result = createDrinkTicketUseCase.execute(mapper.toCommand(request));
 
         return ResponseEntity.status(201).body(mapper.toResponse(result));
     }

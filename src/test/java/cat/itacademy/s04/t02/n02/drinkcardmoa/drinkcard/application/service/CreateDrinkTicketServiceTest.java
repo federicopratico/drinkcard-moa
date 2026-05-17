@@ -44,9 +44,9 @@ class CreateDrinkTicketServiceTest {
     private CreateDrinkTicketService service;
 
     @Test
-    void execute_WhenVolunteerHasCredits_ShouldCreateAndSavePendingDrinkTicket() {
+    void execute_WhenDrinkCardAccountHasCredits_ShouldCreateAndSavePendingDrinkTicket() {
         VolunteerID volunteerId = VolunteerID.generate();
-        DrinkCardAccount drinkCardAccount = createVolunteerWithCredits(volunteerId);
+        DrinkCardAccount drinkCardAccount = createDrinkCardAccountWithCredits(volunteerId);
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
@@ -85,7 +85,7 @@ class CreateDrinkTicketServiceTest {
     @Test
     void execute_WhenDrinkTypeIsLowercase_ShouldCreateDrinkTicket() {
         VolunteerID volunteerId = VolunteerID.generate();
-        DrinkCardAccount drinkCardAccount = createVolunteerWithCredits(volunteerId);
+        DrinkCardAccount drinkCardAccount = createDrinkCardAccountWithCredits(volunteerId);
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
@@ -113,7 +113,7 @@ class CreateDrinkTicketServiceTest {
     }
 
     @Test
-    void execute_WhenVolunteerDoesNotExist_ShouldThrowDrinkCardAccountNotFoundException() {
+    void execute_WhenDrinkCardAccountDoesNotExist_ShouldThrowDrinkCardAccountNotFoundException() {
         VolunteerID volunteerId = VolunteerID.generate();
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
@@ -134,7 +134,7 @@ class CreateDrinkTicketServiceTest {
     }
 
     @Test
-    void execute_WhenVolunteerHasNoCredits_ShouldThrowInsufficientCreditsException() {
+    void execute_WhenDrinkCardAccountHasNoCredits_ShouldThrowInsufficientCreditsException() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
 
@@ -158,7 +158,7 @@ class CreateDrinkTicketServiceTest {
     @Test
     void execute_WhenDrinkTypeIsInvalid_ShouldThrowIllegalArgumentException() {
         VolunteerID volunteerId = VolunteerID.generate();
-        DrinkCardAccount drinkCardAccount = createVolunteerWithCredits(volunteerId);
+        DrinkCardAccount drinkCardAccount = createDrinkCardAccountWithCredits(volunteerId);
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
@@ -177,7 +177,7 @@ class CreateDrinkTicketServiceTest {
         verify(drinkTicketRepository, never()).save(any(DrinkTicket.class));
     }
 
-    private DrinkCardAccount createVolunteerWithCredits(VolunteerID volunteerId) {
+    private DrinkCardAccount createDrinkCardAccountWithCredits(VolunteerID volunteerId) {
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
         drinkCardAccount.purchaseCard(Card.newCard(), Instant.now());
         drinkCardAccount.getDomainEvents();

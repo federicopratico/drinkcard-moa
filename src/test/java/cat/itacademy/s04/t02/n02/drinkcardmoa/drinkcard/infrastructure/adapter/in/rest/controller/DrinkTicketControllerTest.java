@@ -6,7 +6,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConsumeDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ConsumeDrinkTicketUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreateDrinkTickerUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreateDrinkTicketUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.DrinkTicketControllerMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class DrinkTicketControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private CreateDrinkTickerUseCase createDrinkTickerUseCase;
+    private CreateDrinkTicketUseCase createDrinkTicketUseCase;
 
     @MockitoBean
     private ConsumeDrinkTicketUseCase consumeDrinkTicketUseCase;
@@ -60,7 +60,7 @@ class DrinkTicketControllerTest {
                 expiresAt
         );
 
-        when(createDrinkTickerUseCase.execute(new CreateDrinkTicketCommand(volunteerId, "BEER")))
+        when(createDrinkTicketUseCase.execute(new CreateDrinkTicketCommand(volunteerId, "BEER")))
                 .thenReturn(result);
 
         String requestBody = objectMapper.writeValueAsString(new CreateDrinkTicketJson(
@@ -80,7 +80,7 @@ class DrinkTicketControllerTest {
         ArgumentCaptor<CreateDrinkTicketCommand> commandCaptor =
                 ArgumentCaptor.forClass(CreateDrinkTicketCommand.class);
 
-        verify(createDrinkTickerUseCase).execute(commandCaptor.capture());
+        verify(createDrinkTicketUseCase).execute(commandCaptor.capture());
 
         CreateDrinkTicketCommand command = commandCaptor.getValue();
 

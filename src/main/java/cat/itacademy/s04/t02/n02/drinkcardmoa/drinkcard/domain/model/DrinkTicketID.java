@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record DrinkTicketID(UUID value) implements Serializable {
     public DrinkTicketID {
-        Objects.requireNonNull(value, "DrinkTickerID value cannot be null");
+        Objects.requireNonNull(value, "DrinkTicketID value cannot be null");
     }
 
     public static DrinkTicketID generate() {

@@ -63,7 +63,7 @@ class DrinkCardAccountTest {
     }
 
     @Test
-    void canPurchaseCard_WhenVolunteerHasNeverPurchased_ShouldReturnTrue() {
+    void canPurchaseCard_WhenDrinkCardAccountHasNeverPurchased_ShouldReturnTrue() {
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
         boolean canPurchase = drinkCardAccount.canPurchaseCard(Instant.now());
@@ -72,7 +72,7 @@ class DrinkCardAccountTest {
     }
 
     @Test
-    void canPurchaseCard_WhenVolunteerAlreadyPurchasedToday_ShouldReturnFalse() {
+    void canPurchaseCard_WhenDrinkCardAccountAlreadyPurchasedToday_ShouldReturnFalse() {
         Instant now = Instant.now();
 
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
@@ -89,7 +89,7 @@ class DrinkCardAccountTest {
     }
 
     @Test
-    void canPurchaseCard_WhenVolunteerPurchasedOnPreviousDate_ShouldReturnTrue() {
+    void canPurchaseCard_WhenDrinkCardAccountPurchasedOnPreviousDate_ShouldReturnTrue() {
         Instant now = Instant.now();
         Instant yesterday = LocalDate.now()
                 .minusDays(1)
@@ -183,7 +183,7 @@ class DrinkCardAccountTest {
     }
 
     @Test
-    void canConsumeCredits_WhenVolunteerHasCredits_ShouldReturnTrue() {
+    void canConsumeCredits_WhenDrinkCardAccountHasCredits_ShouldReturnTrue() {
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
         Card card = Card.newCard();
 
@@ -193,14 +193,14 @@ class DrinkCardAccountTest {
     }
 
     @Test
-    void canConsumeCredits_WhenVolunteerHasNoCredits_ShouldReturnFalse() {
+    void canConsumeCredits_WhenDrinkCardAccountHasNoCredits_ShouldReturnFalse() {
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
         assertFalse(drinkCardAccount.canConsumeCredit());
     }
 
     @Test
-    void consumeCredits_WhenVolunteerHasCredits_ShouldDecreaseCredits() {
+    void consumeCredits_WhenDrinkCardAccountHasCredits_ShouldDecreaseCredits() {
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
         Card card = Card.newCard();
 
@@ -212,7 +212,7 @@ class DrinkCardAccountTest {
     }
 
     @Test
-    void consumeCredits_WhenVolunteerHasNoCredits_ThrowInsufficientCreditsException() {
+    void consumeCredits_WhenDrinkCardAccountHasNoCredits_ThrowInsufficientCreditsException() {
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
         assertThrows(

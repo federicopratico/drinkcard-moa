@@ -68,7 +68,7 @@ class CreatePaymentCheckoutServiceTest {
     }
 
     @Test
-    void execute_WhenVolunteerCanPurchase_CreatesPendingPaymentAndHostedCheckout() {
+    void execute_WhenDrinkCardAccountCanPurchase_CreatesPendingPaymentAndHostedCheckout() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
 
@@ -106,7 +106,7 @@ class CreatePaymentCheckoutServiceTest {
     }
 
     @Test
-    void execute_WhenVolunteerDoesNotExist_ThrowsDrinkCardAccountNotFoundException() {
+    void execute_WhenDrinkCardAccountDoesNotExist_ThrowsDrinkCardAccountNotFoundException() {
         VolunteerID volunteerId = VolunteerID.generate();
 
         when(paymentRepository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.empty());
@@ -119,7 +119,7 @@ class CreatePaymentCheckoutServiceTest {
     }
 
     @Test
-    void execute_WhenVolunteerCannotPurchase_ThrowsPurchaseLimitExceededException() {
+    void execute_WhenDrinkCardAccountCannotPurchase_ThrowsPurchaseLimitExceededException() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(1L, volunteerId, 0, Instant.now(), Instant.now());
 
