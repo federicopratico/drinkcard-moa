@@ -31,8 +31,8 @@ class PaymentTest {
                 () -> assertNull(payment.getProviderCheckoutId()),
                 () -> assertNull(payment.getProviderCheckoutUrl()),
                 () -> assertNull(payment.getPaidAt()),
-                () -> assertTrue(beforeCreation.isBefore(payment.getCreatedAt())),
-                () -> assertTrue(afterCreation.isAfter(payment.getCreatedAt()))
+                () -> assertFalse(payment.getCreatedAt().isBefore(beforeCreation)),
+                () -> assertFalse(payment.getCreatedAt().isAfter(afterCreation))
         );
     }
 

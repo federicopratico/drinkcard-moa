@@ -41,6 +41,7 @@ public class AuthMapper {
     public LoginResponse toResponse(LoginUserResult result) {
         return new LoginResponse(
                 result.token(),
+                result.volunteerId(),
                 result.email(),
                 result.role()
         );

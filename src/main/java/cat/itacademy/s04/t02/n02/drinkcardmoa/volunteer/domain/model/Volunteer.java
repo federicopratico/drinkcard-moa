@@ -3,6 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.DomainEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.event.CardPurchasedEvent;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.exception.InsufficientCreditsException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -66,6 +67,16 @@ public class Volunteer {
                 card.getPrice(),
                 purchaseTimestamp
         ));
+    }
+
+    public boolean canConsumeCredit() {
+        return credits > 0;
+    }
+
+    public void consumeCredit() {
+        if(!canConsumeCredit()) throw new InsufficientCreditsException("Insufficient credits to consume.");
+
+        credits--;
     }
 
     public Long getId() {

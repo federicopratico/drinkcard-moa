@@ -3,6 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.model;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.DomainEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.event.CardPurchasedEvent;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.volunteer.domain.exception.InsufficientCreditsException;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -178,6 +179,45 @@ class VolunteerTest {
         assertThrows(
                 NullPointerException.class,
                 () -> volunteer.purchaseCard(Card.newCard(), null)
+        );
+    }
+
+    @Test
+    void canConsumeCredits_WhenVolunteerHasCredits_ShouldReturnTrue() {
+        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        Card card = Card.newCard();
+
+        volunteer.purchaseCard(card, Instant.now());
+
+        assertTrue(volunteer.canConsumeCredit());
+    }
+
+    @Test
+    void canConsumeCredits_WhenVolunteerHasNoCredits_ShouldReturnFalse() {
+        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+
+        assertFalse(volunteer.canConsumeCredit());
+    }
+
+    @Test
+    void consumeCredits_WhenVolunteerHasCredits_ShouldDecreaseCredits() {
+        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+        Card card = Card.newCard();
+
+        volunteer.purchaseCard(card, Instant.now());
+
+        assertEquals(5, volunteer.getCredits());
+        volunteer.consumeCredit();
+        assertEquals(4, volunteer.getCredits());
+    }
+
+    @Test
+    void consumeCredits_WhenVolunteerHasNoCredits_ThrowInsufficientCreditsException() {
+        Volunteer volunteer = Volunteer.create(VolunteerID.generate());
+
+        assertThrows(
+                InsufficientCreditsException.class,
+                volunteer::consumeCredit
         );
     }
 }
