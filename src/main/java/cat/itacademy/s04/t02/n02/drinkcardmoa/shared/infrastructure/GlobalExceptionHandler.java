@@ -3,6 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.EmailAlreadyExistsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidCredentialsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.UserNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.exception.DomainException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PaymentNotFoundException;
@@ -69,6 +70,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
         return error(HttpStatus.FORBIDDEN, "Access denied");
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleUserNotFound(UserNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String message) {
