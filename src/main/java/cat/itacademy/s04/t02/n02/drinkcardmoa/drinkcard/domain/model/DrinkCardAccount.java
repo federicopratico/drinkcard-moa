@@ -69,6 +69,10 @@ public class DrinkCardAccount {
         return !hasPurchasedInLast24Hours(now);
     }
 
+    public boolean isActive() {
+        return status == DrinkCardAccountStatus.ACTIVE;
+    }
+
     public void purchaseCard(Card card, Instant purchaseTimestamp) {
         Objects.requireNonNull(card, "Card cannot be null");
         Objects.requireNonNull(purchaseTimestamp, "Timestamp cannot be null");

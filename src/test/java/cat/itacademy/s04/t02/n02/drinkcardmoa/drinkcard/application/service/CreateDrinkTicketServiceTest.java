@@ -5,9 +5,11 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountSuspendedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Card;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccountStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicket;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicketStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkType;
@@ -148,6 +150,35 @@ class CreateDrinkTicketServiceTest {
 
         assertThrows(
                 InsufficientCreditsException.class,
+                () -> service.execute(command)
+        );
+
+        verify(drinkCardAccountRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
+        verify(drinkTicketRepository, never()).save(any(DrinkTicket.class));
+    }
+
+    @Test
+    void execute_WhenDrinkCardAccountIsSuspended_ShouldThrowDrinkCardAccountSuspendedException() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                volunteerId,
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.SUSPENDED
+        );
+
+        CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
+                volunteerId.asString(),
+                "BEER"
+        );
+
+        when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
+                .thenReturn(Optional.of(drinkCardAccount));
+
+        assertThrows(
+                DrinkCardAccountSuspendedException.class,
                 () -> service.execute(command)
         );
 

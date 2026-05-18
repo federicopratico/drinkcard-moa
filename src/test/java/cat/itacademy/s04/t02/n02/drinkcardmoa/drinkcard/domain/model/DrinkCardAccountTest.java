@@ -75,6 +75,27 @@ class DrinkCardAccountTest {
     }
 
     @Test
+    void isActive_WhenDrinkCardAccountIsActive_ShouldReturnTrue() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
+
+        assertTrue(drinkCardAccount.isActive());
+    }
+
+    @Test
+    void isActive_WhenDrinkCardAccountIsSuspended_ShouldReturnFalse() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.SUSPENDED
+        );
+
+        assertFalse(drinkCardAccount.isActive());
+    }
+
+    @Test
     void canPurchaseCard_WhenDrinkCardAccountAlreadyPurchasedToday_ShouldReturnFalse() {
         Instant now = Instant.now();
 
