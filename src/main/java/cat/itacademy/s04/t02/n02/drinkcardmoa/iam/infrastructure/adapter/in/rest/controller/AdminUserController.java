@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -24,8 +25,12 @@ public class AdminUserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserSummaryResponse>> getUsers() {
-        List<UserSummaryResult> result = listUsersUseCase.execute();
+    public ResponseEntity<List<UserSummaryResponse>> getUsers(
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String email) {
+
+        List<UserSummaryResult> result = listUsersUseCase.execute(mapper.toQuery(role, status, email));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(
