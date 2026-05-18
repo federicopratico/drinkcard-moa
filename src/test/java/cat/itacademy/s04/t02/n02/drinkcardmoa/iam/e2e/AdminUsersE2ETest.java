@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 @ActiveProfiles("test")
-class ListAdminUsersE2ETest {
+class AdminUsersE2ETest {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
@@ -59,13 +59,15 @@ class ListAdminUsersE2ETest {
 
     private String adminToken;
     private String volunteerToken;
+    private String adminId;
+    private String volunteerId;
 
     @BeforeEach
     void setUp() {
         jpaUserRepository.deleteAll();
 
-        String adminId = VolunteerID.generate().asString();
-        String volunteerId = VolunteerID.generate().asString();
+        adminId = VolunteerID.generate().asString();
+        volunteerId = VolunteerID.generate().asString();
 
         jpaUserRepository.save(userEntity(
                 adminId,
@@ -172,6 +174,42 @@ class ListAdminUsersE2ETest {
     @Test
     void listUsers_WhenNoBearerToken_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/admin/users"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getUserById_WhenAdminAndUserExists_ReturnsUser() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/users/{userId}", volunteerId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(volunteerId))
+                .andExpect(jsonPath("$.fullName").value("Volunteer User"))
+                .andExpect(jsonPath("$.email").value("volunteer@email.com"))
+                .andExpect(jsonPath("$.role").value("VOLUNTEER"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+    }
+
+    @Test
+    void getUserById_WhenAdminAndUserDoesNotExist_ReturnsNotFound() throws Exception {
+        String missingUserId = VolunteerID.generate().asString();
+
+        mockMvc.perform(get("/api/v1/admin/users/{userId}", missingUserId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("User not found with id: " + missingUserId));
+    }
+
+    @Test
+    void getUserById_WhenAuthenticatedUserIsNotAdmin_ReturnsForbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/users/{userId}", adminId)
+                        .header("Authorization", "Bearer " + volunteerToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getUserById_WhenNoBearerToken_ReturnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/users/{userId}", adminId))
                 .andExpect(status().isUnauthorized());
     }
 

@@ -1,7 +1,9 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.controller;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.GetUserByIdQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.GetUserByIdUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.ListUsersUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.mapper.AdminUserMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.security.JwtAuthenticationFilter;
@@ -34,6 +36,9 @@ class AdminUserControllerTest {
 
     @MockitoBean
     private ListUsersUseCase listUsersUseCase;
+
+    @MockitoBean
+    private GetUserByIdUseCase getUserByIdUseCase;
 
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -142,5 +147,40 @@ class AdminUserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void getUserById_WhenUserExists_ReturnsUserSummary() throws Exception {
+        String userId = "8799df50-d517-4693-9e46-51b537c305a2";
+
+        UserSummaryResult result = new UserSummaryResult(
+                userId,
+                "Admin User",
+                "admin@email.com",
+                "ADMIN",
+                "ACTIVE"
+        );
+
+        when(getUserByIdUseCase.execute(new GetUserByIdQuery(userId)))
+                .thenReturn(result);
+
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken("admin@email.com", null, "ROLE_ADMIN");
+
+        mockMvc.perform(get("/api/v1/admin/users/{userId}", userId)
+                        .principal(authentication))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(userId))
+                .andExpect(jsonPath("$.fullName").value("Admin User"))
+                .andExpect(jsonPath("$.email").value("admin@email.com"))
+                .andExpect(jsonPath("$.role").value("ADMIN"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        ArgumentCaptor<GetUserByIdQuery> queryCaptor =
+                ArgumentCaptor.forClass(GetUserByIdQuery.class);
+
+        verify(getUserByIdUseCase).execute(queryCaptor.capture());
+
+        assertEquals(userId, queryCaptor.getValue().userId());
     }
 }
