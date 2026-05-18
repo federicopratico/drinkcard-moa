@@ -9,6 +9,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.Dri
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.HostedCheckout;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.HostedCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.PaymentGateway;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountSuspendedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PurchaseLimitExceededException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Card;
@@ -48,6 +49,10 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
         DrinkCardAccount drinkCardAccount = drinkCardAccountRepository
                 .findByVolunteerId(VolunteerID.from(cmd.volunteerId()))
                 .orElseThrow(() -> new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + cmd.volunteerId()));
+
+        if (!drinkCardAccount.isActive()) {
+            throw new DrinkCardAccountSuspendedException("DrinkCardAccount is suspended.");
+        }
 
         if (!drinkCardAccount.canPurchaseCard(Instant.now())) {
             throw new PurchaseLimitExceededException("DrinkCardAccount has exceeded the purchase limit for today.");

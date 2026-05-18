@@ -29,6 +29,7 @@ class DrinkCardAccountTest {
                 () -> assertEquals(0, drinkCardAccount.getCredits()),
                 () -> assertNull(drinkCardAccount.getLastPurchaseTimestamp()),
                 () -> assertNotNull(drinkCardAccount.getCreatedAt()),
+                () -> assertEquals(DrinkCardAccountStatus.ACTIVE, drinkCardAccount.getStatus()),
                 () -> assertFalse(drinkCardAccount.getCreatedAt().isBefore(beforeCreation)),
                 () -> assertFalse(drinkCardAccount.getCreatedAt().isAfter(afterCreation))
         );
@@ -50,7 +51,8 @@ class DrinkCardAccountTest {
                 volunteerId,
                 10,
                 lastPurchaseTimestamp,
-                createdAt
+                createdAt,
+                DrinkCardAccountStatus.SUSPENDED
         );
 
         assertAll(
@@ -58,7 +60,8 @@ class DrinkCardAccountTest {
                 () -> assertEquals(volunteerId, drinkCardAccount.getVolunteerId()),
                 () -> assertEquals(10, drinkCardAccount.getCredits()),
                 () -> assertEquals(lastPurchaseTimestamp, drinkCardAccount.getLastPurchaseTimestamp()),
-                () -> assertEquals(createdAt, drinkCardAccount.getCreatedAt())
+                () -> assertEquals(createdAt, drinkCardAccount.getCreatedAt()),
+                () -> assertEquals(DrinkCardAccountStatus.SUSPENDED, drinkCardAccount.getStatus())
         );
     }
 
@@ -69,6 +72,27 @@ class DrinkCardAccountTest {
         boolean canPurchase = drinkCardAccount.canPurchaseCard(Instant.now());
 
         assertTrue(canPurchase);
+    }
+
+    @Test
+    void isActive_WhenDrinkCardAccountIsActive_ShouldReturnTrue() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
+
+        assertTrue(drinkCardAccount.isActive());
+    }
+
+    @Test
+    void isActive_WhenDrinkCardAccountIsSuspended_ShouldReturnFalse() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.SUSPENDED
+        );
+
+        assertFalse(drinkCardAccount.isActive());
     }
 
     @Test

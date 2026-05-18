@@ -6,6 +6,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreateDrinkTicketUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountSuspendedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicket;
@@ -30,6 +31,9 @@ public class CreateDrinkTicketService implements CreateDrinkTicketUseCase {
     public CreateDrinkTicketResult execute(CreateDrinkTicketCommand cmd) {
         DrinkCardAccount drinkCardAccount = drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(cmd.volunteerId()))
                 .orElseThrow(() -> new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + cmd.volunteerId()));
+
+        if (!drinkCardAccount.isActive())
+            throw new DrinkCardAccountSuspendedException("DrinkCardAccount is suspended.");
 
         if (!drinkCardAccount.canConsumeCredit())
             throw new InsufficientCreditsException("DrinkCardAccount has insufficient credits");

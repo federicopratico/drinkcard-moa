@@ -8,12 +8,14 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.Dri
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.HostedCheckout;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.HostedCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.payment.PaymentGateway;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountSuspendedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PurchaseLimitExceededException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccount;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccountStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -127,6 +129,27 @@ class CreatePaymentCheckoutServiceTest {
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
 
         assertThrows(PurchaseLimitExceededException.class, () -> service.execute(command(volunteerId)));
+
+        verify(paymentGateway, never()).createHostedCheckout(any());
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void execute_WhenDrinkCardAccountIsSuspended_ThrowsDrinkCardAccountSuspendedException() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                volunteerId,
+                0,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.SUSPENDED
+        );
+
+        when(paymentRepository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.empty());
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(drinkCardAccount));
+
+        assertThrows(DrinkCardAccountSuspendedException.class, () -> service.execute(command(volunteerId)));
 
         verify(paymentGateway, never()).createHostedCheckout(any());
         verify(paymentRepository, never()).save(any());
