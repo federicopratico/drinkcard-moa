@@ -44,6 +44,7 @@ public class UserJpaEntity {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.status = status;
     }
 
     public static UserJpaEntity create(String id, String firstName, String lastName, String email,

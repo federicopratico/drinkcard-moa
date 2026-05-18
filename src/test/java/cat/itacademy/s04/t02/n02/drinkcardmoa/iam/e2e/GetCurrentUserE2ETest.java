@@ -6,6 +6,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullName;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
@@ -70,7 +71,8 @@ class GetCurrentUserE2ETest {
                 "lastName",
                 email,
                 "hashed_password",
-                "VOLUNTEER"
+                "VOLUNTEER",
+                "ACTIVE"
         );
         jpaUserRepository.save(userEntity);
 
@@ -98,7 +100,8 @@ class GetCurrentUserE2ETest {
                 FullName.from("firstName", "lastName"),
                 Email.from(email),
                 HashedPassword.from("hashed_password"),
-                Role.VOLUNTEER
+                Role.VOLUNTEER,
+                UserStatus.ACTIVE
         );
     }
 }

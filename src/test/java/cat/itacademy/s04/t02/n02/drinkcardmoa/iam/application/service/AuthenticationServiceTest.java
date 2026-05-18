@@ -11,6 +11,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullName;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -111,13 +112,60 @@ class AuthenticationServiceTest {
         verify(tokenService, never()).generateToken(any(User.class));
     }
 
+    @Test
+    void execute_WhenUserIsSuspended_ThrowInvalidCredentialsException() {
+        LoginUserCommand cmd = new LoginUserCommand(
+                "user@email.com",
+                "12345678"
+        );
+
+        User user = createUser(UserStatus.SUSPENDED);
+
+        when(userRepository.findUserByEmail(any(Email.class)))
+                .thenReturn(Optional.of(user));
+
+        assertThrows(InvalidCredentialsException.class, () -> {
+            authenticationService.execute(cmd);
+        });
+
+        verify(userRepository, times(1)).findUserByEmail(any(Email.class));
+        verify(passwordEncoder, never()).matches(any(String.class), any(String.class));
+        verify(tokenService, never()).generateToken(any(User.class));
+    }
+
+    @Test
+    void execute_WhenUserIsDeleted_ThrowInvalidCredentialsException() {
+        LoginUserCommand cmd = new LoginUserCommand(
+                "user@email.com",
+                "12345678"
+        );
+
+        User user = createUser(UserStatus.DELETED);
+
+        when(userRepository.findUserByEmail(any(Email.class)))
+                .thenReturn(Optional.of(user));
+
+        assertThrows(InvalidCredentialsException.class, () -> {
+            authenticationService.execute(cmd);
+        });
+
+        verify(userRepository, times(1)).findUserByEmail(any(Email.class));
+        verify(passwordEncoder, never()).matches(any(String.class), any(String.class));
+        verify(tokenService, never()).generateToken(any(User.class));
+    }
+
     private User createUser() {
+        return createUser(UserStatus.ACTIVE);
+    }
+
+    private User createUser(UserStatus status) {
         return User.rehydrate(
                 VolunteerID.generate(),
                 FullName.from("firstName", "lastName"),
                 Email.from("email@email.com"),
                 HashedPassword.from("12345678"),
-                Role.VOLUNTEER
+                Role.VOLUNTEER,
+                status
         );
     }
 }

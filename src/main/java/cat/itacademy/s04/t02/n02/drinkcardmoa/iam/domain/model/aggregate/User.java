@@ -17,6 +17,7 @@ public class User {
         this.email = email;
         this.hashedPassword = hashedPassword;
         this.role = role;
+        this.status = status;
     }
 
     public boolean isActive() {
