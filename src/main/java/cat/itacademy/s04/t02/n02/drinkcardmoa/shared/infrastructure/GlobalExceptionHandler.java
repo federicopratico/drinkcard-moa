@@ -4,6 +4,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.EmailAlreadyE
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidCredentialsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.UserNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.exception.DomainException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PaymentNotFoundException;
@@ -59,6 +60,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PaymentNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handlePaymentNotFound(PaymentNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(DrinkCardAccountNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleDrinkCardAccountNotFound(DrinkCardAccountNotFoundException ex) {
         return error(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
