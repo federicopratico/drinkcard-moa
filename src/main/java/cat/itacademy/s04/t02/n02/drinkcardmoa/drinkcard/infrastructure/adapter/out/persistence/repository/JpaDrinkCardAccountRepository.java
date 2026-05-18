@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface JpaDrinkCardAccountRepository extends JpaRepository <DrinkCardAccountJpaEntity, String> {
+public interface JpaDrinkCardAccountRepository extends JpaRepository <DrinkCardAccountJpaEntity, Long> {
     Optional<DrinkCardAccountJpaEntity> findByVolunteerId(String volunteerID);
     boolean existsByVolunteerId(String volunteerID);
 }
