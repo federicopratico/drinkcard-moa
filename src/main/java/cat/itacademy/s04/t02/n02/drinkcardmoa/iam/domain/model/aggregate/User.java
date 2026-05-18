@@ -19,8 +19,8 @@ public class User {
         this.role = role;
     }
 
-    public static User create(VolunteerID id, FullName fullName, Email email, HashedPassword hashedPassword, Role role, UserStatus status) {
-        return new User(id, fullName, email, hashedPassword, role, status);
+    public static User create(VolunteerID id, FullName fullName, Email email, HashedPassword hashedPassword, Role role) {
+        return new User(id, fullName, email, hashedPassword, role, UserStatus.ACTIVE);
     }
 
     public static User rehydrate(VolunteerID id, FullName fullName, Email email, HashedPassword hashedPassword, Role role, UserStatus status) {
