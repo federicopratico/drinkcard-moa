@@ -35,21 +35,26 @@ public class DrinkCardAccountJpaEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    private DrinkCardAccountJpaEntity(Long id, String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+    @Column(name = "status", nullable = false)
+    private String status;
+
+    private DrinkCardAccountJpaEntity(Long id, String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt, String status) {
         this.id = id;
         this.volunteerId = volunteerId;
         this.credits = credits;
         this.lastPurchaseTimestamp = lastPurchaseTimestamp;
         this.createdAt = createdAt;
+        this.status = status;
     }
 
-    public static DrinkCardAccountJpaEntity create(String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt) {
+    public static DrinkCardAccountJpaEntity create(String volunteerId, int credits, Instant lastPurchaseTimestamp, Instant createdAt, String status) {
         return new DrinkCardAccountJpaEntity(
                 null,
                 volunteerId,
                 credits,
                 lastPurchaseTimestamp,
-                createdAt
+                createdAt,
+                status
         );
     }
 }

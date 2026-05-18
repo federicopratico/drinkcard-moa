@@ -1,0 +1,2 @@
+ALTER TABLE drink_card_accounts
+ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';

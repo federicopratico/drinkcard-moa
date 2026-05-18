@@ -2,6 +2,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccount;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkCardAccountStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.DrinkCardAccountJpaEntity;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +14,8 @@ public class DrinkCardAccountMapper {
                 drinkCardAccount.getVolunteerId().asString(),
                 drinkCardAccount.getCredits(),
                 drinkCardAccount.getLastPurchaseTimestamp(),
-                drinkCardAccount.getCreatedAt()
+                drinkCardAccount.getCreatedAt(),
+                drinkCardAccount.getStatus().name()
         );
 
         if (drinkCardAccount.getId() != null) {
@@ -29,7 +31,8 @@ public class DrinkCardAccountMapper {
                 VolunteerID.from(entity.getVolunteerId()),
                 entity.getCredits(),
                 entity.getLastPurchaseTimestamp(),
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                DrinkCardAccountStatus.valueOf(entity.getStatus())
         );
     }
 }
