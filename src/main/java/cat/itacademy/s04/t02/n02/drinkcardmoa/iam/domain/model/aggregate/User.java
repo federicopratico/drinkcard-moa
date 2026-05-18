@@ -19,6 +19,10 @@ public class User {
         this.role = role;
     }
 
+    public boolean isActive() {
+        return this.status == UserStatus.ACTIVE;
+    }
+
     public static User create(VolunteerID id, FullName fullName, Email email, HashedPassword hashedPassword, Role role) {
         return new User(id, fullName, email, hashedPassword, role, UserStatus.ACTIVE);
     }

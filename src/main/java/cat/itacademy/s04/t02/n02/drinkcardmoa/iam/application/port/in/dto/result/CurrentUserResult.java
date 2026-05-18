@@ -15,7 +15,7 @@ public record CurrentUserResult(
                 user.getFullName().asString(),
                 user.getEmail().asString(),
                 user.getRole().name(),
-                "ACTIVE"
+                user.getStatus().name()
         );
     }
 }

@@ -30,6 +30,8 @@ public class AuthenticationService implements AuthenticateUserUseCase {
         User user = userRepository.findUserByEmail(Email.from(cmd.email()))
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
+        if(!user.isActive()) throw new InvalidCredentialsException("Invalid Credentials.\nPlease contact the administrator.");
+
         if(!passwordEncoder.matches(cmd.password(), user.getHashedPassword().value()))
             throw new InvalidCredentialsException("Invalid email or password");
 
