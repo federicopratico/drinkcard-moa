@@ -33,18 +33,22 @@ public class UserJpaEntity {
     @Column(nullable = false, name = "role")
     private String role;
 
+    @Column(nullable = false, name = "status")
+    private String status;
+
     private UserJpaEntity(String id, String firstName, String lastName, String email,
-                          String password, String role) {
+                          String password, String role, String status) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.status = status;
     }
 
     public static UserJpaEntity create(String id, String firstName, String lastName, String email,
-                                       String password, String role) {
-        return new UserJpaEntity(id, firstName, lastName, email, password, role);
+                                       String password, String role, String status) {
+        return new UserJpaEntity(id, firstName, lastName, email, password, role, status);
     }
 }
