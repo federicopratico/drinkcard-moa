@@ -9,6 +9,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.per
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -33,5 +34,13 @@ public class UserJpaAdapter implements UserRepository {
     @Override
     public boolean existsByEmail(Email email) {
         return jpaUserRepository.existsByEmail(email.asString());
+    }
+
+    @Override
+    public List<User> findAll() {
+        return jpaUserRepository.findAll()
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }
