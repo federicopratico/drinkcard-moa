@@ -1,10 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.mapper;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullName;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.*;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.springframework.stereotype.Component;
@@ -19,7 +16,8 @@ public class UserMapper {
                 user.getFullName().lastName(),
                 user.getEmail().asString(),
                 user.getHashedPassword().value(),
-                user.getRole().name()
+                user.getRole().name(),
+                user.getStatus().name()
         );
     }
 
@@ -29,7 +27,8 @@ public class UserMapper {
                 FullName.from(entity.getFirstName(), entity.getLastName()),
                 Email.from(entity.getEmail()),
                 HashedPassword.from(entity.getPassword()),
-                Role.valueOf(entity.getRole())
+                Role.valueOf(entity.getRole()),
+                UserStatus.valueOf(entity.getStatus().toUpperCase())
         );
     }
 }
