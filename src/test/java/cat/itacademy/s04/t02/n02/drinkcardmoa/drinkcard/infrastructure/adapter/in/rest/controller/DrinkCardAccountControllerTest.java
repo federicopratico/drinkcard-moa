@@ -55,7 +55,7 @@ class DrinkCardAccountControllerTest {
         TestingAuthenticationToken authentication =
                 new TestingAuthenticationToken(volunteerId, null, "ROLE_VOLUNTEER");
 
-        mockMvc.perform(get("/api/v1/drink-card-account/me")
+        mockMvc.perform(get("/api/v1/drink-card-accounts/me")
                         .param("volunteerId", "ignored-client-id")
                         .principal(authentication))
                 .andExpect(status().isOk())
