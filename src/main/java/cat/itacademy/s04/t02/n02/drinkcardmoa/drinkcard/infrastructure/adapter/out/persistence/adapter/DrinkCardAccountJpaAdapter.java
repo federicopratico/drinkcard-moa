@@ -9,6 +9,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.o
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -34,5 +35,12 @@ public class DrinkCardAccountJpaAdapter implements DrinkCardAccountRepository {
     @Override
     public boolean existsByVolunteerId(VolunteerID volunteerID) {
         return jpaDrinkCardAccountRepository.existsByVolunteerId(volunteerID.asString());
+    }
+
+    @Override
+    public List<DrinkCardAccount> findAll() {
+        return jpaDrinkCardAccountRepository.findAll().stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }
