@@ -3,6 +3,8 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.pe
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.mapper.UserMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
@@ -37,8 +39,12 @@ public class UserJpaAdapter implements UserRepository {
     }
 
     @Override
-    public List<User> findAll() {
-        return jpaUserRepository.findAll()
+    public List<User> findAllByFilters(Role role, UserStatus status, Email email) {
+        return jpaUserRepository.findAllByFilters(
+                role == null ? null : role.name(),
+                status == null ? null : status.name(),
+                email == null ? null : email.asString()
+                )
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
