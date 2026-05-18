@@ -8,6 +8,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserS
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.mapper.UserMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -48,5 +49,11 @@ public class UserJpaAdapter implements UserRepository {
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<User> findById(VolunteerID volunteerID) {
+        return jpaUserRepository.findById(volunteerID.asString())
+                .map(mapper::toDomain);
     }
 }
