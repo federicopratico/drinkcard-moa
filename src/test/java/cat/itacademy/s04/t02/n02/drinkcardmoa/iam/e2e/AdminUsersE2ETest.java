@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -64,6 +65,7 @@ class AdminUsersE2ETest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         jpaUserRepository.deleteAll();
 
         adminId = VolunteerID.generate().asString();
@@ -73,7 +75,7 @@ class AdminUsersE2ETest {
                 adminId,
                 "Admin",
                 "User",
-                "admin@email.com",
+                "admin@userid.com",
                 "ADMIN",
                 "ACTIVE"
         ));
@@ -81,7 +83,7 @@ class AdminUsersE2ETest {
                 volunteerId,
                 "Volunteer",
                 "User",
-                "volunteer@email.com",
+                "volunteer@userid.com",
                 "VOLUNTEER",
                 "ACTIVE"
         ));
@@ -89,13 +91,13 @@ class AdminUsersE2ETest {
                 VolunteerID.generate().asString(),
                 "Suspended",
                 "Volunteer",
-                "suspended@email.com",
+                "suspended@userid.com",
                 "VOLUNTEER",
                 "SUSPENDED"
         ));
 
-        adminToken = tokenService.generateToken(user(adminId, "Admin", "User", "admin@email.com", Role.ADMIN, UserStatus.ACTIVE));
-        volunteerToken = tokenService.generateToken(user(volunteerId, "Volunteer", "User", "volunteer@email.com", Role.VOLUNTEER, UserStatus.ACTIVE));
+        adminToken = tokenService.generateToken(user(adminId, "Admin", "User", "admin@userid.com", Role.ADMIN, UserStatus.ACTIVE));
+        volunteerToken = tokenService.generateToken(user(volunteerId, "Volunteer", "User", "volunteer@userid.com", Role.VOLUNTEER, UserStatus.ACTIVE));
     }
 
     @Test
@@ -105,9 +107,9 @@ class AdminUsersE2ETest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[*].email", containsInAnyOrder(
-                        "admin@email.com",
-                        "volunteer@email.com",
-                        "suspended@email.com"
+                        "admin@userid.com",
+                        "volunteer@userid.com",
+                        "suspended@userid.com"
                 )));
     }
 
@@ -119,8 +121,8 @@ class AdminUsersE2ETest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[*].email", containsInAnyOrder(
-                        "volunteer@email.com",
-                        "suspended@email.com"
+                        "volunteer@userid.com",
+                        "suspended@userid.com"
                 )))
                 .andExpect(jsonPath("$[*].role", containsInAnyOrder(
                         "VOLUNTEER",
@@ -135,18 +137,18 @@ class AdminUsersE2ETest {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].email").value("suspended@email.com"))
+                .andExpect(jsonPath("$[0].email").value("suspended@userid.com"))
                 .andExpect(jsonPath("$[0].status").value("SUSPENDED"));
     }
 
     @Test
     void listUsers_WhenFilteredByEmail_ReturnsMatchingUser() throws Exception {
         mockMvc.perform(get("/api/v1/admin/users")
-                        .param("email", "admin@email.com")
+                        .param("email", "admin@userid.com")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].email").value("admin@email.com"))
+                .andExpect(jsonPath("$[0].email").value("admin@userid.com"))
                 .andExpect(jsonPath("$[0].role").value("ADMIN"))
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"));
     }
@@ -159,7 +161,7 @@ class AdminUsersE2ETest {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].email").value("volunteer@email.com"))
+                .andExpect(jsonPath("$[0].email").value("volunteer@userid.com"))
                 .andExpect(jsonPath("$[0].role").value("VOLUNTEER"))
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"));
     }
@@ -184,7 +186,7 @@ class AdminUsersE2ETest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(volunteerId))
                 .andExpect(jsonPath("$.fullName").value("Volunteer User"))
-                .andExpect(jsonPath("$.email").value("volunteer@email.com"))
+                .andExpect(jsonPath("$.email").value("volunteer@userid.com"))
                 .andExpect(jsonPath("$.role").value("VOLUNTEER"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
     }

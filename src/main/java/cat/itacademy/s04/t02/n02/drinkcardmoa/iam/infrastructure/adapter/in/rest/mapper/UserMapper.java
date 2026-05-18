@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 @Component("userRestMapper")
 public class UserMapper {
 
-    public CurrentUserCommand toCommand(String email) {
-        return new CurrentUserCommand(email);
+    public CurrentUserCommand toCommand(String userId) {
+        return new CurrentUserCommand(userId);
     }
 
     public CurrentUserResponse toResponse(CurrentUserResult result) {

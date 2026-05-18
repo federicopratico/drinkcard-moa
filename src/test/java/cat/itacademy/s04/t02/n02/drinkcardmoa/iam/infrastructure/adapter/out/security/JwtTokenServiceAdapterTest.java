@@ -80,7 +80,7 @@ class JwtTokenServiceAdapterTest {
         return User.rehydrate(
                 VolunteerID.generate(),
                 FullName.from("First", "Last"),
-                Email.from("user@email.com"),
+                Email.from("user@userId.com"),
                 HashedPassword.from("hashed_password"),
                 Role.VOLUNTEER,
                 UserStatus.ACTIVE

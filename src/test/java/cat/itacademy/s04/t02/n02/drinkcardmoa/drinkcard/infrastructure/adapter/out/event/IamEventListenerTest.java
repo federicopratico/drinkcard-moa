@@ -32,7 +32,7 @@ class IamEventListenerTest {
     void onUserRegistered_WhenEventIsValid_CreateDrinkCardAccount() {
         UserRegisteredEvent event = new UserRegisteredEvent(
                 "volunteer-id",
-                "volunteer@email.com",
+                "volunteer@userId.com",
                 "VOLUNTEER",
                 Instant.now()
         );
@@ -56,7 +56,7 @@ class IamEventListenerTest {
     void onUserRegistered_WhenUseCaseFails_RethrowException() {
         UserRegisteredEvent event = new UserRegisteredEvent(
                 "volunteer-id",
-                "volunteer@email.com",
+                "volunteer@userId.com",
                 "VOLUNTEER",
                 Instant.now()
         );

@@ -49,14 +49,14 @@ class AdminUserControllerTest {
                 new UserSummaryResult(
                         "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1",
                         "Volunteer User",
-                        "volunteer@email.com",
+                        "volunteer@userId.com",
                         "VOLUNTEER",
                         "ACTIVE"
                 ),
                 new UserSummaryResult(
                         "8799df50-d517-4693-9e46-51b537c305a2",
                         "Admin User",
-                        "admin@email.com",
+                        "admin@userId.com",
                         "ADMIN",
                         "SUSPENDED"
                 )
@@ -73,12 +73,12 @@ class AdminUserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].userId").value("4f0a8db1-63a7-4997-944c-9f2f6b82e6d1"))
                 .andExpect(jsonPath("$[0].fullName").value("Volunteer User"))
-                .andExpect(jsonPath("$[0].email").value("volunteer@email.com"))
+                .andExpect(jsonPath("$[0].email").value("volunteer@userId.com"))
                 .andExpect(jsonPath("$[0].role").value("VOLUNTEER"))
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"))
                 .andExpect(jsonPath("$[1].userId").value("8799df50-d517-4693-9e46-51b537c305a2"))
                 .andExpect(jsonPath("$[1].fullName").value("Admin User"))
-                .andExpect(jsonPath("$[1].email").value("admin@email.com"))
+                .andExpect(jsonPath("$[1].email").value("admin@userId.com"))
                 .andExpect(jsonPath("$[1].role").value("ADMIN"))
                 .andExpect(jsonPath("$[1].status").value("SUSPENDED"));
 
@@ -98,13 +98,13 @@ class AdminUserControllerTest {
                 new UserSummaryResult(
                         "8799df50-d517-4693-9e46-51b537c305a2",
                         "Admin User",
-                        "admin@email.com",
+                        "admin@userId.com",
                         "ADMIN",
                         "ACTIVE"
                 )
         );
 
-        when(listUsersUseCase.execute(new ListUsersQuery("ADMIN", "ACTIVE", "admin@email.com")))
+        when(listUsersUseCase.execute(new ListUsersQuery("ADMIN", "ACTIVE", "admin@userId.com")))
                 .thenReturn(result);
 
         TestingAuthenticationToken authentication =
@@ -113,12 +113,12 @@ class AdminUserControllerTest {
         mockMvc.perform(get("/api/v1/admin/users")
                         .param("role", "ADMIN")
                         .param("status", "ACTIVE")
-                        .param("email", "admin@email.com")
+                        .param("email", "admin@userId.com")
                         .principal(authentication))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].userId").value("8799df50-d517-4693-9e46-51b537c305a2"))
                 .andExpect(jsonPath("$[0].fullName").value("Admin User"))
-                .andExpect(jsonPath("$[0].email").value("admin@email.com"))
+                .andExpect(jsonPath("$[0].email").value("admin@userId.com"))
                 .andExpect(jsonPath("$[0].role").value("ADMIN"))
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"));
 
@@ -129,7 +129,7 @@ class AdminUserControllerTest {
 
         assertEquals("ADMIN", queryCaptor.getValue().role());
         assertEquals("ACTIVE", queryCaptor.getValue().status());
-        assertEquals("admin@email.com", queryCaptor.getValue().email());
+        assertEquals("admin@userId.com", queryCaptor.getValue().email());
     }
 
     @Test
@@ -156,7 +156,7 @@ class AdminUserControllerTest {
         UserSummaryResult result = new UserSummaryResult(
                 userId,
                 "Admin User",
-                "admin@email.com",
+                "admin@userId.com",
                 "ADMIN",
                 "ACTIVE"
         );
@@ -172,7 +172,7 @@ class AdminUserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(userId))
                 .andExpect(jsonPath("$.fullName").value("Admin User"))
-                .andExpect(jsonPath("$.email").value("admin@email.com"))
+                .andExpect(jsonPath("$.email").value("admin@userId.com"))
                 .andExpect(jsonPath("$.role").value("ADMIN"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
 

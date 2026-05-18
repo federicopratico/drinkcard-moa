@@ -29,7 +29,7 @@ class ListUserServiceTest {
 
     @Test
     void execute_WhenNoFilters_ReturnUserSummaryList() {
-        User user = createUser("volunteer@email.com", "Volunteer", "User", Role.VOLUNTEER, UserStatus.ACTIVE);
+        User user = createUser("volunteer@userId.com", "Volunteer", "User", Role.VOLUNTEER, UserStatus.ACTIVE);
 
         when(userRepository.findAllByFilters(null, null, null))
                 .thenReturn(List.of(user));
@@ -40,7 +40,7 @@ class ListUserServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("Volunteer User", result.getFirst().fullName());
-        assertEquals("volunteer@email.com", result.getFirst().email());
+        assertEquals("volunteer@userid.com", result.getFirst().email());
         assertEquals("VOLUNTEER", result.getFirst().role());
         assertEquals("ACTIVE", result.getFirst().status());
 
@@ -49,13 +49,13 @@ class ListUserServiceTest {
 
     @Test
     void execute_WhenFiltersExist_PassParsedFiltersToRepository() {
-        User user = createUser("admin@email.com", "Admin", "User", Role.ADMIN, UserStatus.SUSPENDED);
+        User user = createUser("admin@userId.com", "Admin", "User", Role.ADMIN, UserStatus.SUSPENDED);
 
         when(userRepository.findAllByFilters(any(Role.class), any(UserStatus.class), any(Email.class)))
                 .thenReturn(List.of(user));
 
         List<UserSummaryResult> result = listUsersService.execute(
-                new ListUsersQuery("ADMIN", "SUSPENDED", "admin@email.com")
+                new ListUsersQuery("ADMIN", "SUSPENDED", "admin@userId.com")
         );
 
         assertEquals(1, result.size());
@@ -73,7 +73,7 @@ class ListUserServiceTest {
 
         assertEquals(Role.ADMIN, roleCaptor.getValue());
         assertEquals(UserStatus.SUSPENDED, statusCaptor.getValue());
-        assertEquals("admin@email.com", emailCaptor.getValue().asString());
+        assertEquals("admin@userid.com", emailCaptor.getValue().asString());
     }
 
     @Test

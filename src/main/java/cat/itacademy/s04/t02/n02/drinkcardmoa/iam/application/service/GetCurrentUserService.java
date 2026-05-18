@@ -6,7 +6,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.Ge
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.UserNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,8 +20,8 @@ public class GetCurrentUserService implements GetCurrentUserUseCase {
 
     @Override
     public CurrentUserResult execute(CurrentUserCommand cmd) {
-        User user = userRepository.findUserByEmail(Email.from(cmd.email()))
-                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + cmd.email()));
+        User user = userRepository.findById(VolunteerID.from(cmd.userId()))
+                .orElseThrow(() -> new UserNotFoundException("User not found with userId: " + cmd.userId()));
 
         return CurrentUserResult.from(user);
     }

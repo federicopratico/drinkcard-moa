@@ -41,7 +41,7 @@ class RegisterUserServiceTest {
         RegisterUserCommand cmd = new RegisterUserCommand(
                 "first",
                 "last",
-                "first_last@email.com",
+                "first_last@userId.com",
                 "password",
                 "VOLUNTEER");
 
@@ -54,7 +54,7 @@ class RegisterUserServiceTest {
         assertNotNull(result);
         assertEquals(cmd.firstName(), result.firstName());
         assertEquals(cmd.lastName(), result.lastName());
-        assertEquals(cmd.email(), result.email());
+        assertEquals("first_last@userid.com", result.email());
 
         verify(userRepository, times(1)).existsByEmail(any(Email.class));
         verify(passwordEncoder, times(1)).encode(cmd.password());
@@ -66,7 +66,7 @@ class RegisterUserServiceTest {
         RegisterUserCommand cmd = new RegisterUserCommand(
                 "first",
                 "last",
-                "duplicate@email.com",
+                "duplicate@userId.com",
                 "password",
                 "VOLUNTEER");
 
