@@ -1,16 +1,14 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullName;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.*;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,69 +25,72 @@ class ListUserServiceTest {
     private UserRepository userRepository;
 
     @InjectMocks
-    private ListUsersService listUserService;
+    private ListUsersService listUsersService;
 
     @Test
-    void execute_WhenUsersExist_ReturnUserSummaryList() {
-        User volunteer = createUser(
-                "volunteer@email.com",
-                "Volunteer",
-                "User",
-                Role.VOLUNTEER,
-                UserStatus.ACTIVE
+    void execute_WhenNoFilters_ReturnUserSummaryList() {
+        User user = createUser("volunteer@email.com", "Volunteer", "User", Role.VOLUNTEER, UserStatus.ACTIVE);
+
+        when(userRepository.findAllByFilters(null, null, null))
+                .thenReturn(List.of(user));
+
+        List<UserSummaryResult> result = listUsersService.execute(
+                new ListUsersQuery(null, null, null)
         );
 
-        User admin = createUser(
-                "admin@email.com",
-                "Admin",
-                "User",
-                Role.ADMIN,
-                UserStatus.SUSPENDED
-        );
-
-        when(userRepository.findAll())
-                .thenReturn(List.of(volunteer, admin));
-
-        List<UserSummaryResult> result = listUserService.execute();
-
-        assertNotNull(result);
-        assertEquals(2, result.size());
-
-        assertEquals(volunteer.getId().asString(), result.getFirst().userId());
+        assertEquals(1, result.size());
         assertEquals("Volunteer User", result.getFirst().fullName());
         assertEquals("volunteer@email.com", result.getFirst().email());
-        assertEquals("VOLUNTEER", result.get(0).role());
-        assertEquals("ACTIVE", result.get(0).status());
+        assertEquals("VOLUNTEER", result.getFirst().role());
+        assertEquals("ACTIVE", result.getFirst().status());
 
-        assertEquals(admin.getId().asString(), result.get(1).userId());
-        assertEquals("Admin User", result.get(1).fullName());
-        assertEquals("admin@email.com", result.get(1).email());
-        assertEquals("ADMIN", result.get(1).role());
-        assertEquals("SUSPENDED", result.get(1).status());
-
-        verify(userRepository, times(1)).findAll();
+        verify(userRepository).findAllByFilters(null, null, null);
     }
 
     @Test
-    void execute_WhenNoUsersExist_ReturnEmptyList() {
-        when(userRepository.findAll())
-                .thenReturn(List.of());
+    void execute_WhenFiltersExist_PassParsedFiltersToRepository() {
+        User user = createUser("admin@email.com", "Admin", "User", Role.ADMIN, UserStatus.SUSPENDED);
 
-        List<UserSummaryResult> result = listUserService.execute();
+        when(userRepository.findAllByFilters(any(Role.class), any(UserStatus.class), any(Email.class)))
+                .thenReturn(List.of(user));
 
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        List<UserSummaryResult> result = listUsersService.execute(
+                new ListUsersQuery("ADMIN", "SUSPENDED", "admin@email.com")
+        );
 
-        verify(userRepository, times(1)).findAll();
+        assertEquals(1, result.size());
+        assertEquals("Admin User", result.getFirst().fullName());
+
+        ArgumentCaptor<Role> roleCaptor = ArgumentCaptor.forClass(Role.class);
+        ArgumentCaptor<UserStatus> statusCaptor = ArgumentCaptor.forClass(UserStatus.class);
+        ArgumentCaptor<Email> emailCaptor = ArgumentCaptor.forClass(Email.class);
+
+        verify(userRepository).findAllByFilters(
+                roleCaptor.capture(),
+                statusCaptor.capture(),
+                emailCaptor.capture()
+        );
+
+        assertEquals(Role.ADMIN, roleCaptor.getValue());
+        assertEquals(UserStatus.SUSPENDED, statusCaptor.getValue());
+        assertEquals("admin@email.com", emailCaptor.getValue().asString());
     }
 
-    private User createUser(
-            String email,
-            String firstName,
-            String lastName,
-            Role role,
-            UserStatus status
-    ) {
+    @Test
+    void execute_WhenNoUsersMatch_ReturnEmptyList() {
+        when(userRepository.findAllByFilters(null, UserStatus.DELETED, null))
+                .thenReturn(List.of());
+
+        List<UserSummaryResult> result = listUsersService.execute(
+                new ListUsersQuery(null, "DELETED", null)
+        );
+
+        assertTrue(result.isEmpty());
+
+        verify(userRepository).findAllByFilters(null, UserStatus.DELETED, null);
+    }
+
+    private User createUser(String email, String firstName, String lastName, Role role, UserStatus status) {
         return User.rehydrate(
                 VolunteerID.generate(),
                 FullName.from(firstName, lastName),
