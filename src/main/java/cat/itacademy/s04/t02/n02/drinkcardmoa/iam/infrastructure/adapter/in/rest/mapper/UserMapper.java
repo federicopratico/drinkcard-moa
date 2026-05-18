@@ -5,7 +5,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.CurrentUserResponse;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("userRestMapper")
 public class UserMapper {
 
     public CurrentUserCommand toCommand(String email) {

@@ -1,0 +1,23 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+jwt:
+  secret: 12345678901234567890123456789012
+  expiration-minutes: 1440
+
+app:
+  payment:
+    frontend-success-url: http://localhost:3000/payment/success
+
+sumup:
+  base-url: http://localhost
+  api-key: test-api-key
+  merchant-code: test-merchant
+
+logging:
+  level:
+    cat.itacademy.s04.t02.n02.drinkcardmoa: INFO
+    org.springframework.security: WARN
