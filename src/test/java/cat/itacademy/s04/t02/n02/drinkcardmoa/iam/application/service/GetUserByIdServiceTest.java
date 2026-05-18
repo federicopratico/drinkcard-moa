@@ -47,7 +47,7 @@ class GetUserByIdServiceTest {
         assertNotNull(result);
         assertEquals(userId.asString(), result.userId());
         assertEquals("First Last", result.fullName());
-        assertEquals("user@email.com", result.email());
+        assertEquals("user@userid.com", result.email());
         assertEquals("VOLUNTEER", result.role());
         assertEquals("ACTIVE", result.status());
 
@@ -77,7 +77,7 @@ class GetUserByIdServiceTest {
         return User.rehydrate(
                 userId,
                 FullName.from("First", "Last"),
-                Email.from("user@email.com"),
+                Email.from("user@userId.com"),
                 HashedPassword.from("hashed_password"),
                 Role.VOLUNTEER,
                 UserStatus.ACTIVE

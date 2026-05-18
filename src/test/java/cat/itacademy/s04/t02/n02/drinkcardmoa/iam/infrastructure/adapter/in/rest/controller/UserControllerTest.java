@@ -38,26 +38,27 @@ class UserControllerTest {
 
     @Test
     void getCurrentUser_ReturnsCurrentUserResponse() throws Exception {
+        String userId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
         String email = "email@email.com";
 
         CurrentUserResult result = new CurrentUserResult(
-                "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1",
+                userId,
                 "fullName",
                 email,
                 "VOLUNTEER",
                 "ACTIVE"
         );
 
-        when(getCurrentUserUseCase.execute(new CurrentUserCommand(email)))
+        when(getCurrentUserUseCase.execute(new CurrentUserCommand(userId)))
                 .thenReturn(result);
 
         TestingAuthenticationToken authentication =
-                new TestingAuthenticationToken(email, null, "ROLE_VOLUNTEER");
+                new TestingAuthenticationToken(userId, null, "ROLE_VOLUNTEER");
 
         mockMvc.perform(get("/api/v1/users/me")
                         .principal(authentication))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value("4f0a8db1-63a7-4997-944c-9f2f6b82e6d1"))
+                .andExpect(jsonPath("$.userId").value(userId))
                 .andExpect(jsonPath("$.fullName").value("fullName"))
                 .andExpect(jsonPath("$.email").value(email))
                 .andExpect(jsonPath("$.role").value("VOLUNTEER"))
@@ -68,6 +69,6 @@ class UserControllerTest {
 
         verify(getCurrentUserUseCase).execute(commandCaptor.capture());
 
-        assertEquals(email, commandCaptor.getValue().email());
+        assertEquals(userId, commandCaptor.getValue().userId());
     }
 }

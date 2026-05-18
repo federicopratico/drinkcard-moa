@@ -44,7 +44,7 @@ class AuthenticationServiceTest {
     void execute_WhenCredentialsAreValid_LoginUser() {
 
         LoginUserCommand command = new LoginUserCommand(
-                "email@email.com",
+                "userId@userId.com",
                 "12345678"
         );
 
@@ -59,7 +59,7 @@ class AuthenticationServiceTest {
 
         assertNotNull(user);
         assertEquals("new-token", result.token());
-        assertEquals("email@email.com", result.email());
+        assertEquals("userid@userid.com", result.email());
         assertEquals(user.getRole().name(), result.role());
 
         verify(userRepository, times(1)).findUserByEmail(any(Email.class));
@@ -71,7 +71,7 @@ class AuthenticationServiceTest {
     @Test
     void execute_WhenEmailDoesNotExist_ThrowInvalidCredentialsException() {
         LoginUserCommand cmd = new LoginUserCommand(
-                "missing@email.com",
+                "missing@userId.com",
                 "raw_password"
         );
 
@@ -90,7 +90,7 @@ class AuthenticationServiceTest {
     @Test
     void execute_WhenPasswordDoesNotMatch_ThrowInvalidCredentialsException() {
         LoginUserCommand cmd = new LoginUserCommand(
-                "user@email.com",
+                "user@userId.com",
                 "wrong_password"
         );
 
@@ -115,7 +115,7 @@ class AuthenticationServiceTest {
     @Test
     void execute_WhenUserIsSuspended_ThrowInvalidCredentialsException() {
         LoginUserCommand cmd = new LoginUserCommand(
-                "user@email.com",
+                "user@userId.com",
                 "12345678"
         );
 
@@ -136,7 +136,7 @@ class AuthenticationServiceTest {
     @Test
     void execute_WhenUserIsDeleted_ThrowInvalidCredentialsException() {
         LoginUserCommand cmd = new LoginUserCommand(
-                "user@email.com",
+                "user@userId.com",
                 "12345678"
         );
 
@@ -162,7 +162,7 @@ class AuthenticationServiceTest {
         return User.rehydrate(
                 VolunteerID.generate(),
                 FullName.from("firstName", "lastName"),
-                Email.from("email@email.com"),
+                Email.from("userId@userId.com"),
                 HashedPassword.from("12345678"),
                 Role.VOLUNTEER,
                 status

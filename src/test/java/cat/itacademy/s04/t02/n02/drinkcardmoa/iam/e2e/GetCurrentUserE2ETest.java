@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -57,13 +58,14 @@ class GetCurrentUserE2ETest {
 
     @BeforeEach
     void cleanDatabase() {
+        SecurityContextHolder.clearContext();
         jpaUserRepository.deleteAll();
     }
 
     @Test
     void getCurrentUser_WithValidBearerToken_ReturnsCurrentUserFromDatabase() throws Exception {
         String userId = VolunteerID.generate().asString();
-        String email = "email@email.com";
+        String email = "userid@userid.com";
 
         UserJpaEntity userEntity = UserJpaEntity.create(
                 userId,
