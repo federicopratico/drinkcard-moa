@@ -105,8 +105,12 @@ class AdminUsersE2ETest {
         mockMvc.perform(get("/api/v1/admin/users")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(3)))
-                .andExpect(jsonPath("$[*].email", containsInAnyOrder(
+                .andExpect(jsonPath("$.content", hasSize(3)))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.content[*].email", containsInAnyOrder(
                         "admin@userid.com",
                         "volunteer@userid.com",
                         "suspended@userid.com"
@@ -119,12 +123,13 @@ class AdminUsersE2ETest {
                         .param("role", "VOLUNTEER")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[*].email", containsInAnyOrder(
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[*].email", containsInAnyOrder(
                         "volunteer@userid.com",
                         "suspended@userid.com"
                 )))
-                .andExpect(jsonPath("$[*].role", containsInAnyOrder(
+                .andExpect(jsonPath("$.content[*].role", containsInAnyOrder(
                         "VOLUNTEER",
                         "VOLUNTEER"
                 )));
@@ -136,9 +141,10 @@ class AdminUsersE2ETest {
                         .param("status", "SUSPENDED")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].email").value("suspended@userid.com"))
-                .andExpect(jsonPath("$[0].status").value("SUSPENDED"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].email").value("suspended@userid.com"))
+                .andExpect(jsonPath("$.content[0].status").value("SUSPENDED"));
     }
 
     @Test
@@ -147,10 +153,11 @@ class AdminUsersE2ETest {
                         .param("email", "admin@userid.com")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].email").value("admin@userid.com"))
-                .andExpect(jsonPath("$[0].role").value("ADMIN"))
-                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].email").value("admin@userid.com"))
+                .andExpect(jsonPath("$.content[0].role").value("ADMIN"))
+                .andExpect(jsonPath("$.content[0].status").value("ACTIVE"));
     }
 
     @Test
@@ -160,10 +167,11 @@ class AdminUsersE2ETest {
                         .param("status", "ACTIVE")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].email").value("volunteer@userid.com"))
-                .andExpect(jsonPath("$[0].role").value("VOLUNTEER"))
-                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].email").value("volunteer@userid.com"))
+                .andExpect(jsonPath("$.content[0].role").value("VOLUNTEER"))
+                .andExpect(jsonPath("$.content[0].status").value("ACTIVE"));
     }
 
     @Test
