@@ -25,3 +25,6 @@ logging:
   level:
     cat.itacademy.s04.t02.n02.drinkcardmoa: INFO
     org.springframework.security: WARN
+
+drinkcard:
+  ticket-expiration-cleanup-delay-ms: 60000
