@@ -4,16 +4,15 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.GetUserByIdUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.ListUsersUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.UserSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.mapper.AdminUserMapper;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/admin/users")
 @AllArgsConstructor
@@ -25,18 +24,20 @@ public class AdminUserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserSummaryResponse>> getUsers(
+    public ResponseEntity<PageResponse<UserSummaryResponse>> getUsers(
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String email) {
+            @RequestParam(required = false) String email,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "email,asc") String sort) {
 
-        List<UserSummaryResult> result = listUsersUseCase.execute(mapper.toQuery(role, status, email));
+        PageResult<UserSummaryResult> result = listUsersUseCase.execute(
+                mapper.toQuery(role, status, email, page, size, sort)
+        );
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(
-                        result.stream()
-                                .map(mapper::toResponse)
-                                .toList());
+                .body(mapper.toResponse(result));
     }
 
     @GetMapping("/{userId}")
