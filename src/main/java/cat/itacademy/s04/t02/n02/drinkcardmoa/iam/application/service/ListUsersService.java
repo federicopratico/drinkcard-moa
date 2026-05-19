@@ -7,9 +7,8 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepos
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class ListUsersService implements ListUsersUseCase {
@@ -21,7 +20,7 @@ public class ListUsersService implements ListUsersUseCase {
     }
 
     @Override
-    public List<UserSummaryResult> execute(ListUsersQuery query) {
+    public PageResult<UserSummaryResult> execute(ListUsersQuery query) {
         Role role = parseRole(query.role());
         UserStatus status = parseStatus(query.status());
         Email email = parseEmail(query.email());
