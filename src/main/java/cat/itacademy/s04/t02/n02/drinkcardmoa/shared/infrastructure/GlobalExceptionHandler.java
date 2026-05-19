@@ -1,5 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.ActiveDrinkTicketAlreadyExistsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.EmailAlreadyExistsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidCredentialsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
@@ -81,6 +82,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleUserNotFound(UserNotFoundException ex) {
         return error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ActiveDrinkTicketAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleActiveDrinkTicket(ActiveDrinkTicketAlreadyExistsException e) {
+        return error(HttpStatus.CONFLICT, e.getMessage());
     }
 
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String message) {
