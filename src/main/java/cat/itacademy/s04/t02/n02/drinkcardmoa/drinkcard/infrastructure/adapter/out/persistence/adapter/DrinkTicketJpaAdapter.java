@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -38,5 +39,13 @@ public class DrinkTicketJpaAdapter implements DrinkTicketRepository {
                 DrinkTicketStatus.PENDING.name(),
                 now
         );
+    }
+
+    @Override
+    public List<DrinkTicket> findExpiredPendingTickets(Instant now) {
+        return jpaDrinkTicketRepository.findByStatusAndExpiresAtLessThanEqual(DrinkTicketStatus.PENDING.name(), now)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }
