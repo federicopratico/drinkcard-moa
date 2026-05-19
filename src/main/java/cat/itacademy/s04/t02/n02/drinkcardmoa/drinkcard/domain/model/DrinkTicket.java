@@ -32,15 +32,14 @@ public class DrinkTicket {
         this.consumedByStaffId = consumedByStaffId;
     }
 
-    public static DrinkTicket pending(VolunteerID volunteerId, DrinkType drinkType) {
-        Instant createdAt = Instant.now();
-        Instant expiresAt = createdAt.plusSeconds(DEFAULT_EXPIRATION_SECONDS);
+    public static DrinkTicket pending(VolunteerID volunteerId, DrinkType drinkType, Instant now) {
+        Instant expiresAt = now.plusSeconds(DEFAULT_EXPIRATION_SECONDS);
         return new DrinkTicket(
                 DrinkTicketID.generate(),
                 volunteerId,
                 drinkType,
                 DrinkTicketStatus.PENDING,
-                createdAt,
+                now,
                 expiresAt,
                 null,
                 null
