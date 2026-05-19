@@ -16,23 +16,18 @@ class DrinkTicketTest {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkType drinkType = DrinkType.BEER;
 
-        Instant beforeCreation = Instant.now();
-        DrinkTicket ticket = DrinkTicket.pending(volunteerId, drinkType);
-        Instant afterCreation = Instant.now();
+        Instant createdAt = Instant.now();
+        DrinkTicket ticket = DrinkTicket.pending(volunteerId, drinkType, createdAt);
 
         assertAll(
                 () -> assertNotNull(ticket.getDrinkTicketId()),
                 () -> assertEquals(volunteerId, ticket.getVolunteerId()),
                 () -> assertEquals(drinkType, ticket.getDrinkType()),
                 () -> assertEquals(DrinkTicketStatus.PENDING, ticket.getStatus()),
-                () -> assertNotNull(ticket.getCreatedAt()),
-                () -> assertNotNull(ticket.getExpiresAt()),
+                () -> assertEquals(createdAt, ticket.getCreatedAt()),
+                () -> assertEquals(createdAt.plusSeconds(90), ticket.getExpiresAt()),
                 () -> assertNull(ticket.getConsumedAt()),
-                () -> assertNull(ticket.getConsumedByStaffId()),
-                () -> assertFalse(ticket.getCreatedAt().isBefore(beforeCreation)),
-                () -> assertFalse(ticket.getCreatedAt().isAfter(afterCreation)),
-                () -> assertFalse(ticket.getExpiresAt().isBefore(beforeCreation.plusSeconds(90))),
-                () -> assertFalse(ticket.getExpiresAt().isAfter(afterCreation.plusSeconds(90)))
+                () -> assertNull(ticket.getConsumedByStaffId())
         );
     }
 
@@ -127,7 +122,7 @@ class DrinkTicketTest {
 
     @Test
     void isConsumed_WhenStatusIsPending_ShouldReturnFalse() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER);
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
 
         assertFalse(ticket.isConsumed());
     }
@@ -150,7 +145,7 @@ class DrinkTicketTest {
 
     @Test
     void markAsExpired_WhenTicketIsPending_ShouldMarkTicketAsExpired() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER);
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
 
         ticket.markAsExpired();
 
@@ -159,7 +154,7 @@ class DrinkTicketTest {
 
     @Test
     void markAsExpired_WhenTicketIsConsumed_ShouldThrowInvalidDrinkTicketStateException() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER);
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
         ticket.consume("staff-123", Instant.now());
 
         assertThrows(
@@ -189,7 +184,7 @@ class DrinkTicketTest {
 
     @Test
     void consume_WhenTicketIsPending_ShouldMarkTicketAsConsumed() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER);
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
         Instant consumedAt = Instant.now();
         String staffId = "staff-123";
 
@@ -204,7 +199,7 @@ class DrinkTicketTest {
 
     @Test
     void consume_WhenTicketIsConsumed_ShouldThrowInvalidDrinkTicketStateException() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER);
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
         ticket.consume("staff-123", Instant.now());
 
         assertThrows(

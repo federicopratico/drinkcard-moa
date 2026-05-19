@@ -5,6 +5,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.ActiveDrinkTicketAlreadyExistsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountSuspendedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,6 +59,11 @@ class CreateDrinkTicketServiceTest {
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
                 .thenReturn(Optional.of(drinkCardAccount));
+
+        when(drinkTicketRepository.existsActivePendingByVolunteerId(
+                eq(volunteerId),
+                any(Instant.class)
+        )).thenReturn(false);
 
         when(drinkTicketRepository.save(any(DrinkTicket.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -96,6 +103,11 @@ class CreateDrinkTicketServiceTest {
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
                 .thenReturn(Optional.of(drinkCardAccount));
+
+        when(drinkTicketRepository.existsActivePendingByVolunteerId(
+                eq(volunteerId),
+                any(Instant.class)
+        )).thenReturn(false);
 
         when(drinkTicketRepository.save(any(DrinkTicket.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -187,6 +199,34 @@ class CreateDrinkTicketServiceTest {
     }
 
     @Test
+    void execute_WhenVolunteerAlreadyHasActivePendingTicket_ShouldThrowActiveDrinkTicketAlreadyExistsException() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount drinkCardAccount = createDrinkCardAccountWithCredits(volunteerId);
+
+        CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
+                volunteerId.asString(),
+                "BEER"
+        );
+
+        when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
+                .thenReturn(Optional.of(drinkCardAccount));
+
+        when(drinkTicketRepository.existsActivePendingByVolunteerId(
+                eq(volunteerId),
+                any(Instant.class)
+        )).thenReturn(true);
+
+        assertThrows(
+                ActiveDrinkTicketAlreadyExistsException.class,
+                () -> service.execute(command)
+        );
+
+        verify(drinkCardAccountRepository).findByVolunteerId(VolunteerID.from(command.volunteerId()));
+        verify(drinkTicketRepository).existsActivePendingByVolunteerId(eq(volunteerId), any(Instant.class));
+        verify(drinkTicketRepository, never()).save(any(DrinkTicket.class));
+    }
+
+    @Test
     void execute_WhenDrinkTypeIsInvalid_ShouldThrowIllegalArgumentException() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = createDrinkCardAccountWithCredits(volunteerId);
@@ -198,6 +238,11 @@ class CreateDrinkTicketServiceTest {
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
                 .thenReturn(Optional.of(drinkCardAccount));
+
+        when(drinkTicketRepository.existsActivePendingByVolunteerId(
+                eq(volunteerId),
+                any(Instant.class)
+        )).thenReturn(false);
 
         assertThrows(
                 IllegalArgumentException.class,
