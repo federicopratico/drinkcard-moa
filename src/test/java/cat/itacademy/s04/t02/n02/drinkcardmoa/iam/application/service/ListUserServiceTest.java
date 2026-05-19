@@ -3,8 +3,14 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.query.UserSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.*;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullName;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,8 +21,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ListUserServiceTest {
@@ -28,66 +40,92 @@ class ListUserServiceTest {
     private ListUsersService listUsersService;
 
     @Test
-    void execute_WhenNoFilters_ReturnUserSummaryList() {
+    void execute_WhenNoFilters_ReturnPagedUserSummaryListWithDefaults() {
         User user = createUser("volunteer@userId.com", "Volunteer", "User", Role.VOLUNTEER, UserStatus.ACTIVE);
 
-        when(userRepository.findAllByFilters(null, null, null))
-                .thenReturn(List.of(user));
+        when(userRepository.searchUsers(any(UserSearchCriteria.class)))
+                .thenReturn(new PageResult<>(List.of(user), 0, 20, 1, 1));
 
-        List<UserSummaryResult> result = listUsersService.execute(
-                new ListUsersQuery(null, null, null)
+        PageResult<UserSummaryResult> result = listUsersService.execute(
+                new ListUsersQuery(null, null, null, -1, 0, null)
         );
 
-        assertEquals(1, result.size());
-        assertEquals("Volunteer User", result.getFirst().fullName());
-        assertEquals("volunteer@userid.com", result.getFirst().email());
-        assertEquals("VOLUNTEER", result.getFirst().role());
-        assertEquals("ACTIVE", result.getFirst().status());
+        ArgumentCaptor<UserSearchCriteria> criteriaCaptor = ArgumentCaptor.forClass(UserSearchCriteria.class);
 
-        verify(userRepository).findAllByFilters(null, null, null);
+        verify(userRepository).searchUsers(criteriaCaptor.capture());
+
+        UserSearchCriteria criteria = criteriaCaptor.getValue();
+        UserSummaryResult userResult = result.content().getFirst();
+
+        assertAll(
+                () -> assertNull(criteria.role()),
+                () -> assertNull(criteria.status()),
+                () -> assertNull(criteria.email()),
+                () -> assertEquals(0, criteria.page()),
+                () -> assertEquals(20, criteria.size()),
+                () -> assertEquals("email", criteria.sortBy()),
+                () -> assertEquals("asc", criteria.sortDirection()),
+                () -> assertEquals(1, result.content().size()),
+                () -> assertEquals("Volunteer User", userResult.fullName()),
+                () -> assertEquals("volunteer@userid.com", userResult.email()),
+                () -> assertEquals("VOLUNTEER", userResult.role()),
+                () -> assertEquals("ACTIVE", userResult.status())
+        );
     }
 
     @Test
     void execute_WhenFiltersExist_PassParsedFiltersToRepository() {
         User user = createUser("admin@userId.com", "Admin", "User", Role.ADMIN, UserStatus.SUSPENDED);
 
-        when(userRepository.findAllByFilters(any(Role.class), any(UserStatus.class), any(Email.class)))
-                .thenReturn(List.of(user));
+        when(userRepository.searchUsers(any(UserSearchCriteria.class)))
+                .thenReturn(new PageResult<>(List.of(user), 2, 10, 1, 1));
 
-        List<UserSummaryResult> result = listUsersService.execute(
-                new ListUsersQuery("ADMIN", "SUSPENDED", "admin@userId.com")
+        PageResult<UserSummaryResult> result = listUsersService.execute(
+                new ListUsersQuery("ADMIN", "SUSPENDED", "admin@userId.com", 2, 10, "lastName,desc")
         );
 
-        assertEquals(1, result.size());
-        assertEquals("Admin User", result.getFirst().fullName());
+        assertEquals(1, result.content().size());
+        assertEquals("Admin User", result.content().getFirst().fullName());
 
-        ArgumentCaptor<Role> roleCaptor = ArgumentCaptor.forClass(Role.class);
-        ArgumentCaptor<UserStatus> statusCaptor = ArgumentCaptor.forClass(UserStatus.class);
-        ArgumentCaptor<Email> emailCaptor = ArgumentCaptor.forClass(Email.class);
+        ArgumentCaptor<UserSearchCriteria> criteriaCaptor = ArgumentCaptor.forClass(UserSearchCriteria.class);
 
-        verify(userRepository).findAllByFilters(
-                roleCaptor.capture(),
-                statusCaptor.capture(),
-                emailCaptor.capture()
+        verify(userRepository).searchUsers(criteriaCaptor.capture());
+
+        UserSearchCriteria criteria = criteriaCaptor.getValue();
+
+        assertAll(
+                () -> assertEquals(Role.ADMIN, criteria.role()),
+                () -> assertEquals(UserStatus.SUSPENDED, criteria.status()),
+                () -> assertEquals("admin@userid.com", criteria.email().asString()),
+                () -> assertEquals(2, criteria.page()),
+                () -> assertEquals(10, criteria.size()),
+                () -> assertEquals("lastName", criteria.sortBy()),
+                () -> assertEquals("desc", criteria.sortDirection())
         );
-
-        assertEquals(Role.ADMIN, roleCaptor.getValue());
-        assertEquals(UserStatus.SUSPENDED, statusCaptor.getValue());
-        assertEquals("admin@userid.com", emailCaptor.getValue().asString());
     }
 
     @Test
-    void execute_WhenNoUsersMatch_ReturnEmptyList() {
-        when(userRepository.findAllByFilters(null, UserStatus.DELETED, null))
-                .thenReturn(List.of());
+    void execute_WhenNoUsersMatch_ReturnEmptyPage() {
+        when(userRepository.searchUsers(any(UserSearchCriteria.class)))
+                .thenReturn(new PageResult<>(List.of(), 0, 20, 0, 0));
 
-        List<UserSummaryResult> result = listUsersService.execute(
-                new ListUsersQuery(null, "DELETED", null)
+        PageResult<UserSummaryResult> result = listUsersService.execute(
+                new ListUsersQuery(null, "DELETED", null, 0, 20, null)
         );
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.content().isEmpty());
 
-        verify(userRepository).findAllByFilters(null, UserStatus.DELETED, null);
+        verify(userRepository).searchUsers(any(UserSearchCriteria.class));
+    }
+
+    @Test
+    void execute_WhenSortFieldIsInvalid_ShouldThrowIllegalArgumentException() {
+        ListUsersQuery query = new ListUsersQuery(null, null, null, 0, 20, "createdAt,desc");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> listUsersService.execute(query)
+        );
     }
 
     private User createUser(String email, String firstName, String lastName, Role role, UserStatus status) {

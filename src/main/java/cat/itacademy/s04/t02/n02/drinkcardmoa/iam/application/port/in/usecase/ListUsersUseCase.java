@@ -4,8 +4,6 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 
-import java.util.List;
-
 public interface ListUsersUseCase {
     PageResult<UserSummaryResult> execute(ListUsersQuery query);
 }
