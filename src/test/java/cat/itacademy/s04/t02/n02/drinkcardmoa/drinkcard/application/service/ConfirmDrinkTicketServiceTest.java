@@ -47,7 +47,7 @@ class ConfirmDrinkTicketServiceTest {
     void execute_WhenTicketIsPendingAndVolunteerHasCredits_ShouldConsumeTicketAndCredit() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = createDrinkCardAccountWithCredits(volunteerId);
-        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER);
+        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER, Instant.now());
 
         ConsumeDrinkTicketCommand command = new ConsumeDrinkTicketCommand(
                 drinkTicket.getDrinkTicketId().asString(),
@@ -114,7 +114,7 @@ class ConfirmDrinkTicketServiceTest {
     @Test
     void execute_WhenDrinkCardAccountDoesNotExist_ShouldThrowDrinkCardAccountNotFoundException() {
         VolunteerID volunteerId = VolunteerID.generate();
-        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER);
+        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER, Instant.now());
 
         ConsumeDrinkTicketCommand command = new ConsumeDrinkTicketCommand(
                 drinkTicket.getDrinkTicketId().asString(),
@@ -216,7 +216,7 @@ class ConfirmDrinkTicketServiceTest {
     void execute_WhenDrinkCardAccountHasNoCredits_ShouldThrowInsufficientCreditsException() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
-        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER);
+        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER, Instant.now());
 
         ConsumeDrinkTicketCommand command = new ConsumeDrinkTicketCommand(
                 drinkTicket.getDrinkTicketId().asString(),
