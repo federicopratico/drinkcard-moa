@@ -1,13 +1,21 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.adapter;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.PaymentJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.mapper.PaymentMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaPaymentRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -38,5 +46,55 @@ public class PaymentJpaAdapter implements PaymentRepository {
     public Optional<Payment> findByIdempotencyKey(String idempotencyKey) {
         return jpaPaymentRepository.findByIdempotencyKey(idempotencyKey)
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public PageResult<Payment> searchAdminPayments(PaymentSearchCriteria criteria) {
+        Sort.Direction direction = Sort.Direction.fromString(criteria.sortDirection());
+        PageRequest pageRequest = PageRequest.of(
+                criteria.page(),
+                criteria.size(),
+                Sort.by(direction, criteria.sortBy())
+        );
+
+        Page<PaymentJpaEntity> page = jpaPaymentRepository.findAll(toSpecification(criteria), pageRequest);
+        List<Payment> payments = page.getContent()
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+
+        return new PageResult<>(
+                payments,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+    }
+
+    private Specification<PaymentJpaEntity> toSpecification(PaymentSearchCriteria criteria) {
+        Specification<PaymentJpaEntity> specification = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+
+        if (criteria.volunteerId() != null) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("volunteerId"), criteria.volunteerId().value()));
+        }
+
+        if (criteria.status() != null) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("status"), criteria.status().name()));
+        }
+
+        if (criteria.from() != null) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), criteria.from()));
+        }
+
+        if (criteria.to() != null) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"), criteria.to()));
+        }
+
+        return specification;
     }
 }
