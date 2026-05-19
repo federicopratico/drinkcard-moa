@@ -1,156 +1,155 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.controller;
 
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.GetUserByIdQuery;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.GetUserByIdUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.ListUsersUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.PageResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.UserSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.mapper.AdminUserMapper;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.security.JwtAuthenticationFilter;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AdminUserController.class)
-@Import(AdminUserMapper.class)
-@AutoConfigureMockMvc(addFilters = false)
+@ExtendWith(MockitoExtension.class)
 class AdminUserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
+    @Mock
     private ListUsersUseCase listUsersUseCase;
 
-    @MockitoBean
+    @Mock
     private GetUserByIdUseCase getUserByIdUseCase;
 
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private AdminUserController controller;
+
+    @BeforeEach
+    void setUp() {
+        controller = new AdminUserController(
+                listUsersUseCase,
+                getUserByIdUseCase,
+                new AdminUserMapper()
+        );
+    }
 
     @Test
-    void getUsers_WhenNoFilters_ReturnsUserSummaryList() throws Exception {
-        List<UserSummaryResult> result = List.of(
-                new UserSummaryResult(
-                        "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1",
-                        "Volunteer User",
-                        "volunteer@userId.com",
-                        "VOLUNTEER",
-                        "ACTIVE"
-                ),
-                new UserSummaryResult(
-                        "8799df50-d517-4693-9e46-51b537c305a2",
-                        "Admin User",
-                        "admin@userId.com",
-                        "ADMIN",
-                        "SUSPENDED"
-                )
+    void getUsers_WhenNoFilters_ReturnsPagedUserSummaryResponse() {
+        UserSummaryResult user = new UserSummaryResult(
+                "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1",
+                "Volunteer User",
+                "volunteer@userId.com",
+                "VOLUNTEER",
+                "ACTIVE"
         );
 
-        when(listUsersUseCase.execute(new ListUsersQuery(null, null, null)))
-                .thenReturn(result);
+        when(listUsersUseCase.execute(new ListUsersQuery(null, null, null, 0, 20, "email,asc")))
+                .thenReturn(new PageResult<>(List.of(user), 0, 20, 1, 1));
 
-        TestingAuthenticationToken authentication =
-                new TestingAuthenticationToken("admin@email.com", null, "ROLE_ADMIN");
+        ResponseEntity<PageResponse<UserSummaryResponse>> response = controller.getUsers(
+                null,
+                null,
+                null,
+                0,
+                20,
+                "email,asc"
+        );
 
-        mockMvc.perform(get("/api/v1/admin/users")
-                        .principal(authentication))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].userId").value("4f0a8db1-63a7-4997-944c-9f2f6b82e6d1"))
-                .andExpect(jsonPath("$[0].fullName").value("Volunteer User"))
-                .andExpect(jsonPath("$[0].email").value("volunteer@userId.com"))
-                .andExpect(jsonPath("$[0].role").value("VOLUNTEER"))
-                .andExpect(jsonPath("$[0].status").value("ACTIVE"))
-                .andExpect(jsonPath("$[1].userId").value("8799df50-d517-4693-9e46-51b537c305a2"))
-                .andExpect(jsonPath("$[1].fullName").value("Admin User"))
-                .andExpect(jsonPath("$[1].email").value("admin@userId.com"))
-                .andExpect(jsonPath("$[1].role").value("ADMIN"))
-                .andExpect(jsonPath("$[1].status").value("SUSPENDED"));
-
-        ArgumentCaptor<ListUsersQuery> queryCaptor =
-                ArgumentCaptor.forClass(ListUsersQuery.class);
+        ArgumentCaptor<ListUsersQuery> queryCaptor = ArgumentCaptor.forClass(ListUsersQuery.class);
 
         verify(listUsersUseCase).execute(queryCaptor.capture());
 
-        assertEquals(null, queryCaptor.getValue().role());
-        assertEquals(null, queryCaptor.getValue().status());
-        assertEquals(null, queryCaptor.getValue().email());
+        PageResponse<UserSummaryResponse> body = response.getBody();
+        UserSummaryResponse userResponse = body.content().getFirst();
+        ListUsersQuery query = queryCaptor.getValue();
+
+        assertAll(
+                () -> assertEquals(200, response.getStatusCode().value()),
+                () -> assertNotNull(body),
+                () -> assertEquals(0, body.page()),
+                () -> assertEquals(20, body.size()),
+                () -> assertEquals(1, body.totalElements()),
+                () -> assertEquals(1, body.totalPages()),
+                () -> assertEquals(user.userId(), userResponse.userId()),
+                () -> assertEquals(user.fullName(), userResponse.fullName()),
+                () -> assertEquals(user.email(), userResponse.email()),
+                () -> assertEquals(user.role(), userResponse.role()),
+                () -> assertEquals(user.status(), userResponse.status()),
+                () -> assertEquals(null, query.role()),
+                () -> assertEquals(null, query.status()),
+                () -> assertEquals(null, query.email()),
+                () -> assertEquals(0, query.page()),
+                () -> assertEquals(20, query.size()),
+                () -> assertEquals("email,asc", query.sort())
+        );
     }
 
     @Test
-    void getUsers_WhenFiltersAreProvided_PassesQueryToUseCase() throws Exception {
-        List<UserSummaryResult> result = List.of(
-                new UserSummaryResult(
-                        "8799df50-d517-4693-9e46-51b537c305a2",
-                        "Admin User",
-                        "admin@userId.com",
-                        "ADMIN",
-                        "ACTIVE"
-                )
+    void getUsers_WhenFiltersAreProvided_PassesQueryToUseCase() {
+        when(listUsersUseCase.execute(new ListUsersQuery("ADMIN", "ACTIVE", "admin@userId.com", 1, 10, "lastName,desc")))
+                .thenReturn(new PageResult<>(List.of(), 1, 10, 0, 0));
+
+        controller.getUsers(
+                "ADMIN",
+                "ACTIVE",
+                "admin@userId.com",
+                1,
+                10,
+                "lastName,desc"
         );
 
-        when(listUsersUseCase.execute(new ListUsersQuery("ADMIN", "ACTIVE", "admin@userId.com")))
-                .thenReturn(result);
-
-        TestingAuthenticationToken authentication =
-                new TestingAuthenticationToken("admin@email.com", null, "ROLE_ADMIN");
-
-        mockMvc.perform(get("/api/v1/admin/users")
-                        .param("role", "ADMIN")
-                        .param("status", "ACTIVE")
-                        .param("email", "admin@userId.com")
-                        .principal(authentication))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].userId").value("8799df50-d517-4693-9e46-51b537c305a2"))
-                .andExpect(jsonPath("$[0].fullName").value("Admin User"))
-                .andExpect(jsonPath("$[0].email").value("admin@userId.com"))
-                .andExpect(jsonPath("$[0].role").value("ADMIN"))
-                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
-
-        ArgumentCaptor<ListUsersQuery> queryCaptor =
-                ArgumentCaptor.forClass(ListUsersQuery.class);
+        ArgumentCaptor<ListUsersQuery> queryCaptor = ArgumentCaptor.forClass(ListUsersQuery.class);
 
         verify(listUsersUseCase).execute(queryCaptor.capture());
 
-        assertEquals("ADMIN", queryCaptor.getValue().role());
-        assertEquals("ACTIVE", queryCaptor.getValue().status());
-        assertEquals("admin@userId.com", queryCaptor.getValue().email());
+        ListUsersQuery query = queryCaptor.getValue();
+
+        assertAll(
+                () -> assertEquals("ADMIN", query.role()),
+                () -> assertEquals("ACTIVE", query.status()),
+                () -> assertEquals("admin@userId.com", query.email()),
+                () -> assertEquals(1, query.page()),
+                () -> assertEquals(10, query.size()),
+                () -> assertEquals("lastName,desc", query.sort())
+        );
     }
 
     @Test
-    void getUsers_WhenNoUsersMatch_ReturnsEmptyList() throws Exception {
-        when(listUsersUseCase.execute(new ListUsersQuery("VOLUNTEER", "DELETED", null)))
-                .thenReturn(List.of());
+    void getUsers_ShouldRequireAdminRole() throws NoSuchMethodException {
+        Method method = AdminUserController.class.getMethod(
+                "getUsers",
+                String.class,
+                String.class,
+                String.class,
+                int.class,
+                int.class,
+                String.class
+        );
 
-        TestingAuthenticationToken authentication =
-                new TestingAuthenticationToken("admin@email.com", null, "ROLE_ADMIN");
+        PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
 
-        mockMvc.perform(get("/api/v1/admin/users")
-                        .param("role", "VOLUNTEER")
-                        .param("status", "DELETED")
-                        .principal(authentication))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+        assertAll(
+                () -> assertNotNull(preAuthorize),
+                () -> assertEquals("hasRole('ADMIN')", preAuthorize.value())
+        );
     }
 
     @Test
-    void getUserById_WhenUserExists_ReturnsUserSummary() throws Exception {
+    void getUserById_WhenUserExists_ReturnsUserSummary() {
         String userId = "8799df50-d517-4693-9e46-51b537c305a2";
 
         UserSummaryResult result = new UserSummaryResult(
@@ -164,23 +163,23 @@ class AdminUserControllerTest {
         when(getUserByIdUseCase.execute(new GetUserByIdQuery(userId)))
                 .thenReturn(result);
 
-        TestingAuthenticationToken authentication =
-                new TestingAuthenticationToken("admin@email.com", null, "ROLE_ADMIN");
+        ResponseEntity<UserSummaryResponse> response = controller.getUserById(userId);
 
-        mockMvc.perform(get("/api/v1/admin/users/{userId}", userId)
-                        .principal(authentication))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value(userId))
-                .andExpect(jsonPath("$.fullName").value("Admin User"))
-                .andExpect(jsonPath("$.email").value("admin@userId.com"))
-                .andExpect(jsonPath("$.role").value("ADMIN"))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
-
-        ArgumentCaptor<GetUserByIdQuery> queryCaptor =
-                ArgumentCaptor.forClass(GetUserByIdQuery.class);
+        ArgumentCaptor<GetUserByIdQuery> queryCaptor = ArgumentCaptor.forClass(GetUserByIdQuery.class);
 
         verify(getUserByIdUseCase).execute(queryCaptor.capture());
 
-        assertEquals(userId, queryCaptor.getValue().userId());
+        UserSummaryResponse body = response.getBody();
+
+        assertAll(
+                () -> assertEquals(200, response.getStatusCode().value()),
+                () -> assertNotNull(body),
+                () -> assertEquals(userId, body.userId()),
+                () -> assertEquals("Admin User", body.fullName()),
+                () -> assertEquals("admin@userId.com", body.email()),
+                () -> assertEquals("ADMIN", body.role()),
+                () -> assertEquals("ACTIVE", body.status()),
+                () -> assertEquals(userId, queryCaptor.getValue().userId())
+        );
     }
 }
