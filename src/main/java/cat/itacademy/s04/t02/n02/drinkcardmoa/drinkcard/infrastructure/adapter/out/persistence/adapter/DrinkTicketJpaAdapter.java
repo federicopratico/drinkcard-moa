@@ -1,13 +1,23 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.adapter;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.DrinkTicketSearchCriteria;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicket;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicketID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicketStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.DrinkTicketJpaEntity;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.PaymentJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.mapper.DrinkTicketMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaDrinkTicketRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.persistence.JpaSpecificationBuilder;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -47,5 +57,38 @@ public class DrinkTicketJpaAdapter implements DrinkTicketRepository {
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageResult<DrinkTicket> searchAdminDrinkTickets(DrinkTicketSearchCriteria criteria) {
+        Sort.Direction direction = Sort.Direction.fromString(criteria.sortDirection());
+        PageRequest pageRequest = PageRequest.of(
+                criteria.page(),
+                criteria.size(),
+                Sort.by(direction, criteria.sortBy())
+        );
+
+        Page<DrinkTicketJpaEntity> page = jpaDrinkTicketRepository.findAll(toSpecification(criteria), pageRequest);
+        List<DrinkTicket> drinkTickets = page.getContent()
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+
+        return new PageResult<>(
+                drinkTickets,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+                );
+    }
+
+    private Specification<DrinkTicketJpaEntity> toSpecification(DrinkTicketSearchCriteria criteria) {
+        return JpaSpecificationBuilder.<DrinkTicketJpaEntity>builder()
+                .equal("volunteerId", criteria.volunteerId() == null ? null : criteria.volunteerId().value())
+                .equal("status", criteria.status() == null ? null : criteria.status().name())
+                .greaterThanOrEqualTo("createdAt", criteria.from())
+                .lessThanOrEqualTo("createdAt", criteria.to())
+                .build();
     }
 }
