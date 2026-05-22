@@ -8,6 +8,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.o
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.mapper.PaymentMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaPaymentRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.persistence.JpaSpecificationBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -73,28 +74,11 @@ public class PaymentJpaAdapter implements PaymentRepository {
     }
 
     private Specification<PaymentJpaEntity> toSpecification(PaymentSearchCriteria criteria) {
-        Specification<PaymentJpaEntity> specification = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
-
-        if (criteria.volunteerId() != null) {
-            specification = specification.and((root, query, criteriaBuilder) ->
-                    criteriaBuilder.equal(root.get("volunteerId"), criteria.volunteerId().value()));
-        }
-
-        if (criteria.status() != null) {
-            specification = specification.and((root, query, criteriaBuilder) ->
-                    criteriaBuilder.equal(root.get("status"), criteria.status().name()));
-        }
-
-        if (criteria.from() != null) {
-            specification = specification.and((root, query, criteriaBuilder) ->
-                    criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), criteria.from()));
-        }
-
-        if (criteria.to() != null) {
-            specification = specification.and((root, query, criteriaBuilder) ->
-                    criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"), criteria.to()));
-        }
-
-        return specification;
+        return JpaSpecificationBuilder.<PaymentJpaEntity>builder()
+                .equal("volunteerId", criteria.volunteerId() == null ? null : criteria.volunteerId().value())
+                .equal("status", criteria.status() == null ? null : criteria.status().name())
+                .greaterThanOrEqualTo("createdAt", criteria.from())
+                .lessThanOrEqualTo("createdAt", criteria.to())
+                .build();
     }
 }
