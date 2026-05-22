@@ -45,3 +45,4 @@ notes.txt
 frontend/node_modules/
 frontend/.vite/
 frontend/
+frontend/*
