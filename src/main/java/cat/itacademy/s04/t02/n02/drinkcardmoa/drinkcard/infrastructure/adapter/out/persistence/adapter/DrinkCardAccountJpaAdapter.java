@@ -75,7 +75,7 @@ public class DrinkCardAccountJpaAdapter implements DrinkCardAccountRepository {
 
     private Specification<DrinkCardAccountJpaEntity> toSpecification(DrinkCardAccountSearchCriteria criteria) {
         return JpaSpecificationBuilder.<DrinkCardAccountJpaEntity>builder()
-                .equal("volunteerId", criteria.volunteerId() == null ? null : criteria.volunteerId().value())
+                .equal("volunteerId", criteria.volunteerId() == null ? null : criteria.volunteerId().asString())
                 .equal("status", criteria.status() == null ? null : criteria.status().name())
                 .build();
     }
