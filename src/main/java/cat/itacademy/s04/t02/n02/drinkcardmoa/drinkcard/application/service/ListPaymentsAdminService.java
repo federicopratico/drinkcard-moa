@@ -7,6 +7,8 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.Pay
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.PageSort;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.PageSortParser;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.springframework.stereotype.Service;
 
@@ -44,17 +46,28 @@ public class ListPaymentsAdminService implements ListPaymentsAdminUseCase {
     }
 
     private PaymentSearchCriteria toSearchCriteria(ListPaymentsAdminQuery query) {
-        SortParts sortParts = parseSort(query.sort());
+        PageSort pageSort = PageSortParser.parse(
+                query.page(),
+                query.size(),
+                query.sort(),
+                DEFAULT_SORT_BY,
+                DEFAULT_SORT_DIRECTION,
+                DEFAULT_PAGE,
+                DEFAULT_SIZE,
+                MAX_SIZE,
+                ALLOWED_SORT_FIELDS,
+                "payment"
+        );
 
         return new PaymentSearchCriteria(
                 parseVolunteerId(query.volunteerId()),
                 parseStatus(query.status()),
                 query.from(),
                 query.to(),
-                normalizePage(query.page()),
-                normalizeSize(query.size()),
-                sortParts.sortBy(),
-                sortParts.sortDirection()
+                pageSort.page(),
+                pageSort.size(),
+                pageSort.sortBy(),
+                pageSort.sortDirection()
         );
     }
 
@@ -74,49 +87,7 @@ public class ListPaymentsAdminService implements ListPaymentsAdminUseCase {
         return PaymentStatus.valueOf(status.toUpperCase(Locale.ROOT));
     }
 
-    private int normalizePage(int page) {
-        if (page < 0) {
-            return DEFAULT_PAGE;
-        }
-
-        return page;
-    }
-
-    private int normalizeSize(int size) {
-        if (size <= 0) {
-            return DEFAULT_SIZE;
-        }
-
-        return Math.min(size, MAX_SIZE);
-    }
-
-    private SortParts parseSort(String sort) {
-        if (isBlank(sort)) {
-            return new SortParts(DEFAULT_SORT_BY, DEFAULT_SORT_DIRECTION);
-        }
-
-        String[] parts = sort.split(",");
-        String sortBy = parts[0].trim();
-        String sortDirection = parts.length > 1 ? parts[1].trim().toLowerCase(Locale.ROOT) : DEFAULT_SORT_DIRECTION;
-
-        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
-            throw new IllegalArgumentException("Unsupported payment sort field: " + sortBy);
-        }
-
-        if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
-            throw new IllegalArgumentException("Unsupported payment sort direction: " + sortDirection);
-        }
-
-        return new SortParts(sortBy, sortDirection);
-    }
-
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
-    }
-
-    private record SortParts(
-            String sortBy,
-            String sortDirection
-    ) {
     }
 }
