@@ -4,14 +4,14 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.ListUsersUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.query.UserSearchCriteria;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.PageSort;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.PageSortParser;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -42,32 +42,32 @@ public class ListUsersService implements ListUsersUseCase {
 
         UserSearchCriteria criteria = toSearchCriteria(query);
 
-        PageResult<User> users = userRepository.searchUsers(criteria);
-        List<UserSummaryResult> content = users.content()
-                .stream()
-                .map(UserSummaryResult::from)
-                .toList();
-
-        return new PageResult<>(
-                content,
-                users.page(),
-                users.size(),
-                users.totalElements(),
-                users.totalPages()
-        );
+        return userRepository.searchUsers(criteria)
+                .map(UserSummaryResult::from);
     }
 
     private UserSearchCriteria toSearchCriteria(ListUsersQuery query) {
-        SortParts sortParts = parseSort(query.sort());
+        PageSort pageSort = PageSortParser.parse(
+                query.page(),
+                query.size(),
+                query.sort(),
+                DEFAULT_SORT_BY,
+                DEFAULT_SORT_DIRECTION,
+                DEFAULT_PAGE,
+                DEFAULT_SIZE,
+                MAX_SIZE,
+                ALLOWED_SORT_FIELDS,
+                "user"
+        );
 
         return new UserSearchCriteria(
                 parseRole(query.role()),
                 parseStatus(query.status()),
                 parseEmail(query.email()),
-                normalizePage(query.page()),
-                normalizeSize(query.size()),
-                sortParts.sortBy(),
-                sortParts.sortDirection()
+                pageSort.page(),
+                pageSort.size(),
+                pageSort.sortBy(),
+                pageSort.sortDirection()
         );
     }
 
@@ -87,47 +87,5 @@ public class ListUsersService implements ListUsersUseCase {
         return email == null || email.isBlank()
                 ? null
                 : Email.from(email);
-    }
-
-    private int normalizePage(int page) {
-        if (page < 0) {
-            return DEFAULT_PAGE;
-        }
-
-        return page;
-    }
-
-    private int normalizeSize(int size) {
-        if (size <= 0) {
-            return DEFAULT_SIZE;
-        }
-
-        return Math.min(size, MAX_SIZE);
-    }
-
-    private SortParts parseSort(String sort) {
-        if (sort == null || sort.isBlank()) {
-            return new SortParts(DEFAULT_SORT_BY, DEFAULT_SORT_DIRECTION);
-        }
-
-        String[] parts = sort.split(",");
-        String sortBy = parts[0].trim();
-        String sortDirection = parts.length > 1 ? parts[1].trim().toLowerCase(Locale.ROOT) : DEFAULT_SORT_DIRECTION;
-
-        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
-            throw new IllegalArgumentException("Unsupported user sort field: " + sortBy);
-        }
-
-        if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
-            throw new IllegalArgumentException("Unsupported user sort direction: " + sortDirection);
-        }
-
-        return new SortParts(sortBy, sortDirection);
-    }
-
-    private record SortParts(
-            String sortBy,
-            String sortDirection
-    ) {
     }
 }
