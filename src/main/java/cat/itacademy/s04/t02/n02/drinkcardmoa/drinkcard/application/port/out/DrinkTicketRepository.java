@@ -16,4 +16,5 @@ public interface DrinkTicketRepository {
     boolean existsActivePendingByVolunteerId(VolunteerID volunteerId, Instant now);
     List<DrinkTicket> findExpiredPendingTickets(Instant now);
     PageResult<DrinkTicket> searchAdminDrinkTickets(DrinkTicketSearchCriteria criteria);
+    PageResult<DrinkTicket> searchVolunteerDrinkTickets(DrinkTicketSearchCriteria criteria);
 }
