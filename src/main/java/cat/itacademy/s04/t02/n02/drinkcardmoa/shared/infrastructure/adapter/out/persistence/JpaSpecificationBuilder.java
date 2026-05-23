@@ -1,4 +1,4 @@
-package cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.persistence;
+package cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.out.persistence;
 
 import org.springframework.data.jpa.domain.Specification;
 
