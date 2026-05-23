@@ -12,14 +12,14 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.Page
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Service
 public class ListDrinkCardAccountsService implements ListDrinkCardAccountsUseCase {
 
-    private static final String DEFAULT_SORT_BY = "createdAt";
-    private static final String DEFAULT_SORT_DIRECTION = "desc";
+    private static final String DEFAULT_SORT_BY = "volunteerId";
+    private static final String DEFAULT_SORT_DIRECTION = "asc";
     private static final int DEFAULT_PAGE = 0;
     private static final int DEFAULT_SIZE = 20;
     private static final int MAX_SIZE = 100;
@@ -82,6 +82,6 @@ public class ListDrinkCardAccountsService implements ListDrinkCardAccountsUseCas
             return null;
         }
 
-        return DrinkCardAccountStatus.valueOf(status.toUpperCase());
+        return DrinkCardAccountStatus.valueOf(status.toUpperCase(Locale.ROOT));
     }
 }
