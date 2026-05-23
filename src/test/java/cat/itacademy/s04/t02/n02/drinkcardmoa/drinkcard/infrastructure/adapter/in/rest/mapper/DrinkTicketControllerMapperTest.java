@@ -4,13 +4,18 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreateDrinkTicketCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConsumeDrinkTicketResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreateDrinkTicketResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.DrinkTicketSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.ConsumeDrinkTicketRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.CreateDrinkTicketRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.ConsumeDrinkTicketResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.CreateDrinkTicketResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.DrinkTicketSummaryResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -85,6 +90,52 @@ class DrinkTicketControllerMapperTest {
                 () -> assertEquals(result.status(), response.status()),
                 () -> assertEquals(result.drinkType(), response.drinkType()),
                 () -> assertEquals(result.remainingCredits(), response.remainingCredits())
+        );
+    }
+
+    @Test
+    void toResponse_WhenPagedDrinkTicketSummaryResult_ShouldMapPageMetadataAndContent() {
+        Instant createdAt = Instant.parse("2026-05-19T20:00:00Z");
+        Instant expiresAt = Instant.parse("2026-05-19T20:01:30Z");
+        Instant consumedAt = Instant.parse("2026-05-19T20:01:00Z");
+        DrinkTicketSummaryResult drinkTicket = drinkTicketSummaryResult(createdAt, expiresAt, consumedAt);
+
+        PageResponse<DrinkTicketSummaryResponse> response = mapper.toResponse(
+                new PageResult<>(List.of(drinkTicket), 1, 10, 25, 3)
+        );
+
+        DrinkTicketSummaryResponse drinkTicketResponse = response.content().getFirst();
+
+        assertAll(
+                () -> assertEquals(1, response.page()),
+                () -> assertEquals(10, response.size()),
+                () -> assertEquals(25, response.totalElements()),
+                () -> assertEquals(3, response.totalPages()),
+                () -> assertEquals(drinkTicket.drinkTicketId(), drinkTicketResponse.drinkTicketId()),
+                () -> assertEquals(drinkTicket.volunteerId(), drinkTicketResponse.volunteerId()),
+                () -> assertEquals(drinkTicket.drinkType(), drinkTicketResponse.drinkType()),
+                () -> assertEquals(drinkTicket.status(), drinkTicketResponse.status()),
+                () -> assertEquals(drinkTicket.createdAt(), drinkTicketResponse.createdAt()),
+                () -> assertEquals(drinkTicket.expiresAt(), drinkTicketResponse.expiresAt()),
+                () -> assertEquals(drinkTicket.consumedAt(), drinkTicketResponse.consumedAt()),
+                () -> assertEquals(drinkTicket.consumedByStaffId(), drinkTicketResponse.consumedByStaffId())
+        );
+    }
+
+    private DrinkTicketSummaryResult drinkTicketSummaryResult(
+            Instant createdAt,
+            Instant expiresAt,
+            Instant consumedAt
+    ) {
+        return new DrinkTicketSummaryResult(
+                "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
+                "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1",
+                "BEER",
+                "CONSUMED",
+                createdAt,
+                expiresAt,
+                consumedAt,
+                "staff-123"
         );
     }
 }
