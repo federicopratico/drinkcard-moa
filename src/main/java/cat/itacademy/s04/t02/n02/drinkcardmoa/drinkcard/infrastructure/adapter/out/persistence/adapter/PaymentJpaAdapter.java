@@ -8,7 +8,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.o
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.mapper.PaymentMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaPaymentRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.persistence.JpaSpecificationBuilder;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.out.persistence.JpaSpecificationBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

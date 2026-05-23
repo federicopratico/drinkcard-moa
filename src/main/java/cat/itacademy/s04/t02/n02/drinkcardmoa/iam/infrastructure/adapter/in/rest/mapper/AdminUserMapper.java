@@ -2,9 +2,9 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.res
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.UserSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
