@@ -73,6 +73,31 @@ public class PaymentJpaAdapter implements PaymentRepository {
         );
     }
 
+    @Override
+    public PageResult<Payment> searchVolunteerPayments(PaymentSearchCriteria criteria) {
+        Sort.Direction direction = Sort.Direction.fromString(criteria.sortDirection());
+        PageRequest pageRequest = PageRequest.of(
+                criteria.page(),
+                criteria.size(),
+                Sort.by(direction, criteria.sortBy())
+        );
+
+        Page<PaymentJpaEntity> page = jpaPaymentRepository.findAll(toSpecification(criteria), pageRequest);
+
+        List<Payment> payments = page.getContent().stream()
+                .map(mapper::toDomain)
+                .toList();
+
+        return new PageResult<>(
+                payments,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+    }
+
+
     private Specification<PaymentJpaEntity> toSpecification(PaymentSearchCriteria criteria) {
         return JpaSpecificationBuilder.<PaymentJpaEntity>builder()
                 .equal("volunteerId", criteria.volunteerId() == null ? null : criteria.volunteerId().value())

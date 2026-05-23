@@ -13,4 +13,5 @@ public interface PaymentRepository {
     Optional<Payment> findByProviderCheckoutId(String providerCheckoutId);
     Optional<Payment> findByIdempotencyKey(String idempotencyKey);
     PageResult<Payment> searchAdminPayments(PaymentSearchCriteria criteria);
+    PageResult<Payment> searchVolunteerPayments(PaymentSearchCriteria criteria);
 }

@@ -1,7 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper;
 
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.AdminPaymentSummaryResult;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.AdminPaymentSummaryResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import org.springframework.stereotype.Component;
@@ -11,8 +11,8 @@ import java.util.List;
 @Component
 public class AdminPaymentControllerMapper {
 
-    public PageResponse<AdminPaymentSummaryResponse> toResponse(PageResult<AdminPaymentSummaryResult> result) {
-        List<AdminPaymentSummaryResponse> content = result.content()
+    public PageResponse<PaymentSummaryResponse> toResponse(PageResult<PaymentSummaryResult> result) {
+        List<PaymentSummaryResponse> content = result.content()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -26,8 +26,8 @@ public class AdminPaymentControllerMapper {
         );
     }
 
-    private AdminPaymentSummaryResponse toResponse(AdminPaymentSummaryResult result) {
-        return new AdminPaymentSummaryResponse(
+    private PaymentSummaryResponse toResponse(PaymentSummaryResult result) {
+        return new PaymentSummaryResponse(
                 result.paymentId(),
                 result.volunteerId(),
                 result.amount(),

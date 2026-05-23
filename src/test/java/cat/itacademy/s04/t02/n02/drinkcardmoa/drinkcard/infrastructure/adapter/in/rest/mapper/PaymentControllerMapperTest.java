@@ -4,12 +4,18 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreatePaymentCheckoutCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConfirmPaymentResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.CreatePaymentCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.ConfirmPaymentResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.CreatePaymentCheckoutResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -79,6 +85,67 @@ class PaymentControllerMapperTest {
                 () -> assertEquals("SUCCESS", response.status()),
                 () -> assertEquals(5, response.credits()),
                 () -> assertEquals(BigDecimal.valueOf(10), response.amount())
+        );
+    }
+
+    @Test
+    void toResponse_WhenPaymentSummaryResult_ShouldMapResultToResponse() {
+        Instant paidAt = Instant.parse("2026-05-19T20:05:00Z");
+        Instant createdAt = Instant.parse("2026-05-19T20:00:00Z");
+        PaymentSummaryResult result = paymentSummaryResult(paidAt, createdAt);
+
+        PaymentSummaryResponse response = mapper.toResponse(result);
+
+        assertAll(
+                () -> assertEquals(result.paymentId(), response.paymentId()),
+                () -> assertEquals(result.volunteerId(), response.volunteerId()),
+                () -> assertEquals(result.amount(), response.amount()),
+                () -> assertEquals(result.status(), response.status()),
+                () -> assertEquals(result.providerCheckoutId(), response.providerCheckoutId()),
+                () -> assertEquals(result.providerCheckoutUrl(), response.providerCheckoutUrl()),
+                () -> assertEquals(paidAt, response.paidAt()),
+                () -> assertEquals(createdAt, response.createdAt())
+        );
+    }
+
+    @Test
+    void toResponse_WhenPagedPaymentSummaryResult_ShouldMapPageMetadataAndContent() {
+        Instant paidAt = Instant.parse("2026-05-19T20:05:00Z");
+        Instant createdAt = Instant.parse("2026-05-19T20:00:00Z");
+        PaymentSummaryResult payment = paymentSummaryResult(paidAt, createdAt);
+
+        PageResponse<PaymentSummaryResponse> response = mapper.toResponse(
+                new PageResult<>(List.of(payment), 1, 10, 25, 3)
+        );
+
+        PaymentSummaryResponse paymentResponse = response.content().getFirst();
+
+        assertAll(
+                () -> assertEquals(1, response.page()),
+                () -> assertEquals(10, response.size()),
+                () -> assertEquals(25, response.totalElements()),
+                () -> assertEquals(3, response.totalPages()),
+                () -> assertEquals(payment.paymentId(), paymentResponse.paymentId()),
+                () -> assertEquals(payment.volunteerId(), paymentResponse.volunteerId()),
+                () -> assertEquals(payment.amount(), paymentResponse.amount()),
+                () -> assertEquals(payment.status(), paymentResponse.status()),
+                () -> assertEquals(payment.providerCheckoutId(), paymentResponse.providerCheckoutId()),
+                () -> assertEquals(payment.providerCheckoutUrl(), paymentResponse.providerCheckoutUrl()),
+                () -> assertEquals(payment.paidAt(), paymentResponse.paidAt()),
+                () -> assertEquals(payment.createdAt(), paymentResponse.createdAt())
+        );
+    }
+
+    private PaymentSummaryResult paymentSummaryResult(Instant paidAt, Instant createdAt) {
+        return new PaymentSummaryResult(
+                "payment-123",
+                "volunteer-123",
+                BigDecimal.valueOf(10),
+                "SUCCESS",
+                "checkout-id",
+                "https://checkout.example.test",
+                paidAt,
+                createdAt
         );
     }
 }

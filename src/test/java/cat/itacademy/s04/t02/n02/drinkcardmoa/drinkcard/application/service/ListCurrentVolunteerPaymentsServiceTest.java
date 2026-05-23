@@ -1,6 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
@@ -24,36 +24,40 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ListPaymentsAdminServiceTest {
+class ListCurrentVolunteerPaymentsServiceTest {
 
     @Mock
     private PaymentRepository paymentRepository;
 
     @InjectMocks
-    private ListPaymentsAdminService service;
+    private ListCurrentVolunteerPaymentsService service;
 
     @Test
-    void execute_WhenNoFiltersProvided_ShouldReturnPagedPaymentsWithDefaults() {
-        Payment payment = createPayment(PaymentStatus.PENDING);
-        when(paymentRepository.searchAdminPayments(org.mockito.ArgumentMatchers.any(PaymentSearchCriteria.class)))
+    void execute_WhenNoPaginationProvided_ShouldSearchAuthenticatedVolunteerPaymentsWithDefaults() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        Payment payment = createPayment(volunteerId, PaymentStatus.PENDING);
+
+        when(paymentRepository.searchVolunteerPayments(any(PaymentSearchCriteria.class)))
                 .thenReturn(new PageResult<>(List.of(payment), 0, 20, 1, 1));
 
         PageResult<PaymentSummaryResult> result = service.execute(
-                new ListPaymentsAdminQuery(null, null, null, null, -1, 0, null)
+                new ListCurrentVolunteerPaymentsQuery(volunteerId.asString(), -1, 0, null)
         );
 
-        ArgumentCaptor<PaymentSearchCriteria> criteriaCaptor = ArgumentCaptor.forClass(PaymentSearchCriteria.class);
-        verify(paymentRepository).searchAdminPayments(criteriaCaptor.capture());
+        ArgumentCaptor<PaymentSearchCriteria> criteriaCaptor =
+                ArgumentCaptor.forClass(PaymentSearchCriteria.class);
+        verify(paymentRepository).searchVolunteerPayments(criteriaCaptor.capture());
 
         PaymentSearchCriteria criteria = criteriaCaptor.getValue();
         PaymentSummaryResult paymentResult = result.content().getFirst();
 
         assertAll(
-                () -> assertNull(criteria.volunteerId()),
+                () -> assertEquals(volunteerId, criteria.volunteerId()),
                 () -> assertNull(criteria.status()),
                 () -> assertNull(criteria.from()),
                 () -> assertNull(criteria.to()),
@@ -63,57 +67,77 @@ class ListPaymentsAdminServiceTest {
                 () -> assertEquals("desc", criteria.sortDirection()),
                 () -> assertEquals(1, result.content().size()),
                 () -> assertEquals(payment.getPaymentId().asString(), paymentResult.paymentId()),
-                () -> assertEquals(payment.getVolunteerId().asString(), paymentResult.volunteerId()),
+                () -> assertEquals(volunteerId.asString(), paymentResult.volunteerId()),
+                () -> assertEquals(payment.getAmount(), paymentResult.amount()),
                 () -> assertEquals(payment.getStatus().name(), paymentResult.status())
         );
     }
 
     @Test
-    void execute_WhenFiltersProvided_ShouldPassParsedCriteriaToRepository() {
+    void execute_WhenPaginationProvided_ShouldPassParsedCriteriaToRepository() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Instant from = Instant.parse("2026-05-01T00:00:00Z");
-        Instant to = Instant.parse("2026-05-19T23:59:59Z");
 
-        when(paymentRepository.searchAdminPayments(org.mockito.ArgumentMatchers.any(PaymentSearchCriteria.class)))
+        when(paymentRepository.searchVolunteerPayments(any(PaymentSearchCriteria.class)))
                 .thenReturn(new PageResult<>(List.of(), 2, 10, 0, 0));
 
-        service.execute(new ListPaymentsAdminQuery(
+        service.execute(new ListCurrentVolunteerPaymentsQuery(
                 volunteerId.asString(),
-                "success",
-                from,
-                to,
                 2,
                 10,
-                "paidAt,asc"
+                "amount,asc"
         ));
 
-        ArgumentCaptor<PaymentSearchCriteria> criteriaCaptor = ArgumentCaptor.forClass(PaymentSearchCriteria.class);
-        verify(paymentRepository).searchAdminPayments(criteriaCaptor.capture());
+        ArgumentCaptor<PaymentSearchCriteria> criteriaCaptor =
+                ArgumentCaptor.forClass(PaymentSearchCriteria.class);
+        verify(paymentRepository).searchVolunteerPayments(criteriaCaptor.capture());
 
         PaymentSearchCriteria criteria = criteriaCaptor.getValue();
 
         assertAll(
                 () -> assertEquals(volunteerId, criteria.volunteerId()),
-                () -> assertEquals(PaymentStatus.SUCCESS, criteria.status()),
-                () -> assertEquals(from, criteria.from()),
-                () -> assertEquals(to, criteria.to()),
                 () -> assertEquals(2, criteria.page()),
                 () -> assertEquals(10, criteria.size()),
-                () -> assertEquals("paidAt", criteria.sortBy()),
+                () -> assertEquals("amount", criteria.sortBy()),
                 () -> assertEquals("asc", criteria.sortDirection())
         );
     }
 
     @Test
-    void execute_WhenStatusIsInvalid_ShouldThrowIllegalArgumentException() {
-        ListPaymentsAdminQuery query = new ListPaymentsAdminQuery(
-                null,
-                "UNKNOWN",
-                null,
-                null,
+    void execute_WhenSizeExceedsMaximum_ShouldCapPageSize() {
+        VolunteerID volunteerId = VolunteerID.generate();
+
+        when(paymentRepository.searchVolunteerPayments(any(PaymentSearchCriteria.class)))
+                .thenReturn(new PageResult<>(List.of(), 0, 100, 0, 0));
+
+        service.execute(new ListCurrentVolunteerPaymentsQuery(
+                volunteerId.asString(),
+                0,
+                150,
+                "paidAt,desc"
+        ));
+
+        ArgumentCaptor<PaymentSearchCriteria> criteriaCaptor =
+                ArgumentCaptor.forClass(PaymentSearchCriteria.class);
+        verify(paymentRepository).searchVolunteerPayments(criteriaCaptor.capture());
+
+        PaymentSearchCriteria criteria = criteriaCaptor.getValue();
+
+        assertAll(
+                () -> assertEquals(100, criteria.size()),
+                () -> assertEquals("paidAt", criteria.sortBy()),
+                () -> assertEquals("desc", criteria.sortDirection())
+        );
+    }
+
+    @Test
+    void execute_WhenSortFieldIsInvalid_ShouldThrowIllegalArgumentException() {
+        VolunteerID volunteerId = VolunteerID.generate();
+
+        ListCurrentVolunteerPaymentsQuery query = new ListCurrentVolunteerPaymentsQuery(
+                volunteerId.asString(),
                 0,
                 20,
-                null
+                "volunteerId,asc"
         );
 
         assertThrows(
@@ -122,19 +146,17 @@ class ListPaymentsAdminServiceTest {
         );
     }
 
-    private Payment createPayment(PaymentStatus status) {
-        Instant createdAt = Instant.parse("2026-05-19T20:00:00Z");
-
+    private Payment createPayment(VolunteerID volunteerId, PaymentStatus status) {
         return Payment.rehydrate(
                 PaymentID.generate(),
-                VolunteerID.generate(),
+                volunteerId,
                 "idempotency-key",
-                BigDecimal.valueOf(5),
+                BigDecimal.valueOf(10),
                 status,
                 "checkout-id",
                 "https://checkout.example.test",
                 null,
-                createdAt
+                Instant.parse("2026-05-19T20:00:00Z")
         );
     }
 }

@@ -1,22 +1,20 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListPaymentsAdminUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListCurrentVolunteerPaymentsUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.PageSort;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.PageSortParser;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.springframework.stereotype.Service;
 
-import java.util.Locale;
 import java.util.Set;
 
 @Service
-public class ListPaymentsAdminService implements ListPaymentsAdminUseCase {
+public class ListCurrentVolunteerPaymentsService implements ListCurrentVolunteerPaymentsUseCase {
 
     private static final String DEFAULT_SORT_BY = "createdAt";
     private static final String DEFAULT_SORT_DIRECTION = "desc";
@@ -27,25 +25,24 @@ public class ListPaymentsAdminService implements ListPaymentsAdminUseCase {
             "createdAt",
             "paidAt",
             "amount",
-            "status",
-            "volunteerId"
+            "status"
     );
 
     private final PaymentRepository paymentRepository;
 
-    public ListPaymentsAdminService(PaymentRepository paymentRepository) {
+    public ListCurrentVolunteerPaymentsService(PaymentRepository paymentRepository) {
         this.paymentRepository = paymentRepository;
     }
 
     @Override
-    public PageResult<PaymentSummaryResult> execute(ListPaymentsAdminQuery query) {
+    public PageResult<PaymentSummaryResult> execute(ListCurrentVolunteerPaymentsQuery query) {
         PaymentSearchCriteria criteria = toSearchCriteria(query);
 
-        return paymentRepository.searchAdminPayments(criteria)
+        return paymentRepository.searchVolunteerPayments(criteria)
                 .map(PaymentSummaryResult::from);
     }
 
-    private PaymentSearchCriteria toSearchCriteria(ListPaymentsAdminQuery query) {
+    private PaymentSearchCriteria toSearchCriteria(ListCurrentVolunteerPaymentsQuery query) {
         PageSort pageSort = PageSortParser.parse(
                 query.page(),
                 query.size(),
@@ -60,34 +57,14 @@ public class ListPaymentsAdminService implements ListPaymentsAdminUseCase {
         );
 
         return new PaymentSearchCriteria(
-                parseVolunteerId(query.volunteerId()),
-                parseStatus(query.status()),
-                query.from(),
-                query.to(),
+                VolunteerID.from(query.volunteerId()),
+                null,
+                null,
+                null,
                 pageSort.page(),
                 pageSort.size(),
                 pageSort.sortBy(),
                 pageSort.sortDirection()
         );
-    }
-
-    private VolunteerID parseVolunteerId(String volunteerId) {
-        if (isBlank(volunteerId)) {
-            return null;
-        }
-
-        return VolunteerID.from(volunteerId);
-    }
-
-    private PaymentStatus parseStatus(String status) {
-        if (isBlank(status)) {
-            return null;
-        }
-
-        return PaymentStatus.valueOf(status.toUpperCase(Locale.ROOT));
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
     }
 }

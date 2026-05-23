@@ -3,7 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.
 import java.math.BigDecimal;
 import java.time.Instant;
 
-public record AdminPaymentSummaryResponse(
+public record PaymentSummaryResponse(
         String paymentId,
         String volunteerId,
         BigDecimal amount,
