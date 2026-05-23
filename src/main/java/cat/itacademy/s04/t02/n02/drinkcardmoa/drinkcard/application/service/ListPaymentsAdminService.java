@@ -5,13 +5,11 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListPaymentsAdminUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -40,19 +38,9 @@ public class ListPaymentsAdminService implements ListPaymentsAdminUseCase {
     @Override
     public PageResult<AdminPaymentSummaryResult> execute(ListPaymentsAdminQuery query) {
         PaymentSearchCriteria criteria = toSearchCriteria(query);
-        PageResult<Payment> payments = paymentRepository.searchAdminPayments(criteria);
-        List<AdminPaymentSummaryResult> content = payments.content()
-                .stream()
-                .map(AdminPaymentSummaryResult::from)
-                .toList();
 
-        return new PageResult<>(
-                content,
-                payments.page(),
-                payments.size(),
-                payments.totalElements(),
-                payments.totalPages()
-        );
+        return paymentRepository.searchAdminPayments(criteria)
+                .map(AdminPaymentSummaryResult::from);
     }
 
     private PaymentSearchCriteria toSearchCriteria(ListPaymentsAdminQuery query) {

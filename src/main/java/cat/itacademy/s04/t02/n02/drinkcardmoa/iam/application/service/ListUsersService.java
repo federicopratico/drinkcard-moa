@@ -4,14 +4,12 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.ListUsersUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.query.UserSearchCriteria;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -42,19 +40,8 @@ public class ListUsersService implements ListUsersUseCase {
 
         UserSearchCriteria criteria = toSearchCriteria(query);
 
-        PageResult<User> users = userRepository.searchUsers(criteria);
-        List<UserSummaryResult> content = users.content()
-                .stream()
-                .map(UserSummaryResult::from)
-                .toList();
-
-        return new PageResult<>(
-                content,
-                users.page(),
-                users.size(),
-                users.totalElements(),
-                users.totalPages()
-        );
+        return userRepository.searchUsers(criteria)
+                .map(UserSummaryResult::from);
     }
 
     private UserSearchCriteria toSearchCriteria(ListUsersQuery query) {
