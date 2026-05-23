@@ -1,9 +1,9 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.AdminPaymentSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListPaymentsAdminUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.AdminPaymentSummaryResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.AdminPaymentControllerMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
@@ -50,7 +50,7 @@ class AdminPaymentControllerTest {
         Instant to = Instant.parse("2026-05-19T23:59:59Z");
         Instant createdAt = Instant.parse("2026-05-19T20:00:00Z");
 
-        AdminPaymentSummaryResult payment = new AdminPaymentSummaryResult(
+        PaymentSummaryResult payment = new PaymentSummaryResult(
                 "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
                 volunteerId,
                 BigDecimal.valueOf(10),
@@ -71,7 +71,7 @@ class AdminPaymentControllerTest {
                 "createdAt,desc"
         ))).thenReturn(new PageResult<>(List.of(payment), 1, 10, 35, 4));
 
-        ResponseEntity<PageResponse<AdminPaymentSummaryResponse>> response = controller.listPayments(
+        ResponseEntity<PageResponse<PaymentSummaryResponse>> response = controller.listPayments(
                 volunteerId,
                 "SUCCESS",
                 from,
@@ -84,8 +84,8 @@ class AdminPaymentControllerTest {
         ArgumentCaptor<ListPaymentsAdminQuery> queryCaptor = ArgumentCaptor.forClass(ListPaymentsAdminQuery.class);
         verify(listPaymentsAdminUseCase).execute(queryCaptor.capture());
 
-        PageResponse<AdminPaymentSummaryResponse> body = response.getBody();
-        AdminPaymentSummaryResponse paymentResponse = body.content().getFirst();
+        PageResponse<PaymentSummaryResponse> body = response.getBody();
+        PaymentSummaryResponse paymentResponse = body.content().getFirst();
         ListPaymentsAdminQuery query = queryCaptor.getValue();
 
         assertAll(

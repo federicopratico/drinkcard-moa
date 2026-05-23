@@ -1,9 +1,9 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.AdminPaymentSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListPaymentsAdminUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.AdminPaymentSummaryResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.AdminPaymentControllerMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
@@ -28,7 +28,7 @@ public class AdminPaymentController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<PageResponse<AdminPaymentSummaryResponse>> listPayments(
+    public ResponseEntity<PageResponse<PaymentSummaryResponse>> listPayments(
             @RequestParam(required = false) String volunteerId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
@@ -37,17 +37,17 @@ public class AdminPaymentController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt,desc") String sort
     ) {
-        PageResult<AdminPaymentSummaryResult> result = listPaymentsAdminUseCase.execute(
-                new ListPaymentsAdminQuery(
-                        volunteerId,
-                        status,
-                        from,
-                        to,
-                        page,
-                        size,
-                        sort
-                )
+        ListPaymentsAdminQuery query = new ListPaymentsAdminQuery(
+                volunteerId,
+                status,
+                from,
+                to,
+                page,
+                size,
+                sort
         );
+
+        PageResult<PaymentSummaryResult> result = listPaymentsAdminUseCase.execute(query);
 
         return ResponseEntity.ok(mapper.toResponse(result));
     }

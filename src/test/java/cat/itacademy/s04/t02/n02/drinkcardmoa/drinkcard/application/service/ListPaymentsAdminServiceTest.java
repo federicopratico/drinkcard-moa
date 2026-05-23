@@ -1,7 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.AdminPaymentSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
@@ -42,7 +42,7 @@ class ListPaymentsAdminServiceTest {
         when(paymentRepository.searchAdminPayments(org.mockito.ArgumentMatchers.any(PaymentSearchCriteria.class)))
                 .thenReturn(new PageResult<>(List.of(payment), 0, 20, 1, 1));
 
-        PageResult<AdminPaymentSummaryResult> result = service.execute(
+        PageResult<PaymentSummaryResult> result = service.execute(
                 new ListPaymentsAdminQuery(null, null, null, null, -1, 0, null)
         );
 
@@ -50,7 +50,7 @@ class ListPaymentsAdminServiceTest {
         verify(paymentRepository).searchAdminPayments(criteriaCaptor.capture());
 
         PaymentSearchCriteria criteria = criteriaCaptor.getValue();
-        AdminPaymentSummaryResult paymentResult = result.content().getFirst();
+        PaymentSummaryResult paymentResult = result.content().getFirst();
 
         assertAll(
                 () -> assertNull(criteria.volunteerId()),

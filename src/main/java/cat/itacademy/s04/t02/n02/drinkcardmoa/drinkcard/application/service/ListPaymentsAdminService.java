@@ -1,7 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.AdminPaymentSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListPaymentsAdminUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
@@ -38,11 +38,11 @@ public class ListPaymentsAdminService implements ListPaymentsAdminUseCase {
     }
 
     @Override
-    public PageResult<AdminPaymentSummaryResult> execute(ListPaymentsAdminQuery query) {
+    public PageResult<PaymentSummaryResult> execute(ListPaymentsAdminQuery query) {
         PaymentSearchCriteria criteria = toSearchCriteria(query);
 
         return paymentRepository.searchAdminPayments(criteria)
-                .map(AdminPaymentSummaryResult::from);
+                .map(PaymentSummaryResult::from);
     }
 
     private PaymentSearchCriteria toSearchCriteria(ListPaymentsAdminQuery query) {
