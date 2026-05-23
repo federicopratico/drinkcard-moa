@@ -1,8 +1,12 @@
-package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model;
+package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkTicketID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkTicketStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkType;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkTicketExpiredException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InvalidDrinkTicketStateException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -23,7 +27,7 @@ class DrinkTicketTest {
                 () -> assertNotNull(ticket.getDrinkTicketId()),
                 () -> assertEquals(volunteerId, ticket.getVolunteerId()),
                 () -> assertEquals(drinkType, ticket.getDrinkType()),
-                () -> assertEquals(DrinkTicketStatus.PENDING, ticket.getStatus()),
+                () -> Assertions.assertEquals(DrinkTicketStatus.PENDING, ticket.getStatus()),
                 () -> assertEquals(createdAt, ticket.getCreatedAt()),
                 () -> assertEquals(createdAt.plusSeconds(90), ticket.getExpiresAt()),
                 () -> assertNull(ticket.getConsumedAt()),

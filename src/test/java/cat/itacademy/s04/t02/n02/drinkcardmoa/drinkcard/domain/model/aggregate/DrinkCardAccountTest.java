@@ -1,9 +1,12 @@
-package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model;
+package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkCardAccountStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.DomainEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.event.CardPurchasedEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -29,7 +32,7 @@ class DrinkCardAccountTest {
                 () -> assertEquals(0, drinkCardAccount.getCredits()),
                 () -> assertNull(drinkCardAccount.getLastPurchaseTimestamp()),
                 () -> assertNotNull(drinkCardAccount.getCreatedAt()),
-                () -> assertEquals(DrinkCardAccountStatus.ACTIVE, drinkCardAccount.getStatus()),
+                () -> Assertions.assertEquals(DrinkCardAccountStatus.ACTIVE, drinkCardAccount.getStatus()),
                 () -> assertFalse(drinkCardAccount.getCreatedAt().isBefore(beforeCreation)),
                 () -> assertFalse(drinkCardAccount.getCreatedAt().isAfter(afterCreation))
         );

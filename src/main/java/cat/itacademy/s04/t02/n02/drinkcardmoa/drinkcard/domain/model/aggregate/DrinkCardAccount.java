@@ -1,5 +1,7 @@
-package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model;
+package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkCardAccountStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.DomainEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.event.CardPurchasedEvent;

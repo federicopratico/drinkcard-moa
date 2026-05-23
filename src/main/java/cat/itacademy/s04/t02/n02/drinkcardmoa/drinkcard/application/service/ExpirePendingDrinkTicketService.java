@@ -2,7 +2,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ExpirePendingDrinkTicketUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.DrinkTicket;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkTicket;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

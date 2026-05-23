@@ -1,7 +1,9 @@
-package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model;
+package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkTicketID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkTicketStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkType;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkTicketAlreadyConsumedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkTicketExpiredException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InvalidDrinkTicketStateException;
 

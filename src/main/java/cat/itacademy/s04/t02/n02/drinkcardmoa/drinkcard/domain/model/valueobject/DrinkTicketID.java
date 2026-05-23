@@ -1,4 +1,4 @@
-package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model;
+package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject;
 
 import java.io.Serializable;
 import java.util.Objects;

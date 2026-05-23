@@ -1,7 +1,10 @@
-package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model;
+package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InvalidPaymentStateException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -27,7 +30,7 @@ class PaymentTest {
                 () -> assertEquals(volunteerId, payment.getVolunteerId()),
                 () -> assertEquals(IDEMPOTENCY_KEY, payment.getIdempotencyKey()),
                 () -> assertEquals(AMOUNT, payment.getAmount()),
-                () -> assertEquals(PaymentStatus.PENDING, payment.getStatus()),
+                () -> Assertions.assertEquals(PaymentStatus.PENDING, payment.getStatus()),
                 () -> assertNull(payment.getProviderCheckoutId()),
                 () -> assertNull(payment.getProviderCheckoutUrl()),
                 () -> assertNull(payment.getPaidAt()),

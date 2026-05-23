@@ -1,9 +1,9 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.mapper;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.Payment;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentID;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.PaymentStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.PaymentJpaEntity;
 import org.springframework.stereotype.Component;
 
