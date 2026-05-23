@@ -59,6 +59,15 @@ public class DrinkTicketJpaAdapter implements DrinkTicketRepository {
 
     @Override
     public PageResult<DrinkTicket> searchAdminDrinkTickets(DrinkTicketSearchCriteria criteria) {
+        return searchDrinkTickets(criteria);
+    }
+
+    @Override
+    public PageResult<DrinkTicket> searchVolunteerDrinkTickets(DrinkTicketSearchCriteria criteria) {
+        return searchDrinkTickets(criteria);
+    }
+
+    private PageResult<DrinkTicket> searchDrinkTickets(DrinkTicketSearchCriteria criteria) {
         Sort.Direction direction = Sort.Direction.fromString(criteria.sortDirection());
         PageRequest pageRequest = PageRequest.of(
                 criteria.page(),
