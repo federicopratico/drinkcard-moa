@@ -1,36 +1,36 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConfirmPaymentResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ConfirmPaymentUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreatePaymentCheckoutUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListCurrentVolunteerPaymentsUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.CreatePaymentCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.ConfirmPaymentResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.CreatePaymentCheckoutResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.PaymentControllerMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.config.PaymentProperties;
-import org.springframework.beans.factory.annotation.Value;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/payments")
+@AllArgsConstructor
 public class PaymentController {
 
     private final CreatePaymentCheckoutUseCase createPaymentCheckoutUseCase;
     private final ConfirmPaymentUseCase confirmPaymentUseCase;
+    private final ListCurrentVolunteerPaymentsUseCase listCurrentVolunteerPaymentsUseCase;
     private final PaymentControllerMapper mapper;
     private final PaymentProperties paymentProperties;
 
-    public PaymentController(CreatePaymentCheckoutUseCase createPaymentCheckoutUseCase,
-                             ConfirmPaymentUseCase confirmPaymentUseCase,
-                             PaymentControllerMapper mapper,
-                             PaymentProperties paymentProperties) {
-        this.createPaymentCheckoutUseCase = createPaymentCheckoutUseCase;
-        this.confirmPaymentUseCase = confirmPaymentUseCase;
-        this.mapper = mapper;
-        this.paymentProperties = paymentProperties;
-    }
 
     @PostMapping("/checkout")
     public ResponseEntity<CreatePaymentCheckoutResponse> createCheckout(@RequestBody CreatePaymentCheckoutRequest request) {
@@ -48,4 +48,17 @@ public class PaymentController {
         return ResponseEntity.status(200).body(mapper.toResponse(result));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<PageResponse<PaymentSummaryResponse>> listCurrentVolunteerPayments(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort
+    ) {
+        ListCurrentVolunteerPaymentsQuery query = new ListCurrentVolunteerPaymentsQuery(authentication.getName(), page, size, sort);
+
+        PageResult<PaymentSummaryResult> result = listCurrentVolunteerPaymentsUseCase.execute(query);
+
+        return ResponseEntity.ok(mapper.toResponse(result));
+    }
 }

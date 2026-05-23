@@ -3,12 +3,16 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.security.JwtAuthenticationFilter;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.ConfirmPaymentCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreatePaymentCheckoutCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConfirmPaymentResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ConfirmPaymentUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreatePaymentCheckoutUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListCurrentVolunteerPaymentsUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.PaymentControllerMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.config.PaymentProperties;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,15 +21,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,6 +58,9 @@ class PaymentControllerTest {
 
     @MockitoBean
     private ConfirmPaymentUseCase confirmPaymentUseCase;
+
+    @MockitoBean
+    private ListCurrentVolunteerPaymentsUseCase listCurrentVolunteerPaymentsUseCase;
 
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -122,6 +134,108 @@ class PaymentControllerTest {
         verify(confirmPaymentUseCase).execute(commandCaptor.capture());
 
         assertEquals(paymentId, commandCaptor.getValue().paymentId());
+    }
+
+    @Test
+    void listCurrentVolunteerPayments_WhenPaymentsExist_ShouldReturnPagedPaymentResponse() throws Exception {
+        String authenticatedVolunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+        String ignoredVolunteerId = "8799df50-d517-4693-9e46-51b537c305a2";
+        Instant createdAt = Instant.parse("2026-05-19T20:00:00Z");
+        Instant paidAt = Instant.parse("2026-05-19T20:05:00Z");
+
+        PaymentSummaryResult payment = new PaymentSummaryResult(
+                "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
+                authenticatedVolunteerId,
+                BigDecimal.valueOf(10),
+                "SUCCESS",
+                "checkout-id",
+                "https://checkout.example.test",
+                paidAt,
+                createdAt
+        );
+
+        when(listCurrentVolunteerPaymentsUseCase.execute(new ListCurrentVolunteerPaymentsQuery(
+                authenticatedVolunteerId,
+                1,
+                10,
+                "amount,asc"
+        ))).thenReturn(new PageResult<>(List.of(payment), 1, 10, 25, 3));
+
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken(
+                        authenticatedVolunteerId,
+                        null,
+                        "ROLE_VOLUNTEER"
+                );
+
+        mockMvc.perform(get("/api/v1/payments/me")
+                        .param("volunteerId", ignoredVolunteerId)
+                        .param("page", "1")
+                        .param("size", "10")
+                        .param("sort", "amount,asc")
+                        .principal(authentication))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.totalElements").value(25))
+                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.content[0].paymentId").value(payment.paymentId()))
+                .andExpect(jsonPath("$.content[0].volunteerId").value(authenticatedVolunteerId))
+                .andExpect(jsonPath("$.content[0].amount").value(10))
+                .andExpect(jsonPath("$.content[0].status").value("SUCCESS"))
+                .andExpect(jsonPath("$.content[0].providerCheckoutId").value("checkout-id"))
+                .andExpect(jsonPath("$.content[0].providerCheckoutUrl").value("https://checkout.example.test"))
+                .andExpect(jsonPath("$.content[0].paidAt").value("2026-05-19T20:05:00Z"))
+                .andExpect(jsonPath("$.content[0].createdAt").value("2026-05-19T20:00:00Z"));
+
+        ArgumentCaptor<ListCurrentVolunteerPaymentsQuery> queryCaptor =
+                ArgumentCaptor.forClass(ListCurrentVolunteerPaymentsQuery.class);
+        verify(listCurrentVolunteerPaymentsUseCase).execute(queryCaptor.capture());
+
+        ListCurrentVolunteerPaymentsQuery query = queryCaptor.getValue();
+
+        assertAll(
+                () -> assertEquals(authenticatedVolunteerId, query.volunteerId()),
+                () -> assertEquals(1, query.page()),
+                () -> assertEquals(10, query.size()),
+                () -> assertEquals("amount,asc", query.sort())
+        );
+    }
+
+    @Test
+    void listCurrentVolunteerPayments_WhenNoQueryParametersProvided_ShouldUseDefaults() throws Exception {
+        String authenticatedVolunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+
+        when(listCurrentVolunteerPaymentsUseCase.execute(new ListCurrentVolunteerPaymentsQuery(
+                authenticatedVolunteerId,
+                0,
+                20,
+                "createdAt,desc"
+        ))).thenReturn(new PageResult<>(List.of(), 0, 20, 0, 0));
+
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken(
+                        authenticatedVolunteerId,
+                        null,
+                        "ROLE_VOLUNTEER"
+                );
+
+        mockMvc.perform(get("/api/v1/payments/me")
+                        .principal(authentication))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0));
+
+        verify(listCurrentVolunteerPaymentsUseCase).execute(new ListCurrentVolunteerPaymentsQuery(
+                authenticatedVolunteerId,
+                0,
+                20,
+                "createdAt,desc"
+        ));
     }
 
     private record CreateCheckoutJson(
