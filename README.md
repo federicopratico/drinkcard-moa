@@ -32,7 +32,7 @@ DrinkCard MOA is designed around three operational views of the same festival sy
 | Bar staff | Scan QR tickets and approve drink consumption. |
 | Organizer | Review users, accounts, payments, tickets, and operational metrics. |
 
-Full functional documentation: [docs/documentacion-funcional-app-festival.md](documents/documentacion-funcional-app-festival.md)
+Full functional documentation: [documentacion-funcional-app-festival.en.md](documents/documentacion-funcional-app-festival.en.md)
 
 ## Current Status
 
