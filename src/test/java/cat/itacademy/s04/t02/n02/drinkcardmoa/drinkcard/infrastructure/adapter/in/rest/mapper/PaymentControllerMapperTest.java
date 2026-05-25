@@ -27,12 +27,11 @@ class PaymentControllerMapperTest {
     @Test
     void toCommand_WhenCreatePaymentCheckoutRequest_ShouldMapRequestToCommand() {
         CreatePaymentCheckoutRequest request = new CreatePaymentCheckoutRequest(
-                "volunteer-123",
                 "idempotency-key-123"
         );
         String redirectUrl = "http://localhost:3000/payment/success";
 
-        CreatePaymentCheckoutCommand command = mapper.toCommand(request, redirectUrl);
+        CreatePaymentCheckoutCommand command = mapper.toCommand(request, "volunteer-123", redirectUrl);
 
         assertAll(
                 () -> assertEquals("volunteer-123", command.volunteerId()),
