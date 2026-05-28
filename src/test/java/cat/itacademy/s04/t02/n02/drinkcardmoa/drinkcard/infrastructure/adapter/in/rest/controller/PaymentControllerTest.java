@@ -1,6 +1,8 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.TokenService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.security.JwtAuthenticationFilter;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.SecurityConfiguration;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.ConfirmPaymentCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreatePaymentCheckoutCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
@@ -17,11 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,14 +34,14 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PaymentController.class)
-@Import({PaymentControllerMapper.class, PaymentProperties.class})
-@AutoConfigureMockMvc(addFilters = false)
+@Import({PaymentControllerMapper.class, PaymentProperties.class, SecurityConfiguration.class, JwtAuthenticationFilter.class})
 @TestPropertySource(properties = "app.payment.frontend-success-url=http://localhost:3000/payment/success")
 class PaymentControllerTest {
 
@@ -63,7 +63,7 @@ class PaymentControllerTest {
     private ListCurrentVolunteerPaymentsUseCase listCurrentVolunteerPaymentsUseCase;
 
     @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private TokenService tokenService;
 
     @Test
     void createCheckout_ReturnsCreatedCheckoutResponse() throws Exception {
@@ -82,13 +82,14 @@ class PaymentControllerTest {
         )).thenReturn(result);
 
         String requestBody = objectMapper.writeValueAsString(new CreateCheckoutJson(
-                volunteerId,
                 idempotencyKey
         ));
 
         mockMvc.perform(post("/api/v1/payments/checkout")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content(requestBody)
+                        .with(user(volunteerId).roles("VOLUNTEER"))
+                )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.paymentId").value("payment-123"))
                 .andExpect(jsonPath("$.checkoutUrl").value("https://checkout.sumup.com/checkout-123"))
@@ -108,6 +109,27 @@ class PaymentControllerTest {
     }
 
     @Test
+    void createCheckout_WhenAnonymous_Returns401() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(new CreateCheckoutJson("checkout-request-123"));
+
+        mockMvc.perform(post("/api/v1/payments/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void createCheckout_WhenWrongRole_Returns403() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(new CreateCheckoutJson("checkout-request-123"));
+
+        mockMvc.perform(post("/api/v1/payments/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .with(user("some-user").roles("OTHER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void confirmPayment_ReturnsOkConfirmPaymentResponse() throws Exception {
         String paymentId = "payment-123";
 
@@ -121,7 +143,8 @@ class PaymentControllerTest {
         when(confirmPaymentUseCase.execute(new ConfirmPaymentCommand(paymentId)))
                 .thenReturn(result);
 
-        mockMvc.perform(post("/api/v1/payments/{paymentId}/confirm", paymentId))
+        mockMvc.perform(post("/api/v1/payments/{paymentId}/confirm", paymentId)
+                        .with(user("any-user").roles("VOLUNTEER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paymentId").value(paymentId))
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
@@ -161,19 +184,12 @@ class PaymentControllerTest {
                 "amount,asc"
         ))).thenReturn(new PageResult<>(List.of(payment), 1, 10, 25, 3));
 
-        TestingAuthenticationToken authentication =
-                new TestingAuthenticationToken(
-                        authenticatedVolunteerId,
-                        null,
-                        "ROLE_VOLUNTEER"
-                );
-
         mockMvc.perform(get("/api/v1/payments/me")
                         .param("volunteerId", ignoredVolunteerId)
                         .param("page", "1")
                         .param("size", "10")
                         .param("sort", "amount,asc")
-                        .principal(authentication))
+                        .with(user(authenticatedVolunteerId).roles("VOLUNTEER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page").value(1))
                 .andExpect(jsonPath("$.size").value(10))
@@ -213,15 +229,8 @@ class PaymentControllerTest {
                 "createdAt,desc"
         ))).thenReturn(new PageResult<>(List.of(), 0, 20, 0, 0));
 
-        TestingAuthenticationToken authentication =
-                new TestingAuthenticationToken(
-                        authenticatedVolunteerId,
-                        null,
-                        "ROLE_VOLUNTEER"
-                );
-
         mockMvc.perform(get("/api/v1/payments/me")
-                        .principal(authentication))
+                        .with(user(authenticatedVolunteerId).roles("VOLUNTEER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content").isEmpty())
@@ -239,7 +248,6 @@ class PaymentControllerTest {
     }
 
     private record CreateCheckoutJson(
-            String volunteerId,
             String idempotencyKey
     ) {
     }

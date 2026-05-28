@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class PaymentControllerMapper {
 
-    public CreatePaymentCheckoutCommand toCommand(CreatePaymentCheckoutRequest request, String redirectUrl) {
+    public CreatePaymentCheckoutCommand toCommand(CreatePaymentCheckoutRequest request, String volunteerId, String redirectUrl) {
         return new CreatePaymentCheckoutCommand(
-                request.volunteerId(),
+                volunteerId,
                 redirectUrl,
                 request.idempotencyKey()
         );

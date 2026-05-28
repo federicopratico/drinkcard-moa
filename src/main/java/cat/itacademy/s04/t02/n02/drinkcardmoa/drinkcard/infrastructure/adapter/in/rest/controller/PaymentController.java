@@ -17,6 +17,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,9 +34,10 @@ public class PaymentController {
 
 
     @PostMapping("/checkout")
-    public ResponseEntity<CreatePaymentCheckoutResponse> createCheckout(@RequestBody CreatePaymentCheckoutRequest request) {
+    @PreAuthorize("hasRole('VOLUNTEER')")
+    public ResponseEntity<CreatePaymentCheckoutResponse> createCheckout(@RequestBody CreatePaymentCheckoutRequest request, Authentication authentication) {
 
-        CreatePaymentCheckoutResult result = createPaymentCheckoutUseCase.execute(mapper.toCommand(request, paymentProperties.getFrontendSuccessUrl()));
+        CreatePaymentCheckoutResult result = createPaymentCheckoutUseCase.execute(mapper.toCommand(request, authentication.getName(), paymentProperties.getFrontendSuccessUrl()));
 
         return ResponseEntity.status(201).body(mapper.toResponse(result));
     }
@@ -49,6 +51,7 @@ public class PaymentController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("hasRole('VOLUNTEER')")
     public ResponseEntity<PageResponse<PaymentSummaryResponse>> listCurrentVolunteerPayments(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
