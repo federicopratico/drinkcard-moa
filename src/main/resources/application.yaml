@@ -15,7 +15,7 @@ jwt:
 app:
   payment:
     frontend-success-url: ${PAYMENT_FRONTEND_SUCCESS_URL}
-    checkout-expiration: ${PAYMENT_CHECKOUT_EXPIRATION:10}
+    checkout-expiration: ${PAYMENT_CHECKOUT_EXPIRATION:15m}
 
 sumup:
   base-url: ${SUMUP_BASE_URL}

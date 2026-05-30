@@ -20,7 +20,9 @@ public class PaymentMapper {
                 payment.getProviderCheckoutId(),
                 payment.getProviderCheckoutUrl(),
                 payment.getPaidAt(),
-                payment.getCreatedAt()
+                payment.getCreatedAt(),
+                payment.getExpiresAt(),
+                payment.getProviderCreatedAt()
         );
     }
 
@@ -34,7 +36,9 @@ public class PaymentMapper {
                 entity.getProviderCheckoutId(),
                 entity.getProviderCheckoutUrl(),
                 entity.getPaidAt(),
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                entity.getExpiresAt(),
+                entity.getProviderCreatedAt()
         );
     }
 }

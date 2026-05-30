@@ -47,7 +47,13 @@ public class PaymentJpaEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    private PaymentJpaEntity(UUID paymentId, UUID volunteerId, String idempotencyKey, BigDecimal amount, String status, String providerCheckoutId, String providerCheckoutUrl,Instant paidAt, Instant createdAt) {
+    @Column(name = "expires_at", nullable = false)
+    private Instant expiresAt;
+
+    @Column(name = "provider_created_at")
+    private Instant providerCreatedAt;
+
+    private PaymentJpaEntity(UUID paymentId, UUID volunteerId, String idempotencyKey, BigDecimal amount, String status, String providerCheckoutId, String providerCheckoutUrl,Instant paidAt, Instant createdAt, Instant expiresAt, Instant providerCreatedAt) {
         this.paymentId = paymentId;
         this.volunteerId = volunteerId;
         this.idempotencyKey = idempotencyKey;
@@ -57,9 +63,11 @@ public class PaymentJpaEntity {
         this.providerCheckoutUrl = providerCheckoutUrl;
         this.paidAt = paidAt;
         this.createdAt = createdAt;
+        this.expiresAt = expiresAt;
+        this.providerCreatedAt = providerCreatedAt;
     }
 
-    public static PaymentJpaEntity create(UUID paymentId, UUID volunteerId, String idempotencyKey, BigDecimal amount, String status, String providerCheckoutId, String providerCheckoutUrl, Instant paidAt, Instant createdAt) {
-        return new PaymentJpaEntity(paymentId, volunteerId, idempotencyKey, amount, status, providerCheckoutId, providerCheckoutUrl, paidAt, createdAt);
+    public static PaymentJpaEntity create(UUID paymentId, UUID volunteerId, String idempotencyKey, BigDecimal amount, String status, String providerCheckoutId, String providerCheckoutUrl, Instant paidAt, Instant createdAt, Instant expiresAt, Instant providerCreatedAt) {
+        return new PaymentJpaEntity(paymentId, volunteerId, idempotencyKey, amount, status, providerCheckoutId, providerCheckoutUrl, paidAt, createdAt, expiresAt, providerCreatedAt);
     }
 }
