@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,14 +17,15 @@ class PaymentTest {
 
     private static final BigDecimal AMOUNT = BigDecimal.valueOf(10);
     private static final String IDEMPOTENCY_KEY = "payment-123";
+    private static final Duration EXPIRATION_TIME = Duration.ofMinutes(15);
 
     @Test
     void pending_ShouldCreatePaymentWithPendingStatus() {
         VolunteerID volunteerId = VolunteerID.generate();
 
-        Instant beforeCreation = Instant.now();
-        Payment payment = Payment.pending(volunteerId, AMOUNT, IDEMPOTENCY_KEY);
-        Instant afterCreation = Instant.now();
+        Instant createdAt = Instant.now();
+        Instant expiresAt = createdAt.plus(EXPIRATION_TIME);
+        Payment payment = Payment.pending(volunteerId, AMOUNT, IDEMPOTENCY_KEY, createdAt, expiresAt);
 
         assertAll(
                 () -> assertNotNull(payment.getPaymentId()),
@@ -34,8 +36,9 @@ class PaymentTest {
                 () -> assertNull(payment.getProviderCheckoutId()),
                 () -> assertNull(payment.getProviderCheckoutUrl()),
                 () -> assertNull(payment.getPaidAt()),
-                () -> assertFalse(payment.getCreatedAt().isBefore(beforeCreation)),
-                () -> assertFalse(payment.getCreatedAt().isAfter(afterCreation))
+                () -> assertEquals(payment.getCreatedAt(), createdAt),
+                () -> assertEquals(payment.getExpiresAt(), expiresAt),
+                () -> assertNull(payment.getProviderCreatedAt())
         );
     }
 
@@ -45,6 +48,8 @@ class PaymentTest {
         VolunteerID volunteerId = VolunteerID.generate();
         Instant paidAt = Instant.now();
         Instant createdAt = Instant.now();
+        Instant expiresAt = createdAt.plus(EXPIRATION_TIME);
+        Instant providerCreatedAt = createdAt;
 
         Payment payment = Payment.rehydrate(
                 paymentId,
@@ -55,7 +60,9 @@ class PaymentTest {
                 "checkout-id-123",
                 "https://checkout.url",
                 paidAt,
-                createdAt
+                createdAt,
+                expiresAt,
+                providerCreatedAt
         );
 
         assertAll(
@@ -67,7 +74,9 @@ class PaymentTest {
                 () -> assertEquals("checkout-id-123", payment.getProviderCheckoutId()),
                 () -> assertEquals("https://checkout.url", payment.getProviderCheckoutUrl()),
                 () -> assertEquals(paidAt, payment.getPaidAt()),
-                () -> assertEquals(createdAt, payment.getCreatedAt())
+                () -> assertEquals(createdAt, payment.getCreatedAt()),
+                () -> assertEquals(expiresAt, payment.getExpiresAt()),
+                () -> assertEquals(providerCreatedAt, payment.getProviderCreatedAt())
         );
     }
 
@@ -108,6 +117,26 @@ class PaymentTest {
         assertThrows(
                 InvalidPaymentStateException.class,
                 () -> payment.attachProviderCheckoutUrl("https://another-checkout.url")
+        );
+    }
+
+    @Test
+    void attachProviderCreatedAt_WhenPaymentDoesNotHaveProviderCreatedAt_ShouldAttachIt() {
+        Payment payment = pendingPayment();
+        Instant providerCreatedAt = Instant.now();
+        payment.attachProviderCreatedAt(providerCreatedAt);
+
+        assertEquals(providerCreatedAt, payment.getProviderCreatedAt());
+    }
+
+    @Test
+    void attachProviderCreatedAt_WhenPaymentAlreadyHasProviderCreatedAt_ShouldThrowException() {
+        Payment payment = pendingPayment();
+        payment.attachProviderCreatedAt(Instant.now());
+
+        assertThrows(
+                InvalidPaymentStateException.class,
+                () -> payment.attachProviderCreatedAt(Instant.now().plusSeconds(1))
         );
     }
 
@@ -188,14 +217,21 @@ class PaymentTest {
     }
 
     private static Payment pendingPayment() {
+        Instant createdAt = Instant.now();
+        Instant expiresAt = createdAt.plus(EXPIRATION_TIME);
         return Payment.pending(
                 VolunteerID.generate(),
                 AMOUNT,
-                IDEMPOTENCY_KEY
+                IDEMPOTENCY_KEY,
+                createdAt,
+                expiresAt
         );
     }
 
     private static Payment paymentWithStatus(PaymentStatus status) {
+        Instant createdAt = Instant.now();
+        Instant expiresAt = createdAt.plus(EXPIRATION_TIME);
+
         return Payment.rehydrate(
                 PaymentID.generate(),
                 VolunteerID.generate(),
@@ -205,7 +241,9 @@ class PaymentTest {
                 null,
                 null,
                 null,
-                Instant.now()
+                createdAt,
+                expiresAt,
+                null
         );
     }
 }
