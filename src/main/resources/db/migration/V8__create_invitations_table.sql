@@ -1,0 +1,7 @@
+CREATE TABLE invitations(
+    id VARCHAR(50) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    role VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    invitation_token VARCHAR(255) NOT NULL UNIQUE
+);
