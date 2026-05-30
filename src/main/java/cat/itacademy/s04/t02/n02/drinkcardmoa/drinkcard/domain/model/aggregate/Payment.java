@@ -9,15 +9,18 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 public class Payment {
-    private PaymentID paymentId;
-    private VolunteerID volunteerId;
-    private String idempotencyKey;
-    private BigDecimal amount;
+
+    private final PaymentID paymentId;
+    private final VolunteerID volunteerId;
+    private final String idempotencyKey;
+    private final BigDecimal amount;
     private PaymentStatus status;
     private String providerCheckoutId;
     private String providerCheckoutUrl;
     private Instant paidAt;
-    private Instant createdAt;
+    private final Instant createdAt;
+    private final Instant expiresAt;
+    private Instant providerCreatedAt;
 
 
     private Payment(
@@ -29,7 +32,9 @@ public class Payment {
             String providerCheckoutId,
             String providerCheckoutUrl,
             Instant paidAt,
-            Instant createdAt) {
+            Instant createdAt,
+            Instant expiresAt,
+            Instant providerCreatedAt) {
         this.paymentId = paymentId;
         this.volunteerId = volunteerId;
         this.idempotencyKey = idempotencyKey;
@@ -39,9 +44,11 @@ public class Payment {
         this.providerCheckoutUrl = providerCheckoutUrl;
         this.paidAt = paidAt;
         this.createdAt = createdAt;
+        this.expiresAt = expiresAt;
+        this.providerCreatedAt = providerCreatedAt;
     }
 
-    public static Payment pending(VolunteerID volunteerId, BigDecimal amount, String idempotencyKey) {
+    public static Payment pending(VolunteerID volunteerId, BigDecimal amount, String idempotencyKey, Instant createdAt, Instant expiresAt) {
         return new Payment(
                 PaymentID.generate(),
                 volunteerId,
@@ -51,7 +58,9 @@ public class Payment {
                 null,
                 null,
                 null,
-                Instant.now()
+                createdAt,
+                expiresAt,
+                null
         );
     }
 
@@ -64,7 +73,9 @@ public class Payment {
             String providerCheckoutId,
             String providerCheckoutUrl,
             Instant paidAt,
-            Instant createdAt
+            Instant createdAt,
+            Instant expiresAt,
+            Instant providerCreatedAt
     ) {
         return new Payment(
                 paymentId,
@@ -75,7 +86,10 @@ public class Payment {
                 providerCheckoutId,
                 providerCheckoutUrl,
                 paidAt,
-                createdAt);
+                createdAt,
+                expiresAt,
+                providerCreatedAt
+        );
     }
 
     public void attachProviderCheckoutId(String providerCheckoutId) {
@@ -90,6 +104,13 @@ public class Payment {
             throw new InvalidPaymentStateException("Payment already has a provider checkout URL");
 
         this.providerCheckoutUrl = providerCheckoutUrl;
+    }
+
+    public void attachProviderCreatedAt(Instant providerCreatedAt) {
+        if (this.providerCreatedAt != null)
+            throw new InvalidPaymentStateException("Payment already has a provider creation time");
+
+        this.providerCreatedAt = providerCreatedAt;
     }
 
     public void markAsSuccess() {
@@ -158,5 +179,11 @@ public class Payment {
     }
     public Instant getCreatedAt() {
         return createdAt;
+    }
+    public Instant getExpiresAt() {
+        return expiresAt;
+    }
+    public Instant getProviderCreatedAt() {
+        return providerCreatedAt;
     }
 }
