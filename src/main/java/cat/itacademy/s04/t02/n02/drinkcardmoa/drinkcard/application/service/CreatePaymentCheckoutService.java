@@ -1,5 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.config.PaymentProperties;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreatePaymentCheckoutCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
@@ -27,16 +28,21 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
     PaymentRepository paymentRepository;
     PaymentGateway paymentGateway;
     DrinkCardAccountRepository drinkCardAccountRepository;
+    PaymentProperties paymentProperties;
 
-    public CreatePaymentCheckoutService(PaymentRepository paymentRepository, PaymentGateway paymentGateway, DrinkCardAccountRepository drinkCardAccountRepository) {
+    public CreatePaymentCheckoutService(PaymentRepository paymentRepository, PaymentGateway paymentGateway, DrinkCardAccountRepository drinkCardAccountRepository, PaymentProperties paymentProperties) {
         this.paymentRepository = paymentRepository;
         this.paymentGateway = paymentGateway;
         this.drinkCardAccountRepository = drinkCardAccountRepository;
+        this.paymentProperties = paymentProperties;
     }
 
     @Transactional
     @Override
     public CreatePaymentCheckoutResult execute(CreatePaymentCheckoutCommand cmd) {
+
+        Instant purchaseTimestamp = Instant.now();
+        Instant expiresAt = purchaseTimestamp.plus(paymentProperties.getCheckoutExpiration());
 
         Optional<Payment> existingPayment = paymentRepository.findByIdempotencyKey(cmd.idempotencyKey());
 
@@ -54,7 +60,7 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
             throw new DrinkCardAccountSuspendedException("DrinkCardAccount is suspended.");
         }
 
-        if (!drinkCardAccount.canPurchaseCard(Instant.now())) {
+        if (!drinkCardAccount.canPurchaseCard(purchaseTimestamp)) {
             throw new PurchaseLimitExceededException("DrinkCardAccount has exceeded the purchase limit for today.");
         }
 
@@ -63,8 +69,10 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
         Payment payment = Payment.pending(
                 VolunteerID.from(cmd.volunteerId()),
                 card.getPrice(),
-                cmd.idempotencyKey()
-                );
+                cmd.idempotencyKey(),
+                purchaseTimestamp,
+                expiresAt
+        );
 
         payment = paymentRepository.save(payment);
 
@@ -74,12 +82,16 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
                         payment.getAmount(),
                         "EUR",
                         "Drink card - 5 credits",
-                        cmd.redirectUrl()
+                        cmd.redirectUrl(),
+                        paymentProperties.getWebhookReturnUrl(),
+                        payment.getExpiresAt()
                 )
         );
 
         payment.attachProviderCheckoutId(hostedCheckout.providerCheckoutId());
         payment.attachProviderCheckoutUrl(hostedCheckout.checkoutUrl());
+        payment.attachProviderCreatedAt(hostedCheckout.providerCreatedAt());
+
         payment = paymentRepository.save(payment);
 
         return toPaymentCheckoutResult(payment);

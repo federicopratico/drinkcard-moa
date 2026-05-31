@@ -29,6 +29,8 @@ public class SumUpPaymentAdapter implements PaymentGateway {
                 properties.getMerchantCode(),
                 request.description(),
                 request.redirectUrl(),
+                request.returnUrl(),
+                request.validUntil().toString(),
                 new SumUpCreateCheckoutRequest.HostedCheckout(true)
         );
 
@@ -38,13 +40,14 @@ public class SumUpPaymentAdapter implements PaymentGateway {
                 .retrieve()
                 .body(SumUpCreateCheckoutResponse.class);
 
-        if (response == null || response.id() == null || response.hostedCheckoutUrl() == null) {
+        if (response == null || response.id() == null || response.hostedCheckoutUrl() == null || response.providerCreatedAt() == null) {
             throw new IllegalStateException("Invalid response from SumUp checkout creation");
         }
 
         return new HostedCheckout(
                 response.id(),
-                response.hostedCheckoutUrl()
+                response.hostedCheckoutUrl(),
+                response.providerCreatedAt()
         );
     }
 

@@ -13,4 +13,5 @@ public class PaymentProperties {
 
     private String frontendSuccessUrl;
     private Duration checkoutExpiration;
+    private String webhookReturnUrl;
 }
