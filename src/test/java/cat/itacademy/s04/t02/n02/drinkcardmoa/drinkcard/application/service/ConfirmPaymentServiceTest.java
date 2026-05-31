@@ -20,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -36,7 +37,8 @@ class ConfirmPaymentServiceTest {
 
     private static final String IDEMPOTENCY_KEY = "checkout-request-123";
     private static final String PROVIDER_CHECKOUT_ID = "checkout-123";
-    private static final String PROVIDER_CHECOUT_URL = "https://checkout.com/checkout-123";
+    private static final String PROVIDER_CHECkOUT_URL = "https://checkout.com/checkout-123";
+    private static final Duration EXPIRATION_TIME = Duration.ofMinutes(15);
 
     @Mock
     private PaymentGateway paymentGateway;
@@ -194,12 +196,16 @@ class ConfirmPaymentServiceTest {
     }
 
     private Payment pendingPayment(VolunteerID volunteerId) {
-        Payment payment = Payment.pending(volunteerId, Card.newCard().getPrice(), IDEMPOTENCY_KEY);
+        Instant createdAt = Instant.now();
+        Instant expiresAt = createdAt.plus(EXPIRATION_TIME);
+        Payment payment = Payment.pending(volunteerId, Card.newCard().getPrice(), IDEMPOTENCY_KEY, createdAt, expiresAt);
         payment.attachProviderCheckoutId(PROVIDER_CHECKOUT_ID);
         return payment;
     }
 
     private Payment finalizedPayment(VolunteerID volunteerId, PaymentStatus status) {
+        Instant createdAt = Instant.now();
+        Instant expiresAt = createdAt.plus(EXPIRATION_TIME);
         return Payment.rehydrate(
                 PaymentID.generate(),
                 volunteerId,
@@ -207,9 +213,11 @@ class ConfirmPaymentServiceTest {
                 Card.newCard().getPrice(),
                 status,
                 PROVIDER_CHECKOUT_ID,
-                PROVIDER_CHECOUT_URL,
+                PROVIDER_CHECkOUT_URL,
                 status == PaymentStatus.SUCCESS ? Instant.now() : null,
-                Instant.now()
+                createdAt,
+                expiresAt,
+                null
         );
     }
 }
