@@ -1,5 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.GetPaymentStatusQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.TokenService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.security.JwtAuthenticationFilter;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.SecurityConfiguration;
@@ -9,9 +10,11 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConfirmPaymentResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentStatusResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ConfirmPaymentUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreatePaymentCheckoutUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.GetPaymentStatusUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListCurrentVolunteerPaymentsUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ProcessPaymentWebhookUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.PaymentControllerMapper;
@@ -68,6 +71,9 @@ class PaymentControllerTest {
 
     @MockitoBean
     private ProcessPaymentWebhookUseCase processPaymentWebhookUseCase;
+
+    @MockitoBean
+    private GetPaymentStatusUseCase getPaymentStatusUseCase;
 
     @MockitoBean
     private TokenService tokenService;
@@ -326,6 +332,51 @@ class PaymentControllerTest {
                 20,
                 "createdAt,desc"
         ));
+    }
+
+    @Test
+    void getPaymentStatus_WhenVolunteerIsAuthenticated_ReturnsPaymentStatusResponse() throws Exception {
+        String volunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+        String paymentId = "payment-123";
+
+        when(getPaymentStatusUseCase.execute(new GetPaymentStatusQuery(paymentId, volunteerId)))
+                .thenReturn(new PaymentStatusResult(paymentId, "SUCCESS", BigDecimal.valueOf(10)));
+
+        mockMvc.perform(get("/api/v1/payments/{paymentId}/status", paymentId)
+                        .with(user(volunteerId).roles("VOLUNTEER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentId").value(paymentId))
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.amount").value(10));
+
+        ArgumentCaptor<GetPaymentStatusQuery> queryCaptor =
+                ArgumentCaptor.forClass(GetPaymentStatusQuery.class);
+
+        verify(getPaymentStatusUseCase).execute(queryCaptor.capture());
+
+        GetPaymentStatusQuery query = queryCaptor.getValue();
+
+        assertAll(
+                () -> assertEquals(paymentId, query.paymentId()),
+                () -> assertEquals(volunteerId, query.volunteerId())
+        );
+    }
+
+    @Test
+    void getPaymentStatus_WhenAnonymous_Returns401() throws Exception {
+        mockMvc.perform(get("/api/v1/payments/{paymentId}/status", "payment-123"))
+                .andExpect(status().isUnauthorized());
+
+        verify(getPaymentStatusUseCase, never()).execute(any());
+    }
+
+    @Test
+    void getPaymentStatus_WhenWrongRole_Returns403() throws Exception {
+        mockMvc.perform(get("/api/v1/payments/{paymentId}/status", "payment-123")
+                        .with(user("some-user").roles("OTHER")))
+                .andExpect(status().isForbidden());
+
+        verify(getPaymentStatusUseCase, never()).execute(any());
     }
 
     private record CreateCheckoutJson(
