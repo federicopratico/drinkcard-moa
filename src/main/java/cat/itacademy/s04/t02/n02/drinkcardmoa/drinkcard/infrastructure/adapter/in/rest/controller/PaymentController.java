@@ -1,5 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.ProcessPaymentWebhookCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConfirmPaymentResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
@@ -7,7 +8,9 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ConfirmPaymentUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreatePaymentCheckoutUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListCurrentVolunteerPaymentsUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ProcessPaymentWebhookUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.CreatePaymentCheckoutRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.SumUpWebhookRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.ConfirmPaymentResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.CreatePaymentCheckoutResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
@@ -26,8 +29,11 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 public class PaymentController {
 
+    private static final String SUM_UP_EVENT_TYPE = "CHECKOUT_STATUS_CHANGED";
+
     private final CreatePaymentCheckoutUseCase createPaymentCheckoutUseCase;
     private final ConfirmPaymentUseCase confirmPaymentUseCase;
+    private final ProcessPaymentWebhookUseCase processPaymentWebhookUseCase;
     private final ListCurrentVolunteerPaymentsUseCase listCurrentVolunteerPaymentsUseCase;
     private final PaymentControllerMapper mapper;
     private final PaymentProperties paymentProperties;
@@ -40,6 +46,21 @@ public class PaymentController {
         CreatePaymentCheckoutResult result = createPaymentCheckoutUseCase.execute(mapper.toCommand(request, authentication.getName(), paymentProperties.getFrontendSuccessUrl()));
 
         return ResponseEntity.status(201).body(mapper.toResponse(result));
+    }
+
+    @PostMapping("/sumup/webhook")
+    public ResponseEntity<Void> sumUpWebhook(@RequestBody SumUpWebhookRequest request) {
+        if(!SUM_UP_EVENT_TYPE.equals(request.eventType())) {
+            return ResponseEntity.noContent().build();
+        }
+
+        if (request.id() == null || request.id().isBlank()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        processPaymentWebhookUseCase.execute(new ProcessPaymentWebhookCommand(request.id()));
+
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{paymentId}/confirm")

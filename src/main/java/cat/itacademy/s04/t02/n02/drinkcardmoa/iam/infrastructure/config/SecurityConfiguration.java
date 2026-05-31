@@ -37,7 +37,8 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(
                                 "/api/v1/auth/register",
-                                "/api/v1/auth/login"
+                                "/api/v1/auth/login",
+                                "/api/v1/payments/sumup/webhook"
                         ).permitAll()
                                 .anyRequest().authenticated()
                         )
@@ -68,5 +69,4 @@ public class SecurityConfiguration {
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
-
 }

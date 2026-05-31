@@ -5,6 +5,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.sec
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.SecurityConfiguration;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.ConfirmPaymentCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreatePaymentCheckoutCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.ProcessPaymentWebhookCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConfirmPaymentResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
@@ -12,6 +13,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ConfirmPaymentUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreatePaymentCheckoutUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListCurrentVolunteerPaymentsUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ProcessPaymentWebhookUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.PaymentControllerMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.config.PaymentProperties;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
@@ -32,6 +34,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -61,6 +65,9 @@ class PaymentControllerTest {
 
     @MockitoBean
     private ListCurrentVolunteerPaymentsUseCase listCurrentVolunteerPaymentsUseCase;
+
+    @MockitoBean
+    private ProcessPaymentWebhookUseCase processPaymentWebhookUseCase;
 
     @MockitoBean
     private TokenService tokenService;
@@ -157,6 +164,80 @@ class PaymentControllerTest {
         verify(confirmPaymentUseCase).execute(commandCaptor.capture());
 
         assertEquals(paymentId, commandCaptor.getValue().paymentId());
+    }
+
+    @Test
+    void sumUpWebhook_WhenCheckoutStatusChangedEventHasCheckoutId_ReturnsNoContentAndProcessesWebhook() throws Exception {
+        String providerCheckoutId = "checkout-123";
+
+        String requestBody = """
+                {
+                  "event_type": "CHECKOUT_STATUS_CHANGED",
+                  "id": "checkout-123"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/payments/sumup/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNoContent());
+
+        ArgumentCaptor<ProcessPaymentWebhookCommand> commandCaptor =
+                ArgumentCaptor.forClass(ProcessPaymentWebhookCommand.class);
+
+        verify(processPaymentWebhookUseCase).execute(commandCaptor.capture());
+
+        assertEquals(providerCheckoutId, commandCaptor.getValue().providerCheckoutId());
+    }
+
+    @Test
+    void sumUpWebhook_WhenEventTypeIsUnsupported_ReturnsNoContentWithoutProcessingWebhook() throws Exception {
+        String requestBody = """
+                {
+                  "event_type": "UNSUPPORTED_EVENT",
+                  "id": "checkout-123"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/payments/sumup/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNoContent());
+
+        verify(processPaymentWebhookUseCase, never()).execute(any());
+    }
+
+    @Test
+    void sumUpWebhook_WhenCheckoutIdIsMissing_ReturnsNoContentWithoutProcessingWebhook() throws Exception {
+        String requestBody = """
+                {
+                  "event_type": "CHECKOUT_STATUS_CHANGED"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/payments/sumup/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNoContent());
+
+        verify(processPaymentWebhookUseCase, never()).execute(any());
+    }
+
+    @Test
+    void sumUpWebhook_WhenCheckoutIdIsBlank_ReturnsNoContentWithoutProcessingWebhook() throws Exception {
+        String requestBody = """
+                {
+                  "event_type": "CHECKOUT_STATUS_CHANGED",
+                  "id": " "
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/payments/sumup/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNoContent());
+
+        verify(processPaymentWebhookUseCase, never()).execute(any());
     }
 
     @Test
