@@ -4,15 +4,15 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListCurrentVolunteerPaymentsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.ConfirmPaymentResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.CreatePaymentCheckoutResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentStatusResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ConfirmPaymentUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.CreatePaymentCheckoutUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListCurrentVolunteerPaymentsUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ProcessPaymentWebhookUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.*;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.GetPaymentStatusQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.CreatePaymentCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.SumUpWebhookRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.ConfirmPaymentResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.CreatePaymentCheckoutResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentStatusResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.PaymentControllerMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.config.PaymentProperties;
@@ -35,6 +35,7 @@ public class PaymentController {
     private final ConfirmPaymentUseCase confirmPaymentUseCase;
     private final ProcessPaymentWebhookUseCase processPaymentWebhookUseCase;
     private final ListCurrentVolunteerPaymentsUseCase listCurrentVolunteerPaymentsUseCase;
+    private final GetPaymentStatusUseCase getPaymentStatusUseCase;
     private final PaymentControllerMapper mapper;
     private final PaymentProperties paymentProperties;
 
@@ -82,6 +83,16 @@ public class PaymentController {
         ListCurrentVolunteerPaymentsQuery query = new ListCurrentVolunteerPaymentsQuery(authentication.getName(), page, size, sort);
 
         PageResult<PaymentSummaryResult> result = listCurrentVolunteerPaymentsUseCase.execute(query);
+
+        return ResponseEntity.ok(mapper.toResponse(result));
+    }
+
+    @GetMapping("/{paymentId}/status")
+    @PreAuthorize("hasRole('VOLUNTEER')")
+    public ResponseEntity<PaymentStatusResponse> getPaymentStatus(@PathVariable String paymentId, Authentication authentication) {
+        GetPaymentStatusQuery query = new GetPaymentStatusQuery(paymentId, authentication.getName());
+
+        PaymentStatusResult result = getPaymentStatusUseCase.execute(query);
 
         return ResponseEntity.ok(mapper.toResponse(result));
     }
