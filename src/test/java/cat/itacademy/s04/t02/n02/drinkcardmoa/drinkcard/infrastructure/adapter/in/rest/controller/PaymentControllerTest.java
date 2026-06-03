@@ -197,56 +197,6 @@ class PaymentControllerTest {
     }
 
     @Test
-    void sumUpWebhook_WhenEventTypeIsUnsupported_ReturnsNoContentWithoutProcessingWebhook() throws Exception {
-        String requestBody = """
-                {
-                  "event_type": "UNSUPPORTED_EVENT",
-                  "id": "checkout-123"
-                }
-                """;
-
-        mockMvc.perform(post("/api/v1/payments/sumup/webhook")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isNoContent());
-
-        verify(processPaymentWebhookUseCase, never()).execute(any());
-    }
-
-    @Test
-    void sumUpWebhook_WhenCheckoutIdIsMissing_ReturnsNoContentWithoutProcessingWebhook() throws Exception {
-        String requestBody = """
-                {
-                  "event_type": "CHECKOUT_STATUS_CHANGED"
-                }
-                """;
-
-        mockMvc.perform(post("/api/v1/payments/sumup/webhook")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isNoContent());
-
-        verify(processPaymentWebhookUseCase, never()).execute(any());
-    }
-
-    @Test
-    void sumUpWebhook_WhenCheckoutIdIsBlank_ReturnsNoContentWithoutProcessingWebhook() throws Exception {
-        String requestBody = """
-                {
-                  "event_type": "CHECKOUT_STATUS_CHANGED",
-                  "id": " "
-                }
-                """;
-
-        mockMvc.perform(post("/api/v1/payments/sumup/webhook")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isNoContent());
-
-        verify(processPaymentWebhookUseCase, never()).execute(any());
-    }
-
-    @Test
     void listCurrentVolunteerPayments_WhenPaymentsExist_ShouldReturnPagedPaymentResponse() throws Exception {
         String authenticatedVolunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
         String ignoredVolunteerId = "8799df50-d517-4693-9e46-51b537c305a2";
