@@ -51,13 +51,6 @@ public class PaymentController {
 
     @PostMapping("/sumup/webhook")
     public ResponseEntity<Void> sumUpWebhook(@RequestBody SumUpWebhookRequest request) {
-        if(!SUM_UP_EVENT_TYPE.equals(request.eventType())) {
-            return ResponseEntity.noContent().build();
-        }
-
-        if (request.id() == null || request.id().isBlank()) {
-            return ResponseEntity.noContent().build();
-        }
 
         processPaymentWebhookUseCase.execute(new ProcessPaymentWebhookCommand(request.id()));
 
