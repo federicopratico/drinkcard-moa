@@ -17,9 +17,9 @@ public class AuthMapper {
         return new RegisterUserCommand(
                 request.firstName(),
                 request.lastName(),
-                request.email(),
                 request.password(),
-                "VOLUNTEER"
+                "VOLUNTEER",
+                request.invitationToken()
         );
     }
 

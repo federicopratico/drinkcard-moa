@@ -23,7 +23,6 @@ public class Invitation {
         this.status = status;
     }
 
-
     public boolean isAccepted() {
         return status == InvitationStatus.ACCEPTED;
     }
@@ -38,5 +37,9 @@ public class Invitation {
 
     public void refresh(InvitationToken invitationToken) {
         this.invitationToken = invitationToken;
+    }
+
+    public void accept() {
+        this.status = InvitationStatus.ACCEPTED;
     }
 }
