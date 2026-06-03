@@ -54,6 +54,10 @@ public class ProcessPaymentWebhookService implements ProcessPaymentWebhookUseCas
                     });
         }));
 
+        if(!shouldProcess) {
+            return;
+        }
+
         PaymentGatewayStatus providerStatus = paymentGateway.fetchCheckoutStatus(cmd.providerCheckoutId());
 
         transactionTemplate.executeWithoutResult(
