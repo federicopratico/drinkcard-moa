@@ -1,5 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.CheckoutAlreadyInProgressException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.config.PaymentProperties;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.CreatePaymentCheckoutCommand;
@@ -18,10 +19,14 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.P
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkCardAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -32,65 +37,67 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
     final DrinkCardAccountRepository drinkCardAccountRepository;
     final TransactionTemplate transactionTemplate;
     final PaymentProperties paymentProperties;
+    private final LockRegistry lockRegistry;
 
     @Override
     public CreatePaymentCheckoutResult execute(CreatePaymentCheckoutCommand cmd) {
-
         Instant purchaseTimestamp = Instant.now();
-        Instant expiresAt = purchaseTimestamp.plus(paymentProperties.getCheckoutExpiration());
+        var key = cmd.volunteerId() + OffsetDateTime.ofInstant(purchaseTimestamp, ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE);
+        var lock = lockRegistry.obtain(key);
 
-        Payment existingPayment = findExistingPayment(cmd.idempotencyKey());
-
-        if (existingPayment != null) {
-            return toPaymentCheckoutResult(existingPayment);
+        if (!lock.tryLock()) {
+           throw new CheckoutAlreadyInProgressException("Another purchase is being processed for this volunteer.");
         }
 
-        validateDrinkCardAccountCanPurchase(cmd.volunteerId(), purchaseTimestamp);
-
-        Card card = Card.newCard();
-
-        Payment pendingPayment = Payment.pending(
-                VolunteerID.from(cmd.volunteerId()),
-                card.getPrice(),
-                cmd.idempotencyKey(),
-                purchaseTimestamp,
-                expiresAt
-        );
-
-
-        HostedCheckout hostedCheckout = paymentGateway.createHostedCheckout(
-                new HostedCheckoutRequest(
-                        pendingPayment.getPaymentId().asString(),
-                        pendingPayment.getAmount(),
-                        "EUR",
-                        "Drink card - 5 credits",
-                        cmd.redirectUrl(),
-                        paymentProperties.getWebhookReturnUrl(),
-                        pendingPayment.getExpiresAt()
-                )
-        );
-
-        validateDrinkCardAccountCanPurchase(cmd.volunteerId(), purchaseTimestamp);
-
         try {
+            validateDrinkCardAccountCanPurchase(cmd.volunteerId(), purchaseTimestamp);
+
+            Instant expiresAt = purchaseTimestamp.plus(paymentProperties.getCheckoutExpiration());
+
+            Payment existingPayment = findExistingPayment(key);
+
+            if (existingPayment != null) {
+                return toPaymentCheckoutResult(existingPayment);
+            }
+
+            Card card = Card.newCard();
+
+            Payment pendingPayment = Payment.pending(
+                    VolunteerID.from(cmd.volunteerId()),
+                    card.getPrice(),
+                    key,
+                    purchaseTimestamp,
+                    expiresAt
+            );
+            HostedCheckout hostedCheckout = paymentGateway.createHostedCheckout(
+                    new HostedCheckoutRequest(
+                            pendingPayment.getPaymentId().asString(),
+                            pendingPayment.getAmount(),
+                            "EUR",
+                            "Drink card - 5 credits",
+                            cmd.redirectUrl(),
+                            paymentProperties.getWebhookReturnUrl(),
+                            pendingPayment.getExpiresAt()
+                    )
+            );
             Payment savedPayment = savePaymentWithProviderCheckout(pendingPayment, hostedCheckout);
             return toPaymentCheckoutResult(savedPayment);
         } catch (DataIntegrityViolationException e) {
-            Payment concurrentlySavedPayment = findExistingPayment(cmd.idempotencyKey());
+            Payment concurrentlySavedPayment = findExistingPayment(key);
 
             if (concurrentlySavedPayment != null)  {
                 return toPaymentCheckoutResult(concurrentlySavedPayment);
             }
 
             throw  e;
+        } finally {
+            lock.unlock();
         }
     }
 
-    private Payment findExistingPayment(String idempotencyKey) {
-        return transactionTemplate.execute(status -> {
-            return paymentRepository.findByIdempotencyKey(idempotencyKey)
-                    .orElse(null);
-        });
+    private Payment findExistingPayment(String key) {
+        return transactionTemplate.execute(status -> paymentRepository.findByIdempotencyKey(key)
+                .orElse(null));
     }
 
     private Payment savePaymentWithProviderCheckout(Payment payment, HostedCheckout hostedCheckout) {

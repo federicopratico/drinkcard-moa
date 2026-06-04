@@ -91,7 +91,7 @@ class PaymentControllerTest {
         );
 
         when(createPaymentCheckoutUseCase.execute(
-                new CreatePaymentCheckoutCommand(volunteerId, PAYMENT_SUCCESS_URL, idempotencyKey)
+                new CreatePaymentCheckoutCommand(volunteerId, PAYMENT_SUCCESS_URL)
         )).thenReturn(result);
 
         String requestBody = objectMapper.writeValueAsString(new CreateCheckoutJson(
@@ -118,7 +118,6 @@ class PaymentControllerTest {
 
         assertEquals(volunteerId, command.volunteerId());
         assertEquals(PAYMENT_SUCCESS_URL, command.redirectUrl());
-        assertEquals(idempotencyKey, command.idempotencyKey());
     }
 
     @Test

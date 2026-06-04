@@ -21,8 +21,7 @@ public class PaymentControllerMapper {
     public CreatePaymentCheckoutCommand toCommand(CreatePaymentCheckoutRequest request, String volunteerId, String redirectUrl) {
         return new CreatePaymentCheckoutCommand(
                 volunteerId,
-                redirectUrl,
-                request.idempotencyKey()
+                redirectUrl
         );
     }
 

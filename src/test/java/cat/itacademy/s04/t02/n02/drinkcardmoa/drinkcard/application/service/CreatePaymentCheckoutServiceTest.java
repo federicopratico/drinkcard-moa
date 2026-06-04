@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -33,6 +34,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -40,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -65,6 +68,12 @@ class CreatePaymentCheckoutServiceTest {
     @Mock
     private TransactionTemplate transactionTemplate;
 
+    @Mock
+    private LockRegistry lockRegistry;
+
+    @Mock
+    private Lock lock;
+
     private CreatePaymentCheckoutService service;
 
     @BeforeEach
@@ -73,24 +82,35 @@ class CreatePaymentCheckoutServiceTest {
         paymentProperties.setCheckoutExpiration(CHECKOUT_EXPIRATION);
         paymentProperties.setWebhookReturnUrl(WEBHOOK_RETURN_URL);
 
+        when(lockRegistry.obtain(any())).thenReturn(lock);
+        when(lock.tryLock()).thenReturn(true);
+
         service = new CreatePaymentCheckoutService(
                 paymentRepository,
                 paymentGateway,
                 drinkCardAccountRepository,
                 transactionTemplate,
-                paymentProperties
+                paymentProperties,
+                lockRegistry
         );
     }
 
     @Test
-    void execute_WhenPaymentExistsForIdempotencyKey_ReturnsExistingPaymentWithoutCreatingCheckout() {
-        Payment existingPayment = PaymentTestBuilder.aPayment().build();
+    void execute_WhenPaymentExistsForVolunteerToday_ReturnsExistingPaymentWithoutCreatingCheckout() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
+        Payment existingPayment = PaymentTestBuilder.aPayment()
+                .withVolunteerId(volunteerId)
+                .build();
 
         when(transactionTemplate.execute(any())).thenAnswer(executeTransactionCallback());
-        when(paymentRepository.findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY))
+        doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
+                .thenReturn(Optional.of(drinkCardAccount));
+        when(paymentRepository.findByIdempotencyKey(any()))
                 .thenReturn(Optional.of(existingPayment));
 
-        CreatePaymentCheckoutResult result = service.execute(command(PaymentTestBuilder.DEFAULT_VOLUNTEER_ID));
+        CreatePaymentCheckoutResult result = service.execute(command(volunteerId));
 
         assertAll(
                 () -> assertEquals(existingPayment.getPaymentId().asString(), result.paymentId()),
@@ -99,9 +119,7 @@ class CreatePaymentCheckoutServiceTest {
                 () -> assertEquals(existingPayment.getProviderCheckoutUrl(), result.checkoutUrl())
         );
 
-        verify(paymentRepository).findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY);
-        verify(transactionTemplate, never()).executeWithoutResult(any());
-        verify(drinkCardAccountRepository, never()).findByVolunteerId(any());
+        verify(paymentRepository).findByIdempotencyKey(argThat(key -> key.startsWith(volunteerId.asString())));
         verify(paymentGateway, never()).createHostedCheckout(any());
         verify(paymentRepository, never()).save(any());
     }
@@ -115,7 +133,7 @@ class CreatePaymentCheckoutServiceTest {
 
         when(transactionTemplate.execute(any())).thenAnswer(executeTransactionCallback());
         doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
-        when(paymentRepository.findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY))
+        when(paymentRepository.findByIdempotencyKey(any()))
                 .thenReturn(Optional.empty());
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
@@ -162,7 +180,7 @@ class CreatePaymentCheckoutServiceTest {
                 () -> assertEquals(providerCreatedAt, savedPayment.getProviderCreatedAt())
         );
 
-        verify(drinkCardAccountRepository, times(2)).findByVolunteerId(volunteerId);
+        verify(drinkCardAccountRepository, times(1)).findByVolunteerId(volunteerId);
     }
 
     @Test
@@ -175,7 +193,7 @@ class CreatePaymentCheckoutServiceTest {
 
         when(transactionTemplate.execute(any())).thenAnswer(executeTransactionCallback());
         doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
-        when(paymentRepository.findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY))
+        when(paymentRepository.findByIdempotencyKey(any()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(concurrentlySavedPayment));
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
@@ -196,7 +214,7 @@ class CreatePaymentCheckoutServiceTest {
 
         verify(paymentGateway).createHostedCheckout(any(HostedCheckoutRequest.class));
         verify(paymentRepository).save(any(Payment.class));
-        verify(paymentRepository, times(2)).findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY);
+        verify(paymentRepository, times(2)).findByIdempotencyKey(argThat(key -> key.startsWith(volunteerId.asString())));
     }
 
     @Test
@@ -208,7 +226,7 @@ class CreatePaymentCheckoutServiceTest {
 
         when(transactionTemplate.execute(any())).thenAnswer(executeTransactionCallback());
         doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
-        when(paymentRepository.findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY))
+        when(paymentRepository.findByIdempotencyKey(any()))
                 .thenReturn(Optional.empty());
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
@@ -222,23 +240,21 @@ class CreatePaymentCheckoutServiceTest {
         );
 
         assertEquals(exception, thrown);
-        verify(paymentRepository, times(2)).findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY);
+        verify(paymentRepository, times(2)).findByIdempotencyKey(argThat(key -> key.startsWith(volunteerId.asString())));
     }
 
     @Test
     void execute_WhenDrinkCardAccountDoesNotExist_ThrowsDrinkCardAccountNotFoundException() {
         VolunteerID volunteerId = VolunteerID.generate();
 
-        when(transactionTemplate.execute(any())).thenAnswer(executeTransactionCallback());
         doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
-        when(paymentRepository.findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY))
-                .thenReturn(Optional.empty());
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.empty());
 
         assertThrows(DrinkCardAccountNotFoundException.class, () -> service.execute(command(volunteerId)));
 
         verify(paymentGateway, never()).createHostedCheckout(any());
         verify(paymentRepository, never()).save(any());
+        verify(paymentRepository, never()).findByIdempotencyKey(any());
     }
 
     @Test
@@ -247,10 +263,7 @@ class CreatePaymentCheckoutServiceTest {
         DrinkCardAccount drinkCardAccount =
                 DrinkCardAccount.rehydrate(1L, volunteerId, 0, Instant.now(), Instant.now());
 
-        when(transactionTemplate.execute(any())).thenAnswer(executeTransactionCallback());
         doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
-        when(paymentRepository.findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY))
-                .thenReturn(Optional.empty());
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
 
@@ -258,6 +271,7 @@ class CreatePaymentCheckoutServiceTest {
 
         verify(paymentGateway, never()).createHostedCheckout(any());
         verify(paymentRepository, never()).save(any());
+        verify(paymentRepository, never()).findByIdempotencyKey(any());
     }
 
     @Test
@@ -272,10 +286,7 @@ class CreatePaymentCheckoutServiceTest {
                 DrinkCardAccountStatus.SUSPENDED
         );
 
-        when(transactionTemplate.execute(any())).thenAnswer(executeTransactionCallback());
         doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
-        when(paymentRepository.findByIdempotencyKey(PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY))
-                .thenReturn(Optional.empty());
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
 
@@ -283,13 +294,13 @@ class CreatePaymentCheckoutServiceTest {
 
         verify(paymentGateway, never()).createHostedCheckout(any());
         verify(paymentRepository, never()).save(any());
+        verify(paymentRepository, never()).findByIdempotencyKey(any());
     }
 
     private CreatePaymentCheckoutCommand command(VolunteerID volunteerId) {
         return new CreatePaymentCheckoutCommand(
                 volunteerId.asString(),
-                REDIRECT_URL,
-                PaymentTestBuilder.DEFAULT_IDEMPOTENCY_KEY
+                REDIRECT_URL
         );
     }
 

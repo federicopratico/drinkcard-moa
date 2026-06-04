@@ -1,6 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.ActiveDrinkTicketAlreadyExistsException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.CheckoutAlreadyInProgressException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.EmailAlreadyExistsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidCredentialsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
@@ -84,6 +85,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientCreditsException.class)
     public ResponseEntity<Map<String, Object>> handleInsufficientCredits(InsufficientCreditsException ex) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(CheckoutAlreadyInProgressException.class)
+    public ResponseEntity<Map<String, Object>> handleCheckoutAlreadyInProgress(CheckoutAlreadyInProgressException ex) {
+        return error(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
