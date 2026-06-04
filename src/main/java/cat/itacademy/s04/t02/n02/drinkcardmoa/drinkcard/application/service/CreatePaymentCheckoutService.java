@@ -16,57 +16,40 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCa
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkCardAccount;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCase {
 
-    PaymentRepository paymentRepository;
-    PaymentGateway paymentGateway;
-    DrinkCardAccountRepository drinkCardAccountRepository;
-    PaymentProperties paymentProperties;
+    final PaymentRepository paymentRepository;
+    final PaymentGateway paymentGateway;
+    final DrinkCardAccountRepository drinkCardAccountRepository;
+    final TransactionTemplate transactionTemplate;
+    final PaymentProperties paymentProperties;
 
-    public CreatePaymentCheckoutService(PaymentRepository paymentRepository, PaymentGateway paymentGateway, DrinkCardAccountRepository drinkCardAccountRepository, PaymentProperties paymentProperties) {
-        this.paymentRepository = paymentRepository;
-        this.paymentGateway = paymentGateway;
-        this.drinkCardAccountRepository = drinkCardAccountRepository;
-        this.paymentProperties = paymentProperties;
-    }
-
-    @Transactional
     @Override
     public CreatePaymentCheckoutResult execute(CreatePaymentCheckoutCommand cmd) {
 
         Instant purchaseTimestamp = Instant.now();
         Instant expiresAt = purchaseTimestamp.plus(paymentProperties.getCheckoutExpiration());
 
-        Optional<Payment> existingPayment = paymentRepository.findByIdempotencyKey(cmd.idempotencyKey());
+        Payment existingPayment = findExistingPayment(cmd.idempotencyKey());
 
-        if (existingPayment.isPresent()) {
-            Payment payment = existingPayment.get();
-
-            return toPaymentCheckoutResult(payment);
+        if (existingPayment != null) {
+            return toPaymentCheckoutResult(existingPayment);
         }
 
-        DrinkCardAccount drinkCardAccount = drinkCardAccountRepository
-                .findByVolunteerId(VolunteerID.from(cmd.volunteerId()))
-                .orElseThrow(() -> new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + cmd.volunteerId()));
-
-        if (!drinkCardAccount.isActive()) {
-            throw new DrinkCardAccountSuspendedException("DrinkCardAccount is suspended.");
-        }
-
-        if (!drinkCardAccount.canPurchaseCard(purchaseTimestamp)) {
-            throw new PurchaseLimitExceededException("DrinkCardAccount has exceeded the purchase limit for today.");
-        }
+        validateDrinkCardAccountCanPurchase(cmd.volunteerId(), purchaseTimestamp);
 
         Card card = Card.newCard();
 
-        Payment payment = Payment.pending(
+        Payment pendingPayment = Payment.pending(
                 VolunteerID.from(cmd.volunteerId()),
                 card.getPrice(),
                 cmd.idempotencyKey(),
@@ -74,27 +57,66 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
                 expiresAt
         );
 
-        payment = paymentRepository.save(payment);
 
         HostedCheckout hostedCheckout = paymentGateway.createHostedCheckout(
                 new HostedCheckoutRequest(
-                        payment.getPaymentId().asString(),
-                        payment.getAmount(),
+                        pendingPayment.getPaymentId().asString(),
+                        pendingPayment.getAmount(),
                         "EUR",
                         "Drink card - 5 credits",
                         cmd.redirectUrl(),
                         paymentProperties.getWebhookReturnUrl(),
-                        payment.getExpiresAt()
+                        pendingPayment.getExpiresAt()
                 )
         );
 
-        payment.attachProviderCheckoutId(hostedCheckout.providerCheckoutId());
-        payment.attachProviderCheckoutUrl(hostedCheckout.checkoutUrl());
-        payment.attachProviderCreatedAt(hostedCheckout.providerCreatedAt());
+        validateDrinkCardAccountCanPurchase(cmd.volunteerId(), purchaseTimestamp);
 
-        payment = paymentRepository.save(payment);
+        try {
+            Payment savedPayment = savePaymentWithProviderCheckout(pendingPayment, hostedCheckout);
+            return toPaymentCheckoutResult(savedPayment);
+        } catch (DataIntegrityViolationException e) {
+            Payment concurrentlySavedPayment = findExistingPayment(cmd.idempotencyKey());
 
-        return toPaymentCheckoutResult(payment);
+            if (concurrentlySavedPayment != null)  {
+                return toPaymentCheckoutResult(concurrentlySavedPayment);
+            }
+
+            throw  e;
+        }
+    }
+
+    private Payment findExistingPayment(String idempotencyKey) {
+        return transactionTemplate.execute(status -> {
+            return paymentRepository.findByIdempotencyKey(idempotencyKey)
+                    .orElse(null);
+        });
+    }
+
+    private Payment savePaymentWithProviderCheckout(Payment payment, HostedCheckout hostedCheckout) {
+        return transactionTemplate.execute(status -> {
+            payment.attachProviderCheckoutId(hostedCheckout.providerCheckoutId());
+            payment.attachProviderCheckoutUrl(hostedCheckout.checkoutUrl());
+            payment.attachProviderCreatedAt(hostedCheckout.providerCreatedAt());
+
+            return paymentRepository.save(payment);
+        });
+    }
+
+    private void validateDrinkCardAccountCanPurchase(String volunteerId, Instant purchaseTimestamp) {
+        transactionTemplate.executeWithoutResult(status -> {
+            DrinkCardAccount account = drinkCardAccountRepository
+                    .findByVolunteerId(VolunteerID.from(volunteerId))
+                    .orElseThrow(() -> new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + volunteerId));
+
+            if (!account.isActive()) {
+                throw new DrinkCardAccountSuspendedException("DrinkCardAccount is suspended.");
+            }
+
+            if (!account.canPurchaseCard(purchaseTimestamp)) {
+                throw new PurchaseLimitExceededException("DrinkCardAccount has exceeded the purchase limit for today.");
+            }
+        });
     }
 
     private CreatePaymentCheckoutResult toPaymentCheckoutResult(Payment payment) {
