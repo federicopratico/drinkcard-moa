@@ -7,6 +7,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.que
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.testhelper.PaymentTestBuilder;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,10 @@ class ListCurrentVolunteerPaymentsServiceTest {
     @Test
     void execute_WhenNoPaginationProvided_ShouldSearchAuthenticatedVolunteerPaymentsWithDefaults() {
         VolunteerID volunteerId = VolunteerID.generate();
-        Payment payment = createPayment(volunteerId, PaymentStatus.PENDING);
+        Payment payment = PaymentTestBuilder.aPayment()
+                .withVolunteerId(volunteerId)
+                .withStatus(PaymentStatus.PENDING)
+                .build();
 
         when(paymentRepository.searchVolunteerPayments(any(PaymentSearchCriteria.class)))
                 .thenReturn(new PageResult<>(List.of(payment), 0, 20, 1, 1));
@@ -143,20 +147,6 @@ class ListCurrentVolunteerPaymentsServiceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.execute(query)
-        );
-    }
-
-    private Payment createPayment(VolunteerID volunteerId, PaymentStatus status) {
-        return Payment.rehydrate(
-                PaymentID.generate(),
-                volunteerId,
-                "idempotency-key",
-                BigDecimal.valueOf(10),
-                status,
-                "checkout-id",
-                "https://checkout.example.test",
-                null,
-                Instant.parse("2026-05-19T20:00:00Z")
         );
     }
 }

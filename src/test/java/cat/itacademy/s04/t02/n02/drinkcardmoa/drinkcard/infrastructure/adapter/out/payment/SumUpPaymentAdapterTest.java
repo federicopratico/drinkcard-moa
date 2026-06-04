@@ -13,12 +13,18 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class SumUpPaymentAdapterTest {
+
+    private static final String REDIRECT_URL = "http://localhost:3000/payment/success";
+    private static final String RETURN_URL = "http://localhost:8080/api/v1/payments/sumup/webhook";
+    private static final Instant VALID_UNTIL = Instant.parse("2026-05-30T10:15:00Z");
+    private static final Instant PROVIDER_CREATED_AT = Instant.parse("2026-05-30T10:00:00Z");
 
     private MockRestServiceServer server;
     private SumUpPaymentAdapter adapter;
@@ -48,6 +54,8 @@ class SumUpPaymentAdapterTest {
                           "merchant_code": "merchant-123",
                           "description": "Drink card - 5 credits",
                           "redirect_url": "http://localhost:3000/payment/success",
+                          "return_url": "http://localhost:8080/api/v1/payments/sumup/webhook",
+                          "valid_until": "2026-05-30T10:15:00Z",
                           "hosted_checkout": {
                             "enabled": true
                           }
@@ -57,7 +65,8 @@ class SumUpPaymentAdapterTest {
                         {
                           "id": "checkout-123",
                           "status": "PENDING",
-                          "hosted_checkout_url": "https://checkout.sumup.com/checkout-123"
+                          "hosted_checkout_url": "https://checkout.sumup.com/checkout-123",
+                          "date": "2026-05-30T10:00:00Z"
                         }
                         """, MediaType.APPLICATION_JSON));
 
@@ -65,7 +74,8 @@ class SumUpPaymentAdapterTest {
 
         assertAll(
                 () -> assertEquals("checkout-123", result.providerCheckoutId()),
-                () -> assertEquals("https://checkout.sumup.com/checkout-123", result.checkoutUrl())
+                () -> assertEquals("https://checkout.sumup.com/checkout-123", result.checkoutUrl()),
+                () -> assertEquals(PROVIDER_CREATED_AT, result.providerCreatedAt())
         );
 
         server.verify();
@@ -182,7 +192,9 @@ class SumUpPaymentAdapterTest {
                 BigDecimal.valueOf(10),
                 "EUR",
                 "Drink card - 5 credits",
-                "http://localhost:3000/payment/success"
+                REDIRECT_URL,
+                RETURN_URL,
+                VALID_UNTIL
         );
     }
 }

@@ -7,6 +7,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.que
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.testhelper.PaymentTestBuilder;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -38,7 +40,10 @@ class ListPaymentsAdminServiceTest {
 
     @Test
     void execute_WhenNoFiltersProvided_ShouldReturnPagedPaymentsWithDefaults() {
-        Payment payment = createPayment(PaymentStatus.PENDING);
+        Payment payment = PaymentTestBuilder.aPayment()
+                .withStatus(PaymentStatus.PENDING)
+                .build();
+
         when(paymentRepository.searchAdminPayments(org.mockito.ArgumentMatchers.any(PaymentSearchCriteria.class)))
                 .thenReturn(new PageResult<>(List.of(payment), 0, 20, 1, 1));
 
@@ -119,22 +124,6 @@ class ListPaymentsAdminServiceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.execute(query)
-        );
-    }
-
-    private Payment createPayment(PaymentStatus status) {
-        Instant createdAt = Instant.parse("2026-05-19T20:00:00Z");
-
-        return Payment.rehydrate(
-                PaymentID.generate(),
-                VolunteerID.generate(),
-                "idempotency-key",
-                BigDecimal.valueOf(5),
-                status,
-                "checkout-id",
-                "https://checkout.example.test",
-                null,
-                createdAt
         );
     }
 }
