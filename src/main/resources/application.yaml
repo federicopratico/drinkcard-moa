@@ -17,6 +17,10 @@ app:
     frontend-success-url: ${PAYMENT_FRONTEND_SUCCESS_URL}
     checkout-expiration: ${PAYMENT_CHECKOUT_EXPIRATION:15m}
     webhook-return-url: ${PAYMENT_WEBHOOK_RETURN_URL}
+  lock:
+    region: ${APP_LOCK_REGION:DEFAULT}
+    time-to-live: ${APP_LOCK_TTL:30s}
+    idle-between-tries: ${APP_LOCK_IDLE_BETWEEN_TRIES:100ms}
 
 sumup:
   base-url: ${SUMUP_BASE_URL}
