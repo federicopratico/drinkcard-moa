@@ -21,6 +21,12 @@ app:
     region: ${APP_LOCK_REGION:DEFAULT}
     time-to-live: ${APP_LOCK_TTL:30s}
     idle-between-tries: ${APP_LOCK_IDLE_BETWEEN_TRIES:100ms}
+  bootstrap-admin:
+    enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
+    first-name: ${BOOTSTRAP_ADMIN_FIRST_NAME:System}
+    last-name: ${BOOTSTRAP_ADMIN_LAST_NAME:Admin}
+    email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
 
 sumup:
   base-url: ${SUMUP_BASE_URL}
