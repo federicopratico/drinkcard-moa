@@ -1,14 +1,19 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.controller;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.LoginUserCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RefreshTokenCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RegisterUserCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.LoginUserResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RefreshTokenResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RegisterUserResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.AuthenticateUserUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RefreshAccessTokenUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RegisterUserUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.LoginRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RegisterRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RefreshTokenResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RegisterResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.mapper.AuthMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.RefreshTokenProperties;
@@ -21,10 +26,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +45,9 @@ class AuthControllerTest {
 
     @Mock
     private AuthenticateUserUseCase authenticateUserUseCase;
+
+    @Mock
+    private RefreshAccessTokenUseCase refreshAccessTokenUseCase;
 
     private AuthController controller;
 
@@ -54,6 +66,7 @@ class AuthControllerTest {
         controller = new AuthController(
                 registerUserUseCase,
                 authenticateUserUseCase,
+                refreshAccessTokenUseCase,
                 refreshTokenProperties,
                 new AuthMapper()
         );
@@ -154,5 +167,60 @@ class AuthControllerTest {
                 () -> assertTrue(setCookie.contains("Secure")),
                 () -> assertTrue(setCookie.contains("SameSite=Lax"))
         );
+    }
+
+    @Test
+    void refresh_WhenRefreshTokenCookieExists_ReturnsRefreshTokenResponseAndNewCookie() {
+        Map<String, String> cookies = Map.of(
+                "refresh_token",
+                "raw-refresh-token"
+        );
+        RefreshTokenResult result = new RefreshTokenResult(
+                "new-access-token",
+                "new-raw-refresh-token",
+                "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1",
+                "user@email.com",
+                "VOLUNTEER"
+        );
+
+        when(refreshAccessTokenUseCase.execute(new RefreshTokenCommand("raw-refresh-token")))
+                .thenReturn(result);
+
+        ResponseEntity<RefreshTokenResponse> response = controller.refresh(cookies);
+
+        ArgumentCaptor<RefreshTokenCommand> commandCaptor =
+                ArgumentCaptor.forClass(RefreshTokenCommand.class);
+
+        verify(refreshAccessTokenUseCase).execute(commandCaptor.capture());
+
+        RefreshTokenResponse body = response.getBody();
+        String setCookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        assertAll(
+                () -> assertEquals(200, response.getStatusCode().value()),
+                () -> assertNotNull(body),
+                () -> assertEquals("new-access-token", body.token()),
+                () -> assertEquals("4f0a8db1-63a7-4997-944c-9f2f6b82e6d1", body.volunteerId()),
+                () -> assertEquals("user@email.com", body.email()),
+                () -> assertEquals("VOLUNTEER", body.role()),
+                () -> assertEquals("raw-refresh-token", commandCaptor.getValue().rawRefreshToken()),
+                () -> assertNotNull(setCookie),
+                () -> assertTrue(setCookie.startsWith("refresh_token=new-raw-refresh-token")),
+                () -> assertTrue(setCookie.contains("Path=/api/v1/auth")),
+                () -> assertTrue(setCookie.contains("Max-Age=2592000")),
+                () -> assertTrue(setCookie.contains("HttpOnly")),
+                () -> assertTrue(setCookie.contains("Secure")),
+                () -> assertTrue(setCookie.contains("SameSite=Lax"))
+        );
+    }
+
+    @Test
+    void refresh_WhenRefreshTokenCookieIsMissing_ShouldThrowInvalidTokenException() {
+        assertThrows(
+                InvalidTokenException.class,
+                () -> controller.refresh(Map.of())
+        );
+
+        verify(refreshAccessTokenUseCase, never()).execute(new RefreshTokenCommand("raw-refresh-token"));
     }
 }
