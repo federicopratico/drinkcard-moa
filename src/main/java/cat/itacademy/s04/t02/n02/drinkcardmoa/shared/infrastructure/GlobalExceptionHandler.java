@@ -14,6 +14,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.Insuffi
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PaymentNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +31,10 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
     @ExceptionHandler(InvitationAlreadyAcceptedException.class)
     public ResponseEntity<Map<String, Object>> handleInvitationAlreadyAccepted(InvitationAlreadyAcceptedException ex) {
         return error(HttpStatus.CONFLICT, ex.getMessage());
