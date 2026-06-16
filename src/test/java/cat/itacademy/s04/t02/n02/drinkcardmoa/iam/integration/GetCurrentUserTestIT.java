@@ -1,4 +1,4 @@
-package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.e2e;
+package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.integration;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.TokenService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 @ActiveProfiles("test")
-class GetCurrentUserE2ETest {
+class GetCurrentUserTestIT {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")

@@ -3,22 +3,30 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.LoginUserCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.LoginUserResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.PasswordEncoder;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.TokenService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidCredentialsException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.RefreshToken;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullName;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedToken;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.RefreshTokenProperties;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,8 +45,27 @@ class AuthenticationServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @InjectMocks
+    @Mock
+    private RefreshTokenGenerator refreshTokenGenerator;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
     private AuthenticationService authenticationService;
+
+    @BeforeEach
+    void setUp() {
+        authenticationService = new AuthenticationService(
+                tokenService,
+                userRepository,
+                passwordEncoder,
+                refreshTokenGenerator,
+                refreshTokenRepository,
+                new RefreshTokenProperties(
+                        30
+                )
+        );
+    }
 
     @Test
     void execute_WhenCredentialsAreValid_LoginUser() {
@@ -54,11 +81,27 @@ class AuthenticationServiceTest {
         when(passwordEncoder.matches(command.password(), user.getHashedPassword().value()))
                 .thenReturn(true);
         when(tokenService.generateToken(user)).thenReturn("new-token");
+        when(refreshTokenGenerator.generate()).thenReturn(
+                new RefreshTokenGenerator.GeneratedRefreshToken(
+                        "raw-refresh-token",
+                        HashedToken.from("hashed-refresh-token")
+                )
+        );
+        when(refreshTokenRepository.save(any(RefreshToken.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Instant beforeExecution = Instant.now();
 
         LoginUserResult result = authenticationService.execute(command);
 
+        Instant afterExecution = Instant.now();
+
+        ArgumentCaptor<RefreshToken> refreshTokenCaptor =
+                ArgumentCaptor.forClass(RefreshToken.class);
+
         assertNotNull(user);
         assertEquals("new-token", result.token());
+        assertEquals("raw-refresh-token", result.refreshToken());
         assertEquals("userid@userid.com", result.email());
         assertEquals(user.getRole().name(), result.role());
 
@@ -66,6 +109,28 @@ class AuthenticationServiceTest {
         verify(passwordEncoder, times(1))
                 .matches(command.password(), user.getHashedPassword().value());
         verify(tokenService, times(1)).generateToken(user);
+        verify(refreshTokenGenerator, times(1)).generate();
+        verify(refreshTokenRepository, times(1)).save(refreshTokenCaptor.capture());
+
+        RefreshToken savedRefreshToken = refreshTokenCaptor.getValue();
+
+        assertAll(
+                () -> assertEquals(user.getId(), savedRefreshToken.getUserId()),
+                () -> assertEquals("hashed-refresh-token", savedRefreshToken.getTokenHash().asString()),
+                () -> assertNotNull(savedRefreshToken.getId()),
+                () -> assertNotNull(savedRefreshToken.getFamilyId()),
+                () -> assertNull(savedRefreshToken.getLastUsedAt()),
+                () -> assertNull(savedRefreshToken.getRevokedAt()),
+                () -> assertNull(savedRefreshToken.getReplacedBy()),
+                () -> assertFalse(savedRefreshToken.isRevoked()),
+                () -> assertFalse(savedRefreshToken.wasReplaced()),
+                () -> assertFalse(savedRefreshToken.getCreatedAt().isBefore(beforeExecution)),
+                () -> assertFalse(savedRefreshToken.getCreatedAt().isAfter(afterExecution)),
+                () -> assertEquals(
+                        savedRefreshToken.getCreatedAt().plus(30, ChronoUnit.DAYS),
+                        savedRefreshToken.getExpiresAt()
+                )
+        );
     }
 
     @Test
@@ -85,6 +150,8 @@ class AuthenticationServiceTest {
         verify(userRepository, times(1)).findUserByEmail(any(Email.class));
         verify(passwordEncoder, never()).matches(any(String.class), any(String.class));
         verify(tokenService, never()).generateToken(any(User.class));
+        verify(refreshTokenGenerator, never()).generate();
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
     @Test
@@ -110,6 +177,8 @@ class AuthenticationServiceTest {
         verify(passwordEncoder, times(1))
                 .matches(cmd.password(), user.getHashedPassword().value());
         verify(tokenService, never()).generateToken(any(User.class));
+        verify(refreshTokenGenerator, never()).generate();
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
     @Test
@@ -131,6 +200,8 @@ class AuthenticationServiceTest {
         verify(userRepository, times(1)).findUserByEmail(any(Email.class));
         verify(passwordEncoder, never()).matches(any(String.class), any(String.class));
         verify(tokenService, never()).generateToken(any(User.class));
+        verify(refreshTokenGenerator, never()).generate();
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
     @Test
@@ -152,6 +223,8 @@ class AuthenticationServiceTest {
         verify(userRepository, times(1)).findUserByEmail(any(Email.class));
         verify(passwordEncoder, never()).matches(any(String.class), any(String.class));
         verify(tokenService, never()).generateToken(any(User.class));
+        verify(refreshTokenGenerator, never()).generate();
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
     private User createUser() {
