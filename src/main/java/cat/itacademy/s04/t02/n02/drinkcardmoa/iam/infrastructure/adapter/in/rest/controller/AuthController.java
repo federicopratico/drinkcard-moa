@@ -12,6 +12,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.Re
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.LoginRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RegisterRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RefreshTokenRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RefreshTokenResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RegisterResponse;
@@ -24,9 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.Duration;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -56,41 +54,15 @@ public class AuthController {
         LoginUserCommand command = mapper.toCommand(request);
         LoginUserResult result = authenticateUserUseCase.execute(command);
 
-        ResponseCookie refreshCookie = refreshCookie(result.refreshToken());
-
         return ResponseEntity.status(HttpStatus.OK)
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .body(mapper.toResponse(result));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshTokenResponse> refresh(@CookieValue Map<String, String> cookies) {
-
-        String rawRefreshToken = cookies.get(refreshTokenProperties.cookie().name());
-
-        if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
-            throw new InvalidTokenException("Refresh token not found");
-        }
-
-        RefreshTokenResult result = refreshAccessTokenUseCase.execute(new RefreshTokenCommand(rawRefreshToken));
-
-        ResponseCookie refreshCookie = refreshCookie(result.refreshToken());
+    public ResponseEntity<RefreshTokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        RefreshTokenResult result = refreshAccessTokenUseCase.execute(new RefreshTokenCommand(request.refreshToken()));
 
         return ResponseEntity.status(HttpStatus.OK)
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .body(mapper.toResponse(result));
-    }
-
-    private ResponseCookie refreshCookie(String refreshToken) {
-        return ResponseCookie.from(
-                        refreshTokenProperties.cookie().name(),
-                        refreshToken
-                )
-                .httpOnly(true)
-                .secure(refreshTokenProperties.cookie().secure())
-                .sameSite(refreshTokenProperties.cookie().sameSite())
-                .path(refreshTokenProperties.cookie().path())
-                .maxAge(Duration.ofDays(refreshTokenProperties.expirationDays()))
-                .build();
     }
 }

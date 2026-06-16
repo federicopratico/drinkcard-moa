@@ -43,6 +43,7 @@ public class AuthMapper {
     public LoginResponse toResponse(LoginUserResult result) {
         return new LoginResponse(
                 result.token(),
+                result.refreshToken(),
                 result.volunteerId(),
                 result.email(),
                 result.role()
@@ -52,6 +53,7 @@ public class AuthMapper {
     public RefreshTokenResponse toResponse(RefreshTokenResult result) {
         return new RefreshTokenResponse(
                 result.accessToken(),
+                result.refreshToken(),
                 result.volunteerId(),
                 result.email(),
                 result.role()

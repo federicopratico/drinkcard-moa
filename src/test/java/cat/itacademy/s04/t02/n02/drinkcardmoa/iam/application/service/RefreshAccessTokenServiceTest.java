@@ -63,12 +63,6 @@ class RefreshAccessTokenServiceTest {
     private RefreshTokenGenerator refreshTokenGenerator;
 
     @Mock
-    private LockRegistry lockRegistry;
-
-    @Mock
-    private TransactionTemplate transactionTemplate;
-
-    @Mock
     private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
@@ -76,9 +70,6 @@ class RefreshAccessTokenServiceTest {
 
     @Mock
     private TokenService tokenService;
-
-    @Mock
-    private Lock lock;
 
     private RefreshAccessTokenService service;
 
@@ -96,8 +87,6 @@ class RefreshAccessTokenServiceTest {
 
         service = new RefreshAccessTokenService(
                 refreshTokenGenerator,
-                lockRegistry,
-                transactionTemplate,
                 refreshTokenRepository,
                 userRepository,
                 tokenService,
@@ -112,13 +101,6 @@ class RefreshAccessTokenServiceTest {
 
         when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
-        when(lockRegistry.obtain("refresh:" + HASHED_REFRESH_TOKEN.asString()))
-                .thenReturn(lock);
-        when(lock.tryLock()).thenReturn(true);
-        doAnswer(invocation -> {
-            TransactionCallback<?> callback = invocation.getArgument(0);
-            return callback.doInTransaction(null);
-        }).when(transactionTemplate).execute(any());
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(currentRefreshToken));
         when(userRepository.findById(currentRefreshToken.getUserId()))
@@ -178,40 +160,12 @@ class RefreshAccessTokenServiceTest {
         InOrder inOrder = inOrder(refreshTokenRepository);
         inOrder.verify(refreshTokenRepository).save(nextRefreshToken);
         inOrder.verify(refreshTokenRepository).save(savedCurrentRefreshToken);
-
-        verify(lock).unlock();
-    }
-
-    @Test
-    void execute_WhenLockCannotBeAcquired_ShouldThrowExceptionWithoutStartingTransaction() {
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
-                .thenReturn(HASHED_REFRESH_TOKEN);
-        when(lockRegistry.obtain("refresh:" + HASHED_REFRESH_TOKEN.asString()))
-                .thenReturn(lock);
-        when(lock.tryLock()).thenReturn(false);
-
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> service.execute(new RefreshTokenCommand(RAW_REFRESH_TOKEN))
-        );
-
-        assertEquals("Another refresh token is being processed.", exception.getMessage());
-
-        verify(transactionTemplate, never()).execute(any());
-        verify(lock, never()).unlock();
     }
 
     @Test
     void execute_WhenRefreshTokenDoesNotExist_ShouldThrowInvalidTokenExceptionAndReleaseLock() {
         when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
-        when(lockRegistry.obtain("refresh:" + HASHED_REFRESH_TOKEN.asString()))
-                .thenReturn(lock);
-        when(lock.tryLock()).thenReturn(true);
-        doAnswer(invocation -> {
-            TransactionCallback<?> callback = invocation.getArgument(0);
-            return callback.doInTransaction(null);
-        }).when(transactionTemplate).execute(any());
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.empty());
 
@@ -222,7 +176,6 @@ class RefreshAccessTokenServiceTest {
 
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
         verify(refreshTokenRepository, never()).revokeFamily(any(), any());
-        verify(lock).unlock();
     }
 
     @Test
@@ -231,13 +184,6 @@ class RefreshAccessTokenServiceTest {
 
         when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
-        when(lockRegistry.obtain("refresh:" + HASHED_REFRESH_TOKEN.asString()))
-                .thenReturn(lock);
-        when(lock.tryLock()).thenReturn(true);
-        doAnswer(invocation -> {
-            TransactionCallback<?> callback = invocation.getArgument(0);
-            return callback.doInTransaction(null);
-        }).when(transactionTemplate).execute(any());
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(expiredToken));
 
@@ -248,7 +194,6 @@ class RefreshAccessTokenServiceTest {
 
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
         verify(refreshTokenRepository, never()).revokeFamily(any(), any());
-        verify(lock).unlock();
     }
 
     @Test
@@ -257,13 +202,6 @@ class RefreshAccessTokenServiceTest {
 
         when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
-        when(lockRegistry.obtain("refresh:" + HASHED_REFRESH_TOKEN.asString()))
-                .thenReturn(lock);
-        when(lock.tryLock()).thenReturn(true);
-        doAnswer(invocation -> {
-            TransactionCallback<?> callback = invocation.getArgument(0);
-            return callback.doInTransaction(null);
-        }).when(transactionTemplate).execute(any());
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(replacedToken));
 
@@ -277,7 +215,6 @@ class RefreshAccessTokenServiceTest {
                 any(Instant.class)
         );
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
-        verify(lock).unlock();
     }
 
     @Test
@@ -286,13 +223,6 @@ class RefreshAccessTokenServiceTest {
 
         when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
-        when(lockRegistry.obtain("refresh:" + HASHED_REFRESH_TOKEN.asString()))
-                .thenReturn(lock);
-        when(lock.tryLock()).thenReturn(true);
-        doAnswer(invocation -> {
-            TransactionCallback<?> callback = invocation.getArgument(0);
-            return callback.doInTransaction(null);
-        }).when(transactionTemplate).execute(any());
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(currentRefreshToken));
         when(userRepository.findById(currentRefreshToken.getUserId()))
@@ -305,7 +235,6 @@ class RefreshAccessTokenServiceTest {
 
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
         verify(refreshTokenRepository, never()).revokeFamily(any(), any());
-        verify(lock).unlock();
     }
 
     private RefreshToken activeRefreshToken() {

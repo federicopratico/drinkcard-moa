@@ -1,11 +1,15 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.integration;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RefreshTokenRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RefreshTokenResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.RefreshTokenJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaRefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +52,8 @@ class RefreshTokenEndpointTestIT {
             .withDatabaseName("festival_test")
             .withUsername("postgres")
             .withPassword("postgres");
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @DynamicPropertySource
     static void configureDatasource(DynamicPropertyRegistry registry) {
@@ -87,7 +93,7 @@ class RefreshTokenEndpointTestIT {
 
     @Test
     void refresh_WhenRefreshCookieIsValid_ReturnsNewAccessTokenAndRotatesRefreshToken() throws Exception {
-        String loginResponseCookie = mockMvc.perform(post("/api/v1/auth/login")
+        var loginResponse = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -97,14 +103,15 @@ class RefreshTokenEndpointTestIT {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.email").value(EMAIL))
                 .andExpect(jsonPath("$.role").value("VOLUNTEER"))
-                .andExpect(header().exists(HttpHeaders.SET_COOKIE))
                 .andReturn()
-                .getResponse()
-                .getHeader(HttpHeaders.SET_COOKIE);
+                .getResponse();
 
-        String firstRawRefreshToken = extractCookieValue(loginResponseCookie, "refresh_token");
+
+        var result = objectMapper.readValue(loginResponse.getContentAsString(), LoginResponse.class);
+        String firstRawRefreshToken = result.refreshToken();
         String firstRefreshTokenHash = refreshTokenGenerator.hash(firstRawRefreshToken).asString();
 
         Optional<RefreshTokenJpaEntity> storedFirstToken =
@@ -112,18 +119,22 @@ class RefreshTokenEndpointTestIT {
 
         assertTrue(storedFirstToken.isPresent());
 
-        String refreshResponseCookie = mockMvc.perform(post("/api/v1/auth/refresh")
-                        .cookie(new Cookie("refresh_token", firstRawRefreshToken)))
+        var refreshResponse = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "refreshToken": "%s" }
+                                """.formatted(firstRawRefreshToken))
+                )
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.email").value(EMAIL))
                 .andExpect(jsonPath("$.role").value("VOLUNTEER"))
-                .andExpect(header().exists(HttpHeaders.SET_COOKIE))
                 .andReturn()
-                .getResponse()
-                .getHeader(HttpHeaders.SET_COOKIE);
+                .getResponse();
 
-        String secondRawRefreshToken = extractCookieValue(refreshResponseCookie, "refresh_token");
+        var refreshResult = objectMapper.readValue(refreshResponse.getContentAsString(), RefreshTokenResponse.class);
+        String secondRawRefreshToken = refreshResult.refreshToken();
         String secondRefreshTokenHash = refreshTokenGenerator.hash(secondRawRefreshToken).asString();
 
         RefreshTokenJpaEntity rotatedFirstToken =
@@ -133,10 +144,6 @@ class RefreshTokenEndpointTestIT {
 
         assertAll(
                 () -> assertNotEquals(firstRawRefreshToken, secondRawRefreshToken),
-                () -> assertTrue(refreshResponseCookie.contains("HttpOnly")),
-                () -> assertTrue(refreshResponseCookie.contains("SameSite=Lax")),
-                () -> assertTrue(refreshResponseCookie.contains("Path=/api/v1/auth")),
-                () -> assertTrue(refreshResponseCookie.contains("Max-Age=864000")),
                 () -> assertTrue(rotatedFirstToken.getRevokedAt() != null),
                 () -> assertTrue(rotatedFirstToken.getLastUsedAt() != null),
                 () -> assertTrue(rotatedFirstToken.getReplacedBy() != null),
@@ -148,10 +155,10 @@ class RefreshTokenEndpointTestIT {
     }
 
     @Test
-    void refresh_WhenRefreshCookieIsMissing_ReturnsUnauthorized() throws Exception {
+    void refresh_WhenRefreshIsMissing_ReturnsUBadRequest() throws Exception {
         mockMvc.perform(post("/api/v1/auth/refresh"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(401));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     private String extractCookieValue(String setCookieHeader, String cookieName) {

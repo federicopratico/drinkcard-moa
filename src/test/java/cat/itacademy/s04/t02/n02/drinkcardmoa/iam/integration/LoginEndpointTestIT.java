@@ -1,11 +1,14 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.integration;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedToken;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.RefreshTokenJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaRefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +51,8 @@ class LoginEndpointTestIT {
             .withDatabaseName("festival_test")
             .withUsername("postgres")
             .withPassword("postgres");
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @DynamicPropertySource
     static void configureDatasource(DynamicPropertyRegistry registry) {
@@ -87,7 +92,7 @@ class LoginEndpointTestIT {
 
     @Test
     void login_WhenCredentialsAreValid_ReturnsAccessTokenAndRefreshCookie() throws Exception {
-        String setCookie = mockMvc.perform(post("/api/v1/auth/login")
+        var response = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -97,27 +102,21 @@ class LoginEndpointTestIT {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.volunteerId").value(USER_ID))
                 .andExpect(jsonPath("$.email").value(EMAIL))
                 .andExpect(jsonPath("$.role").value("VOLUNTEER"))
-                .andExpect(header().exists(HttpHeaders.SET_COOKIE))
                 .andReturn()
-                .getResponse()
-                .getHeader(HttpHeaders.SET_COOKIE);
+                .getResponse();
 
-        String rawRefreshToken = extractCookieValue(setCookie, "refresh_token");
-        String refreshTokenHash = refreshTokenGenerator.hash(rawRefreshToken).asString();
+
+        var result = objectMapper.readValue(response.getContentAsString(), LoginResponse.class);
+        String refreshTokenHash = refreshTokenGenerator.hash(result.refreshToken()).asString();
 
         Optional<RefreshTokenJpaEntity> storedRefreshToken =
                 jpaRefreshTokenRepository.findByTokenHash(refreshTokenHash);
 
         assertAll(
-                () -> assertTrue(setCookie.contains("refresh_token=")),
-                () -> assertTrue(setCookie.contains("HttpOnly")),
-                () -> assertTrue(setCookie.contains("SameSite=Lax")),
-                () -> assertTrue(setCookie.contains("Path=/api/v1/auth")),
-                () -> assertTrue(setCookie.contains("Max-Age=864000")),
                 () -> assertTrue(storedRefreshToken.isPresent()),
                 () -> assertEquals(USER_ID, storedRefreshToken.orElseThrow().getUserId()),
                 () -> assertTrue(storedRefreshToken.orElseThrow().getRevokedAt() == null),

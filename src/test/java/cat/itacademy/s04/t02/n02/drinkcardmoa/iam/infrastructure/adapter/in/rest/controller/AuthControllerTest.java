@@ -11,6 +11,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.Re
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RegisterUserUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.LoginRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RefreshTokenRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RegisterRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RefreshTokenResponse;
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -148,7 +150,6 @@ class AuthControllerTest {
 
         LoginResponse body = response.getBody();
         LoginUserCommand command = commandCaptor.getValue();
-        String setCookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
 
         assertAll(
                 () -> assertEquals(200, response.getStatusCode().value()),
@@ -157,24 +158,14 @@ class AuthControllerTest {
                 () -> assertEquals("4f0a8db1-63a7-4997-944c-9f2f6b82e6d1", body.volunteerId()),
                 () -> assertEquals("user@email.com", body.email()),
                 () -> assertEquals("VOLUNTEER", body.role()),
+                () -> assertEquals("raw-refresh-token", body.refreshToken()),
                 () -> assertEquals("user@email.com", command.email()),
-                () -> assertEquals("password123", command.password()),
-                () -> assertNotNull(setCookie),
-                () -> assertTrue(setCookie.startsWith("refresh_token=raw-refresh-token")),
-                () -> assertTrue(setCookie.contains("Path=/api/v1/auth")),
-                () -> assertTrue(setCookie.contains("Max-Age=2592000")),
-                () -> assertTrue(setCookie.contains("HttpOnly")),
-                () -> assertTrue(setCookie.contains("Secure")),
-                () -> assertTrue(setCookie.contains("SameSite=Lax"))
+                () -> assertEquals("password123", command.password())
         );
     }
 
     @Test
     void refresh_WhenRefreshTokenCookieExists_ReturnsRefreshTokenResponseAndNewCookie() {
-        Map<String, String> cookies = Map.of(
-                "refresh_token",
-                "raw-refresh-token"
-        );
         RefreshTokenResult result = new RefreshTokenResult(
                 "new-access-token",
                 "new-raw-refresh-token",
@@ -186,7 +177,7 @@ class AuthControllerTest {
         when(refreshAccessTokenUseCase.execute(new RefreshTokenCommand("raw-refresh-token")))
                 .thenReturn(result);
 
-        ResponseEntity<RefreshTokenResponse> response = controller.refresh(cookies);
+        ResponseEntity<RefreshTokenResponse> response = controller.refresh(new RefreshTokenRequest("raw-refresh-token"));
 
         ArgumentCaptor<RefreshTokenCommand> commandCaptor =
                 ArgumentCaptor.forClass(RefreshTokenCommand.class);
@@ -200,27 +191,11 @@ class AuthControllerTest {
                 () -> assertEquals(200, response.getStatusCode().value()),
                 () -> assertNotNull(body),
                 () -> assertEquals("new-access-token", body.token()),
+                () -> assertEquals("new-raw-refresh-token", body.refreshToken()),
                 () -> assertEquals("4f0a8db1-63a7-4997-944c-9f2f6b82e6d1", body.volunteerId()),
                 () -> assertEquals("user@email.com", body.email()),
                 () -> assertEquals("VOLUNTEER", body.role()),
-                () -> assertEquals("raw-refresh-token", commandCaptor.getValue().rawRefreshToken()),
-                () -> assertNotNull(setCookie),
-                () -> assertTrue(setCookie.startsWith("refresh_token=new-raw-refresh-token")),
-                () -> assertTrue(setCookie.contains("Path=/api/v1/auth")),
-                () -> assertTrue(setCookie.contains("Max-Age=2592000")),
-                () -> assertTrue(setCookie.contains("HttpOnly")),
-                () -> assertTrue(setCookie.contains("Secure")),
-                () -> assertTrue(setCookie.contains("SameSite=Lax"))
+                () -> assertEquals("raw-refresh-token", commandCaptor.getValue().rawRefreshToken())
         );
-    }
-
-    @Test
-    void refresh_WhenRefreshTokenCookieIsMissing_ShouldThrowInvalidTokenException() {
-        assertThrows(
-                InvalidTokenException.class,
-                () -> controller.refresh(Map.of())
-        );
-
-        verify(refreshAccessTokenUseCase, never()).execute(new RefreshTokenCommand("raw-refresh-token"));
     }
 }

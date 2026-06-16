@@ -13,6 +13,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedToken;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.RefreshTokenFamilyID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.RefreshTokenProperties;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,38 +33,23 @@ public class RefreshAccessTokenService implements RefreshAccessTokenUseCase {
     private static final Logger log = LoggerFactory.getLogger(RefreshAccessTokenService.class);
 
     private final RefreshTokenGenerator refreshTokenGenerator;
-    private final LockRegistry lockRegistry;
-    private final TransactionTemplate transactionTemplate;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final TokenService tokenService;
     private final RefreshTokenProperties refreshTokenProperties;
 
     @Override
+    @Transactional
     public RefreshTokenResult execute(RefreshTokenCommand cmd) {
-
         HashedToken hashedToken = refreshTokenGenerator.hash(cmd.rawRefreshToken());
 
-        Lock lock = lockRegistry.obtain("refresh:" + hashedToken.asString());
+        RefreshTokenAttempt refreshTokenAttempt = Objects.requireNonNull(attemptRefresh(hashedToken));
 
-        if (!lock.tryLock()) {
-            throw new RuntimeException("Another refresh token is being processed.");
+        if (refreshTokenAttempt.reuseDetected()) {
+            throw new InvalidTokenException("Invalid refresh token");
         }
 
-        try {
-            RefreshTokenAttempt refreshTokenAttempt = Objects.requireNonNull(
-                    transactionTemplate.execute(status -> attemptRefresh(hashedToken))
-            );
-
-            if (refreshTokenAttempt.reuseDetected()) {
-                throw new InvalidTokenException("Invalid refresh token");
-            }
-
-            return refreshTokenAttempt.result();
-
-        } finally {
-            lock.unlock();
-        }
+        return refreshTokenAttempt.result();
     }
 
     private RefreshTokenAttempt attemptRefresh(HashedToken hashedToken) {
