@@ -9,7 +9,6 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.AuthenticateUserUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RefreshAccessTokenUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RegisterUserUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.LoginRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RegisterRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RefreshTokenRequest;
@@ -20,9 +19,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.RefreshTokenProperties;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

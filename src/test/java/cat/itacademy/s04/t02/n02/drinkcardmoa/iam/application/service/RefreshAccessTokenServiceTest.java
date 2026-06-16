@@ -76,13 +76,7 @@ class RefreshAccessTokenServiceTest {
     @BeforeEach
     void setUp() {
         RefreshTokenProperties refreshTokenProperties = new RefreshTokenProperties(
-                30,
-                new RefreshTokenProperties.Cookie(
-                        "refresh_token",
-                        true,
-                        "Lax",
-                        "/api/v1/auth"
-                )
+                30
         );
 
         service = new RefreshAccessTokenService(

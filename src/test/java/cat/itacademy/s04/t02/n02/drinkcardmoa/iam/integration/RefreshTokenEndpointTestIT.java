@@ -1,7 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.integration;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RefreshTokenRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RefreshTokenResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.RefreshTokenJpaEntity;
@@ -10,13 +9,11 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.per
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -92,7 +88,7 @@ class RefreshTokenEndpointTestIT {
     }
 
     @Test
-    void refresh_WhenRefreshCookieIsValid_ReturnsNewAccessTokenAndRotatesRefreshToken() throws Exception {
+    void refresh_WhenRefreshRefreshTokenIsValid_ReturnsNewAccessTokenAndRotatesRefreshToken() throws Exception {
         var loginResponse = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -161,17 +157,4 @@ class RefreshTokenEndpointTestIT {
                 .andExpect(jsonPath("$.status").value(400));
     }
 
-    private String extractCookieValue(String setCookieHeader, String cookieName) {
-        String prefix = cookieName + "=";
-
-        for (String part : setCookieHeader.split(";")) {
-            String trimmedPart = part.trim();
-
-            if (trimmedPart.startsWith(prefix)) {
-                return trimmedPart.substring(prefix.length());
-            }
-        }
-
-        throw new AssertionError("Cookie not found: " + cookieName);
-    }
 }

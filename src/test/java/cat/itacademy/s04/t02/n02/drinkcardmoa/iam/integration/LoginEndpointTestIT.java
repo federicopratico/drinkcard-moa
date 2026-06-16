@@ -1,13 +1,11 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.integration;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedToken;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.RefreshTokenJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaRefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,7 +89,7 @@ class LoginEndpointTestIT {
     }
 
     @Test
-    void login_WhenCredentialsAreValid_ReturnsAccessTokenAndRefreshCookie() throws Exception {
+    void login_WhenCredentialsAreValid_ReturnsAccessTokenAndRefreshToken() throws Exception {
         var response = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -135,23 +133,9 @@ class LoginEndpointTestIT {
                                 }
                                 """))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(401))
-                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
+                .andExpect(jsonPath("$.status").value(401));
 
         assertTrue(jpaRefreshTokenRepository.findAll().isEmpty());
     }
 
-    private String extractCookieValue(String setCookieHeader, String cookieName) {
-        String prefix = cookieName + "=";
-
-        for (String part : setCookieHeader.split(";")) {
-            String trimmedPart = part.trim();
-
-            if (trimmedPart.startsWith(prefix)) {
-                return trimmedPart.substring(prefix.length());
-            }
-        }
-
-        throw new AssertionError("Cookie not found: " + cookieName);
-    }
 }

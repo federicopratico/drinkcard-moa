@@ -56,13 +56,7 @@ class AuthControllerTest {
     @BeforeEach
     void setUp() {
         RefreshTokenProperties refreshTokenProperties = new RefreshTokenProperties(
-                30,
-                new RefreshTokenProperties.Cookie(
-                        "refresh_token",
-                        true,
-                        "Lax",
-                        "/api/v1/auth"
-                )
+                30
         );
 
         controller = new AuthController(
@@ -123,7 +117,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_WhenCredentialsAreValid_ReturnsLoginResponseAndRefreshTokenCookie() {
+    void login_WhenCredentialsAreValid_ReturnsLoginResponseAndRefreshToken() {
         LoginRequest request = new LoginRequest(
                 "user@email.com",
                 "password123"
@@ -165,7 +159,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void refresh_WhenRefreshTokenCookieExists_ReturnsRefreshTokenResponseAndNewCookie() {
+    void refresh_WhenRefreshTokenExists_ReturnsRefreshTokenResponseAndRefreshToken() {
         RefreshTokenResult result = new RefreshTokenResult(
                 "new-access-token",
                 "new-raw-refresh-token",
@@ -185,7 +179,6 @@ class AuthControllerTest {
         verify(refreshAccessTokenUseCase).execute(commandCaptor.capture());
 
         RefreshTokenResponse body = response.getBody();
-        String setCookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
 
         assertAll(
                 () -> assertEquals(200, response.getStatusCode().value()),
