@@ -199,6 +199,44 @@ class CreateDrinkTicketServiceTest {
     }
 
     @Test
+    void execute_WhenDrinkCardAccountHasRefillDisabled_ShouldStillCreateDrinkTicket() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                volunteerId,
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.REFILL_DISABLED
+        );
+
+        CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
+                volunteerId.asString(),
+                "BEER"
+        );
+
+        when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
+                .thenReturn(Optional.of(drinkCardAccount));
+
+        when(drinkTicketRepository.existsActivePendingByVolunteerId(
+                eq(volunteerId),
+                any(Instant.class)
+        )).thenReturn(false);
+
+        when(drinkTicketRepository.save(any(DrinkTicket.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CreateDrinkTicketResult result = service.execute(command);
+
+        assertAll(
+                () -> assertEquals("PENDING", result.status()),
+                () -> assertEquals("BEER", result.drinkType())
+        );
+
+        verify(drinkTicketRepository).save(any(DrinkTicket.class));
+    }
+
+    @Test
     void execute_WhenVolunteerAlreadyHasActivePendingTicket_ShouldThrowActiveDrinkTicketAlreadyExistsException() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = createDrinkCardAccountWithCredits(volunteerId);

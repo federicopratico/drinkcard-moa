@@ -10,6 +10,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.pay
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountSuspendedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PurchaseLimitExceededException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.RefillDisabledException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkCardAccount;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
@@ -275,7 +276,7 @@ class CreatePaymentCheckoutServiceTest {
     }
 
     @Test
-    void execute_WhenDrinkCardAccountIsSuspended_ThrowsDrinkCardAccountSuspendedException() {
+    void execute_WhenDrinkCardAccountIsSuspended_ThrowsDrinkCardRefillDisabledException() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
                 1L,
@@ -290,7 +291,30 @@ class CreatePaymentCheckoutServiceTest {
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
 
-        assertThrows(DrinkCardAccountSuspendedException.class, () -> service.execute(command(volunteerId)));
+        assertThrows(RefillDisabledException.class, () -> service.execute(command(volunteerId)));
+
+        verify(paymentGateway, never()).createHostedCheckout(any());
+        verify(paymentRepository, never()).save(any());
+        verify(paymentRepository, never()).findByIdempotencyKey(any());
+    }
+
+    @Test
+    void execute_WhenDrinkCardAccountHasRefillDisabled_ThrowsRefillDisabledException() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                volunteerId,
+                3,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.REFILL_DISABLED
+        );
+
+        doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
+                .thenReturn(Optional.of(drinkCardAccount));
+
+        assertThrows(RefillDisabledException.class, () -> service.execute(command(volunteerId)));
 
         verify(paymentGateway, never()).createHostedCheckout(any());
         verify(paymentRepository, never()).save(any());

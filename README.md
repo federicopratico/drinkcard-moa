@@ -200,6 +200,8 @@ Authorization: Bearer <jwt>
 | `GET` | `/api/v1/admin/users/{userId}` | Get user details. |
 | `GET` | `/api/v1/admin/drink-card-accounts` | List DrinkCard accounts. |
 | `GET` | `/api/v1/admin/drink-card-accounts/{volunteerId}` | Get account by volunteer ID. |
+| `POST` | `/api/v1/admin/drink-card-accounts/{volunteerId}/disable-refill` | Disable refill for an account. Existing tickets remain usable. |
+| `POST` | `/api/v1/admin/drink-card-accounts/{volunteerId}/enable-refill` | Re-enable refill for an account. |
 | `GET` | `/api/v1/admin/payments` | List payments. |
 | `GET` | `/api/v1/admin/drink-tickets` | List drink tickets. |
 

@@ -52,7 +52,7 @@ public class CreateDrinkTicketService implements CreateDrinkTicketUseCase {
     }
 
     private void validateDrinkTicketCanBeCreated(DrinkCardAccount drinkCardAccount, Instant now) {
-        if (!drinkCardAccount.isActive()) {
+        if (!drinkCardAccount.canCreateTicket()) {
             throw new DrinkCardAccountSuspendedException("DrinkCardAccount is suspended.");
         }
 

@@ -2,6 +2,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.ActiveDrinkTicketAlreadyExistsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.CheckoutAlreadyInProgressException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.RefillDisabledException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.EmailAlreadyExistsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidCredentialsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
@@ -95,6 +96,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CheckoutAlreadyInProgressException.class)
     public ResponseEntity<Map<String, Object>> handleCheckoutAlreadyInProgress(CheckoutAlreadyInProgressException ex) {
         return error(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(RefillDisabledException.class)
+    public ResponseEntity<Map<String, Object>> handleRefillDisabled(RefillDisabledException ex) {
+        return error(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)

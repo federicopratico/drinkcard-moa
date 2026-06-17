@@ -6,6 +6,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.Checkou
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountSuspendedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PurchaseLimitExceededException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.RefillDisabledException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.DrinkCardAccountJpaEntity;
@@ -198,7 +199,7 @@ class CreatePaymentCheckoutServiceIT {
                 REDIRECT_URL
         );
 
-        assertThrows(DrinkCardAccountSuspendedException.class, () -> service.execute(command));
+        assertThrows(RefillDisabledException.class, () -> service.execute(command));
 
         assertEquals(0, jpaPaymentRepository.count());
         wireMock.verify(0, postRequestedFor(urlEqualTo("/v0.1/checkouts")));
