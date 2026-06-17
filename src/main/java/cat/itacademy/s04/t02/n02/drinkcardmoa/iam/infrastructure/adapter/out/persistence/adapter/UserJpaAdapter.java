@@ -33,6 +33,11 @@ public class UserJpaAdapter implements UserRepository {
     }
 
     @Override
+    public void delete(User user) {
+        jpaUserRepository.delete(mapper.toEntity(user));
+    }
+
+    @Override
     public Optional<User> findUserByEmail(Email email) {
         return jpaUserRepository.findByEmail(email.asString())
                 .map(mapper::toDomain);
