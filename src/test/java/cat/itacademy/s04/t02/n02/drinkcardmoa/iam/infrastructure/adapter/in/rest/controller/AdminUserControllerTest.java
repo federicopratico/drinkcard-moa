@@ -3,6 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.res
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.GetUserByIdQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.DeleteUserByIdUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.GetUserByIdUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.ListUsersUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.UserSummaryResponse;
@@ -36,6 +37,9 @@ class AdminUserControllerTest {
     @Mock
     private GetUserByIdUseCase getUserByIdUseCase;
 
+    @Mock
+    private DeleteUserByIdUseCase deleteUserByIdUseCase;
+
     private AdminUserController controller;
 
     @BeforeEach
@@ -43,6 +47,7 @@ class AdminUserControllerTest {
         controller = new AdminUserController(
                 listUsersUseCase,
                 getUserByIdUseCase,
+                deleteUserByIdUseCase,
                 new AdminUserMapper()
         );
     }

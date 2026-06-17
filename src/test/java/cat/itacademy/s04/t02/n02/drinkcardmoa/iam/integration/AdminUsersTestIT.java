@@ -24,8 +24,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.UUID;
+
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -59,6 +62,7 @@ class AdminUsersTestIT {
     private JpaUserRepository jpaUserRepository;
 
     private String adminToken;
+    private String otherAdminToken;
     private String volunteerToken;
     private String adminId;
     private String volunteerId;
@@ -69,6 +73,7 @@ class AdminUsersTestIT {
         jpaUserRepository.deleteAll();
 
         adminId = VolunteerID.generate().asString();
+        String otherAdminId = UUID.randomUUID().toString();
         volunteerId = VolunteerID.generate().asString();
 
         jpaUserRepository.save(userEntity(
@@ -76,6 +81,14 @@ class AdminUsersTestIT {
                 "Admin",
                 "User",
                 "admin@userid.com",
+                "ADMIN",
+                "ACTIVE"
+        ));
+        jpaUserRepository.save(userEntity(
+                otherAdminId,
+                "Admin ",
+                "User 2",
+                "admin2@userid.com",
                 "ADMIN",
                 "ACTIVE"
         ));
@@ -97,6 +110,7 @@ class AdminUsersTestIT {
         ));
 
         adminToken = tokenService.generateToken(user(adminId, "Admin", "User", "admin@userid.com", Role.ADMIN, UserStatus.ACTIVE));
+        otherAdminToken = tokenService.generateToken(user(otherAdminId, "Admin 2", "User 2", "admin2@userid.com", Role.ADMIN, UserStatus.ACTIVE));
         volunteerToken = tokenService.generateToken(user(volunteerId, "Volunteer", "User", "volunteer@userid.com", Role.VOLUNTEER, UserStatus.ACTIVE));
     }
 
@@ -105,15 +119,16 @@ class AdminUsersTestIT {
         mockMvc.perform(get("/api/v1/admin/users")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(3)))
+                .andExpect(jsonPath("$.content", hasSize(4)))
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(20))
-                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalElements").value(4))
                 .andExpect(jsonPath("$.totalPages").value(1))
                 .andExpect(jsonPath("$.content[*].email", containsInAnyOrder(
                         "admin@userid.com",
                         "volunteer@userid.com",
-                        "suspended@userid.com"
+                        "suspended@userid.com",
+                        "admin2@userid.com"
                 )));
     }
 
@@ -221,6 +236,49 @@ class AdminUsersTestIT {
     void getUserById_WhenNoBearerToken_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/admin/users/{userId}", adminId))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void deleteUserById_WhenAdminAndUserExists_DeletesUser() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/users/{userId}", volunteerId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/api/v1/admin/users/{userId}", volunteerId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/v1/admin/users/{userId}", volunteerId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteUserById_WhenNotFound_ReturnsNotFound() throws Exception {
+        mockMvc.perform(delete("/api/v1/admin/users/{userId}", UUID.randomUUID().toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteUserById_WhenDeletingTheSameUser_ReturnsConflict() throws Exception {
+        mockMvc.perform(delete("/api/v1/admin/users/{userId}", adminId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deleteUserById_WhenAuthenticatedUserIsNotAdmin_ReturnsForbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/users/{userId}", adminId)
+                        .header("Authorization", "Bearer " + volunteerToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deleteUserById_WhenAuthenticatedUserIsAdminAndTriesToDeleteAnotherAdmin_ReturnsForbidden() throws Exception {
+        mockMvc.perform(delete("/api/v1/admin/users/{userId}", adminId)
+                        .header("Authorization", "Bearer " + otherAdminToken))
+                .andExpect(status().isForbidden());
     }
 
     private UserJpaEntity userEntity(String id, String firstName, String lastName, String email, String role, String status) {
