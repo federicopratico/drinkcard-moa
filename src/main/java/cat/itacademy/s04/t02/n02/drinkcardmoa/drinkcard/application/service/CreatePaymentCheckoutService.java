@@ -14,6 +14,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.pay
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountSuspendedException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PurchaseLimitExceededException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.RefillDisabledException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkCardAccount;
@@ -116,8 +117,8 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
                     .findByVolunteerId(VolunteerID.from(volunteerId))
                     .orElseThrow(() -> new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + volunteerId));
 
-            if (!account.isActive()) {
-                throw new DrinkCardAccountSuspendedException("DrinkCardAccount is suspended.");
+            if (!account.canRefill()) {
+                throw new RefillDisabledException("Refill is disabled for this DrinkCardAccount.");
             }
 
             if (!account.canPurchaseCard(purchaseTimestamp)) {

@@ -6,6 +6,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.DomainEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.event.CardPurchasedEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InvalidDrinkCardAccountStatusTransitionException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -71,8 +72,36 @@ public class DrinkCardAccount {
         return !hasPurchasedInLast24Hours(now);
     }
 
-    public boolean isActive() {
+    public boolean isSuspended() {
+        return status != DrinkCardAccountStatus.SUSPENDED;
+    }
+
+    public boolean canCreateTicket() {
+        return status != DrinkCardAccountStatus.SUSPENDED;
+    }
+
+    public boolean canRefill() {
         return status == DrinkCardAccountStatus.ACTIVE;
+    }
+
+    public void disableRefill() {
+        if (status == DrinkCardAccountStatus.SUSPENDED) {
+            throw new InvalidDrinkCardAccountStatusTransitionException(
+                    "Cannot disable refill on a suspended DrinkCardAccount."
+            );
+        }
+
+        this.status = DrinkCardAccountStatus.REFILL_DISABLED;
+    }
+
+    public void enableRefill() {
+        if (status == DrinkCardAccountStatus.SUSPENDED) {
+            throw new InvalidDrinkCardAccountStatusTransitionException(
+                    "Cannot enable refill on a suspended DrinkCardAccount."
+            );
+        }
+
+        this.status = DrinkCardAccountStatus.ACTIVE;
     }
 
     public void purchaseCard(Card card, Instant purchaseTimestamp) {

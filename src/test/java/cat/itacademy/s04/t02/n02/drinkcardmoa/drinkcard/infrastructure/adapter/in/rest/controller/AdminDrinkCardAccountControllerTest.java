@@ -1,11 +1,16 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.DisableDrinkCardAccountRefillCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.EnableDrinkCardAccountRefillCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.GetDrinkCardAccountByVolunteerIdQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListDrinkCardAccountsQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.DrinkCardAccountSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.DisableDrinkCardAccountRefillUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.EnableDrinkCardAccountRefillUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.GetDrinkCardAccountByVolunteerIdUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListDrinkCardAccountsUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCardAccountNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InvalidDrinkCardAccountStatusTransitionException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.AdminDrinkCardAccountMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.GlobalExceptionHandler;
@@ -31,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,6 +53,12 @@ class AdminDrinkCardAccountControllerTest {
 
     @MockitoBean
     private GetDrinkCardAccountByVolunteerIdUseCase getDrinkCardAccountByVolunteerIdUseCase;
+
+    @MockitoBean
+    private DisableDrinkCardAccountRefillUseCase disableDrinkCardAccountRefillUseCase;
+
+    @MockitoBean
+    private EnableDrinkCardAccountRefillUseCase enableDrinkCardAccountRefillUseCase;
 
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -198,6 +210,156 @@ class AdminDrinkCardAccountControllerTest {
                 .andExpect(jsonPath("$.message").value("DrinkCardAccount not found with id: " + volunteerId));
 
         verify(getDrinkCardAccountByVolunteerIdUseCase).execute(new GetDrinkCardAccountByVolunteerIdQuery(volunteerId));
+    }
+
+    @Test
+    void disableDrinkCardAccountRefill_WhenAccountExists_ReturnsAccountWithRefillDisabledStatus() throws Exception {
+        String volunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+        DrinkCardAccountSummaryResult result = new DrinkCardAccountSummaryResult(
+                volunteerId,
+                3,
+                "REFILL_DISABLED",
+                Instant.parse("2026-05-18T10:00:00Z")
+        );
+
+        when(disableDrinkCardAccountRefillUseCase.execute(new DisableDrinkCardAccountRefillCommand(volunteerId)))
+                .thenReturn(result);
+
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken(
+                        "admin-user-id",
+                        null,
+                        "ROLE_ADMIN"
+                );
+
+        mockMvc.perform(post("/api/v1/admin/drink-card-accounts/{volunteerId}/disable-refill", volunteerId)
+                        .principal(authentication))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.volunteerId").value(volunteerId))
+                .andExpect(jsonPath("$.credits").value(3))
+                .andExpect(jsonPath("$.status").value("REFILL_DISABLED"));
+
+        verify(disableDrinkCardAccountRefillUseCase).execute(new DisableDrinkCardAccountRefillCommand(volunteerId));
+    }
+
+    @Test
+    void disableDrinkCardAccountRefill_WhenAccountDoesNotExist_ReturnsNotFound() throws Exception {
+        String volunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+
+        when(disableDrinkCardAccountRefillUseCase.execute(any(DisableDrinkCardAccountRefillCommand.class)))
+                .thenThrow(new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + volunteerId));
+
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken(
+                        "admin-user-id",
+                        null,
+                        "ROLE_ADMIN"
+                );
+
+        mockMvc.perform(post("/api/v1/admin/drink-card-accounts/{volunteerId}/disable-refill", volunteerId)
+                        .principal(authentication))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("DrinkCardAccount not found with id: " + volunteerId));
+    }
+
+    @Test
+    void disableDrinkCardAccountRefill_WhenAccountIsSuspended_ReturnsBadRequest() throws Exception {
+        String volunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+
+        when(disableDrinkCardAccountRefillUseCase.execute(any(DisableDrinkCardAccountRefillCommand.class)))
+                .thenThrow(new InvalidDrinkCardAccountStatusTransitionException("Cannot disable refill on a suspended DrinkCardAccount."));
+
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken(
+                        "admin-user-id",
+                        null,
+                        "ROLE_ADMIN"
+                );
+
+        mockMvc.perform(post("/api/v1/admin/drink-card-accounts/{volunteerId}/disable-refill", volunteerId)
+                        .principal(authentication))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    void enableDrinkCardAccountRefill_WhenAccountExists_ReturnsAccountWithActiveStatus() throws Exception {
+        String volunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+        DrinkCardAccountSummaryResult result = new DrinkCardAccountSummaryResult(
+                volunteerId,
+                3,
+                "ACTIVE",
+                Instant.parse("2026-05-18T10:00:00Z")
+        );
+
+        when(enableDrinkCardAccountRefillUseCase.execute(new EnableDrinkCardAccountRefillCommand(volunteerId)))
+                .thenReturn(result);
+
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken(
+                        "admin-user-id",
+                        null,
+                        "ROLE_ADMIN"
+                );
+
+        mockMvc.perform(post("/api/v1/admin/drink-card-accounts/{volunteerId}/enable-refill", volunteerId)
+                        .principal(authentication))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.volunteerId").value(volunteerId))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        verify(enableDrinkCardAccountRefillUseCase).execute(new EnableDrinkCardAccountRefillCommand(volunteerId));
+    }
+
+    @Test
+    void enableDrinkCardAccountRefill_WhenAccountDoesNotExist_ReturnsNotFound() throws Exception {
+        String volunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+
+        when(enableDrinkCardAccountRefillUseCase.execute(any(EnableDrinkCardAccountRefillCommand.class)))
+                .thenThrow(new DrinkCardAccountNotFoundException("DrinkCardAccount not found with id: " + volunteerId));
+
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken(
+                        "admin-user-id",
+                        null,
+                        "ROLE_ADMIN"
+                );
+
+        mockMvc.perform(post("/api/v1/admin/drink-card-accounts/{volunteerId}/enable-refill", volunteerId)
+                        .principal(authentication))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void disableDrinkCardAccountRefill_ShouldRequireAdminRole() throws NoSuchMethodException {
+        Method method = AdminDrinkCardAccountController.class.getMethod(
+                "disableDrinkCardAccountRefill",
+                String.class
+        );
+
+        PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
+
+        assertAll(
+                () -> assertNotNull(preAuthorize),
+                () -> assertEquals("hasRole('ADMIN')", preAuthorize.value())
+        );
+    }
+
+    @Test
+    void enableDrinkCardAccountRefill_ShouldRequireAdminRole() throws NoSuchMethodException {
+        Method method = AdminDrinkCardAccountController.class.getMethod(
+                "enableDrinkCardAccountRefill",
+                String.class
+        );
+
+        PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
+
+        assertAll(
+                () -> assertNotNull(preAuthorize),
+                () -> assertEquals("hasRole('ADMIN')", preAuthorize.value())
+        );
     }
 
     @Test

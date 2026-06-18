@@ -6,6 +6,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.event.DomainEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.event.CardPurchasedEvent;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InvalidDrinkCardAccountStatusTransitionException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -78,14 +79,14 @@ class DrinkCardAccountTest {
     }
 
     @Test
-    void isActive_WhenDrinkCardAccountIsActive_ShouldReturnTrue() {
+    void canCreateTicket_WhenDrinkCardAccountIsActive_ShouldReturnTrue() {
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
 
-        assertTrue(drinkCardAccount.isActive());
+        assertTrue(drinkCardAccount.canCreateTicket());
     }
 
     @Test
-    void isActive_WhenDrinkCardAccountIsSuspended_ShouldReturnFalse() {
+    void canCreateTicket_WhenDrinkCardAccountIsSuspended_ShouldReturnFalse() {
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
                 1L,
                 VolunteerID.generate(),
@@ -95,7 +96,149 @@ class DrinkCardAccountTest {
                 DrinkCardAccountStatus.SUSPENDED
         );
 
-        assertFalse(drinkCardAccount.isActive());
+        assertFalse(drinkCardAccount.canCreateTicket());
+    }
+
+    @Test
+    void canCreateTicket_WhenDrinkCardAccountHasRefillDisabled_ShouldReturnTrue() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.REFILL_DISABLED
+        );
+
+        assertTrue(drinkCardAccount.canCreateTicket());
+    }
+
+    @Test
+    void canRefill_WhenDrinkCardAccountIsActive_ShouldReturnTrue() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
+
+        assertTrue(drinkCardAccount.canRefill());
+    }
+
+    @Test
+    void canRefill_WhenDrinkCardAccountHasRefillDisabled_ShouldReturnFalse() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.REFILL_DISABLED
+        );
+
+        assertFalse(drinkCardAccount.canRefill());
+    }
+
+    @Test
+    void canRefill_WhenDrinkCardAccountIsSuspended_ShouldReturnFalse() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.SUSPENDED
+        );
+
+        assertFalse(drinkCardAccount.canRefill());
+    }
+
+    @Test
+    void disableRefill_WhenDrinkCardAccountIsActive_ShouldSetStatusToRefillDisabled() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
+
+        drinkCardAccount.disableRefill();
+
+        assertAll(
+                () -> assertEquals(DrinkCardAccountStatus.REFILL_DISABLED, drinkCardAccount.getStatus()),
+                () -> assertFalse(drinkCardAccount.canRefill()),
+                () -> assertTrue(drinkCardAccount.canCreateTicket())
+        );
+    }
+
+    @Test
+    void disableRefill_WhenDrinkCardAccountAlreadyHasRefillDisabled_IsIdempotent() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.REFILL_DISABLED
+        );
+
+        drinkCardAccount.disableRefill();
+
+        assertEquals(DrinkCardAccountStatus.REFILL_DISABLED, drinkCardAccount.getStatus());
+    }
+
+    @Test
+    void disableRefill_WhenDrinkCardAccountIsSuspended_ShouldThrowInvalidStatusTransition() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.SUSPENDED
+        );
+
+        assertThrows(
+                InvalidDrinkCardAccountStatusTransitionException.class,
+                drinkCardAccount::disableRefill
+        );
+        assertEquals(DrinkCardAccountStatus.SUSPENDED, drinkCardAccount.getStatus());
+    }
+
+    @Test
+    void enableRefill_WhenDrinkCardAccountHasRefillDisabled_ShouldSetStatusToActive() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.REFILL_DISABLED
+        );
+
+        drinkCardAccount.enableRefill();
+
+        assertAll(
+                () -> assertEquals(DrinkCardAccountStatus.ACTIVE, drinkCardAccount.getStatus()),
+                () -> assertTrue(drinkCardAccount.canRefill())
+        );
+    }
+
+    @Test
+    void enableRefill_WhenDrinkCardAccountIsActive_IsIdempotent() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(VolunteerID.generate());
+
+        drinkCardAccount.enableRefill();
+
+        assertEquals(DrinkCardAccountStatus.ACTIVE, drinkCardAccount.getStatus());
+    }
+
+    @Test
+    void enableRefill_WhenDrinkCardAccountIsSuspended_ShouldThrowInvalidStatusTransition() {
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.rehydrate(
+                1L,
+                VolunteerID.generate(),
+                5,
+                null,
+                Instant.now(),
+                DrinkCardAccountStatus.SUSPENDED
+        );
+
+        assertThrows(
+                InvalidDrinkCardAccountStatusTransitionException.class,
+                drinkCardAccount::enableRefill
+        );
+        assertEquals(DrinkCardAccountStatus.SUSPENDED, drinkCardAccount.getStatus());
     }
 
     @Test
