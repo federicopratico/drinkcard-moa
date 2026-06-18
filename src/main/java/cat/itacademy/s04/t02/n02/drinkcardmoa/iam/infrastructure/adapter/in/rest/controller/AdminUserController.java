@@ -1,7 +1,9 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.controller;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.DeleteUserByIdQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.GetUserByIdQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.DeleteUserByIdUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.GetUserByIdUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.ListUsersUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.UserSummaryResponse;
@@ -12,6 +14,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/users")
@@ -20,6 +23,7 @@ public class AdminUserController {
 
     private final ListUsersUseCase listUsersUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
+    private final DeleteUserByIdUseCase deleteUserByIdUseCase;
     private final AdminUserMapper mapper;
 
     @GetMapping
@@ -45,5 +49,12 @@ public class AdminUserController {
     public ResponseEntity<UserSummaryResponse> getUserById(@PathVariable String userId) {
         UserSummaryResult result = getUserByIdUseCase.execute(new GetUserByIdQuery(userId));
         return ResponseEntity.status(HttpStatus.OK).body(mapper.toResponse(result));
+    }
+
+    @DeleteMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUserById(@PathVariable String userId, Authentication authentication) {
+        deleteUserByIdUseCase.execute(new DeleteUserByIdQuery(authentication.getName(), userId));
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
