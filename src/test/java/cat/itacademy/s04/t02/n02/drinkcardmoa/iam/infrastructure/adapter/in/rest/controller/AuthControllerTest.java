@@ -1,41 +1,35 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.controller;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.LoginUserCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.LogoutCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RefreshTokenCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RegisterUserCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.LoginUserResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RefreshTokenResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RegisterUserResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.AuthenticateUserUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.LogoutUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RefreshAccessTokenUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RegisterUserUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.InvalidTokenException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.LoginRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.LogoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RefreshTokenRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RegisterRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RefreshTokenResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RegisterResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.mapper.AuthMapper;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.RefreshTokenProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,19 +45,18 @@ class AuthControllerTest {
     @Mock
     private RefreshAccessTokenUseCase refreshAccessTokenUseCase;
 
+    @Mock
+    private LogoutUseCase logoutUseCase;
+
     private AuthController controller;
 
     @BeforeEach
     void setUp() {
-        RefreshTokenProperties refreshTokenProperties = new RefreshTokenProperties(
-                30
-        );
-
         controller = new AuthController(
                 registerUserUseCase,
                 authenticateUserUseCase,
                 refreshAccessTokenUseCase,
-                refreshTokenProperties,
+                logoutUseCase,
                 new AuthMapper()
         );
     }
@@ -189,6 +182,23 @@ class AuthControllerTest {
                 () -> assertEquals("user@email.com", body.email()),
                 () -> assertEquals("VOLUNTEER", body.role()),
                 () -> assertEquals("raw-refresh-token", commandCaptor.getValue().rawRefreshToken())
+        );
+    }
+
+    @Test
+    void logout_WhenRefreshTokenExists_ReturnsNoContent() {
+        LogoutRequest request = new LogoutRequest("raw-refresh-token");
+
+        ResponseEntity<Void> response = controller.logout(request);
+
+        ArgumentCaptor<LogoutCommand> commandCaptor =
+                ArgumentCaptor.forClass(LogoutCommand.class);
+
+        verify(logoutUseCase).execute(commandCaptor.capture());
+
+        assertAll(
+                () -> assertEquals(204, response.getStatusCode().value()),
+                () -> assertEquals("raw-refresh-token", commandCaptor.getValue().refreshToken())
         );
     }
 }
