@@ -17,14 +17,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
-import java.util.concurrent.locks.Lock;
 
 @Service
 @RequiredArgsConstructor
