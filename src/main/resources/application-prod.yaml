@@ -2,14 +2,26 @@ spring:
   datasource:
     url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:5}
+      minimum-idle: ${DB_POOL_MIN:1}
 
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: false
+
+server:
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:2}
+      min-spare: ${TOMCAT_MIN_SPARE:3}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:5}
+    accept-count: 50
 
 logging:
   level:

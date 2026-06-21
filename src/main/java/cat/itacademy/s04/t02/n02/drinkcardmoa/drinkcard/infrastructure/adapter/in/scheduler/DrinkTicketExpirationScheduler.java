@@ -10,5 +10,8 @@ import org.springframework.stereotype.Component;
 public class DrinkTicketExpirationScheduler {
 
     private final ExpirePendingDrinkTicketUseCase expirePendingDrinkTicketUseCase;
-    
+
+    public void expirePendingDrinkTickets() {
+        expirePendingDrinkTicketUseCase.execute();
+    }
 }
