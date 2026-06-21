@@ -12,12 +12,14 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Refre
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.RefreshTokenID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config.RefreshTokenProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AuthenticationService implements AuthenticateUserUseCase {
@@ -36,13 +38,15 @@ public class AuthenticationService implements AuthenticateUserUseCase {
         User user = userRepository.findUserByEmail(Email.from(cmd.email()))
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
+        log.info("Authenticating user with email: {}", cmd.email());
         if(!user.isActive()) throw new InvalidCredentialsException("Invalid Credentials.\nPlease contact the administrator.");
 
         if(!passwordEncoder.matches(cmd.password(), user.getHashedPassword().value()))
             throw new InvalidCredentialsException("Invalid email or password");
 
+        log.info("password match");
         String token = tokenService.generateToken(user);
-
+        log.info("token generated");
         RefreshTokenGenerator.GeneratedRefreshToken generatedRefreshToken = refreshTokenGenerator.generate();
 
         Instant now = Instant.now();

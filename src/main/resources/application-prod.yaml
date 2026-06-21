@@ -18,9 +18,9 @@ spring:
 server:
   tomcat:
     threads:
-      max: ${TOMCAT_MAX_THREADS:2}
-      min-spare: ${TOMCAT_MIN_SPARE:3}
-    max-connections: ${TOMCAT_MAX_CONNECTIONS:5}
+      max: ${TOMCAT_MAX_THREADS:15}
+      min-spare: ${TOMCAT_MIN_SPARE:2}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:200}
     accept-count: 50
 
 logging:
