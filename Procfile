@@ -1,1 +1,1 @@
-web:  java -XX:MaxRAMPercentage=75 -XX:+UseSerialGC -Xss256k -jar target/drinkcard-MOA-0.0.1-SNAPSHOT.jar
+web:  java -Xmx512m -XX:MaxRAMPercentage=75 -XX:+UseSerialGC -Xss256k -jar target/drinkcard-MOA-0.0.1-SNAPSHOT.jar

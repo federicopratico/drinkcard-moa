@@ -10,9 +10,5 @@ import org.springframework.stereotype.Component;
 public class DrinkTicketExpirationScheduler {
 
     private final ExpirePendingDrinkTicketUseCase expirePendingDrinkTicketUseCase;
-
-    @Scheduled(fixedDelayString = "${drinkcard.ticket-expiration-cleanup-delay-ms:60000}")
-    public void expirePendingDrinkTickets() {
-        expirePendingDrinkTicketUseCase.execute();
-    }
+    
 }
