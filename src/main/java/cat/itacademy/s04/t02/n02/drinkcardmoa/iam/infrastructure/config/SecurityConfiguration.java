@@ -1,7 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.config;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.security.JwtAuthenticationFilter;
-import lombok.AllArgsConstructor;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,13 +25,19 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@AllArgsConstructor
 public class SecurityConfiguration {
 
-    @Value("${app.cors.allowed-origins}")
     private final String corsAllowedOrigins;
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfiguration(
+            @Value("${app.cors.allowed-origins}") String corsAllowedOrigins,
+            JwtAuthenticationFilter jwtAuthenticationFilter
+    ) {
+        this.corsAllowedOrigins = corsAllowedOrigins;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
