@@ -3,27 +3,9 @@ spring:
     url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: ${DB_POOL_MAX:5}
-      minimum-idle: ${DB_POOL_MIN:1}
+      maximum-pool-size: ${DB_POOL_MAX:10}
 
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: false
     open-in-view: false
-    properties:
-      hibernate:
-        format_sql: false
-
-server:
-  tomcat:
-    threads:
-      max: ${TOMCAT_MAX_THREADS:15}
-      min-spare: ${TOMCAT_MIN_SPARE:2}
-    max-connections: ${TOMCAT_MAX_CONNECTIONS:200}
-    accept-count: 50
-
-logging:
-  level:
-    cat.itacademy.s04.t02.n02.drinkcardmoa: INFO
-    org.springframework.security: WARN
