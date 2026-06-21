@@ -38,15 +38,12 @@ public class AuthenticationService implements AuthenticateUserUseCase {
         User user = userRepository.findUserByEmail(Email.from(cmd.email()))
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
-        log.info("Authenticating user with email: {}", cmd.email());
         if(!user.isActive()) throw new InvalidCredentialsException("Invalid Credentials.\nPlease contact the administrator.");
 
         if(!passwordEncoder.matches(cmd.password(), user.getHashedPassword().value()))
             throw new InvalidCredentialsException("Invalid email or password");
 
-        log.info("password match");
         String token = tokenService.generateToken(user);
-        log.info("token generated");
         RefreshTokenGenerator.GeneratedRefreshToken generatedRefreshToken = refreshTokenGenerator.generate();
 
         Instant now = Instant.now();
