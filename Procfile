@@ -1,1 +1,1 @@
-web: java -jar target/drinkcard-MOA-0.0.1-SNAPSHOT.jar
+web:  java -XX:MaxRAMPercentage=75 -Xss256k -jar target/drinkcard-MOA-0.0.1-SNAPSHOT.jar
