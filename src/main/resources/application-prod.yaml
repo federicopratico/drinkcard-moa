@@ -1,19 +1,11 @@
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:10}
 
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: false
-
-logging:
-  level:
-    cat.itacademy.s04.t02.n02.drinkcardmoa: INFO
-    org.springframework.security: WARN
+    open-in-view: false
