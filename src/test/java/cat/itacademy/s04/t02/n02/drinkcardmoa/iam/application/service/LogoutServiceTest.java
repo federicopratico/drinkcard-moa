@@ -1,7 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.LogoutCommand;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.RefreshToken;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedToken;
@@ -39,20 +39,20 @@ class LogoutServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
-    private RefreshTokenGenerator refreshTokenGenerator;
+    private OpaqueTokenGenerator opaqueTokenGenerator;
 
     private LogoutService service;
 
     @BeforeEach
     void setUp() {
-        service = new LogoutService(refreshTokenRepository, refreshTokenGenerator);
+        service = new LogoutService(refreshTokenRepository, opaqueTokenGenerator);
     }
 
     @Test
     void execute_WhenRefreshTokenExists_ShouldRevokeTokenFamily() {
         RefreshToken refreshToken = activeRefreshToken();
 
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(refreshToken));
@@ -82,7 +82,7 @@ class LogoutServiceTest {
 
     @Test
     void execute_WhenRefreshTokenDoesNotExist_ShouldDoNothing() {
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.empty());
@@ -97,7 +97,7 @@ class LogoutServiceTest {
     void execute_WhenRefreshTokenIsAlreadyRevoked_ShouldRemainIdempotentAndRevokeFamily() {
         RefreshToken refreshToken = revokedRefreshToken();
 
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(refreshToken));
@@ -115,7 +115,7 @@ class LogoutServiceTest {
     void execute_WhenRefreshTokenWasAlreadyReplaced_ShouldRevokeTokenFamily() {
         RefreshToken refreshToken = replacedRefreshToken();
 
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(refreshToken));

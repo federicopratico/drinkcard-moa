@@ -3,7 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RefreshTokenCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RefreshTokenResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RefreshAccessTokenUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.TokenService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
@@ -29,7 +29,7 @@ public class RefreshAccessTokenService implements RefreshAccessTokenUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(RefreshAccessTokenService.class);
 
-    private final RefreshTokenGenerator refreshTokenGenerator;
+    private final OpaqueTokenGenerator opaqueTokenGenerator;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final TokenService tokenService;
@@ -38,7 +38,7 @@ public class RefreshAccessTokenService implements RefreshAccessTokenUseCase {
     @Override
     @Transactional
     public RefreshTokenResult execute(RefreshTokenCommand cmd) {
-        HashedToken hashedToken = refreshTokenGenerator.hash(cmd.rawRefreshToken());
+        HashedToken hashedToken = opaqueTokenGenerator.hash(cmd.rawRefreshToken());
 
         RefreshTokenAttempt refreshTokenAttempt = Objects.requireNonNull(attemptRefresh(hashedToken));
 
@@ -68,7 +68,7 @@ public class RefreshAccessTokenService implements RefreshAccessTokenUseCase {
         User user = userRepository.findById(currentRefreshToken.getUserId())
                 .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
 
-        RefreshTokenGenerator.GeneratedRefreshToken generatedRefreshToken = refreshTokenGenerator.generate();
+        OpaqueTokenGenerator.GeneratedToken generatedRefreshToken = opaqueTokenGenerator.generate();
 
         RefreshToken nextRefreshToken = currentRefreshToken.rotate(generatedRefreshToken.hashedToken(), now, newExpiresAt);
 
