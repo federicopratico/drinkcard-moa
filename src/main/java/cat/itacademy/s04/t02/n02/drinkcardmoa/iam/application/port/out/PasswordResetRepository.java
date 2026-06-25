@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface PasswordResetRepository {
     PasswordReset save(PasswordReset passwordReset);
-    Optional<PasswordReset> findByToken(HashedToken token);
+    Optional<PasswordReset> findByPasswordResetToken(HashedToken token);
 }

@@ -23,8 +23,8 @@ public class PasswordResetJpaAdapter implements PasswordResetRepository {
     }
 
     @Override
-    public Optional<PasswordReset> findByToken(HashedToken token) {
-        return jpaPasswordResetRepository.findByToken(token.asString())
+    public Optional<PasswordReset> findByPasswordResetToken(HashedToken token) {
+        return jpaPasswordResetRepository.findByPasswordResetToken(token.asString())
                 .map(mapper::toDomain);
     }
 }
