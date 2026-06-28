@@ -54,6 +54,9 @@ public class PasswordReset {
         this.status = PasswordResetStatus.EXPIRED;
     }
 
-}
+    public void markAsRevoked() {
+        this.status = PasswordResetStatus.REVOKED;
+    }
 
+}
 
