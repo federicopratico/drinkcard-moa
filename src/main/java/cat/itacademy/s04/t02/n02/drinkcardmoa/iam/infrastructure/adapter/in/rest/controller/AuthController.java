@@ -26,6 +26,7 @@ public class AuthController {
     private final RefreshAccessTokenUseCase refreshAccessTokenUseCase;
     private final LogoutUseCase logoutUseCase;
     private final InitiatePasswordResetUseCase initiatePasswordResetUseCase;
+    private final ResetPasswordUseCase resetPasswordUseCase;
     private final AuthMapper mapper;
 
 
@@ -63,10 +64,17 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("password-reset/request")
+    @PostMapping("/password-reset/request")
     public ResponseEntity<Void> initiatePasswordReset(@Valid @RequestBody InitiatePasswordResetRequest request) {
         InitiatePasswordResetCommand cmd = new InitiatePasswordResetCommand(request.email());
         initiatePasswordResetUseCase.execute(cmd);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        ResetPasswordCommand cmd = new ResetPasswordCommand(request.token(), request.newPassword());
+        resetPasswordUseCase.execute(cmd);
+        return ResponseEntity.noContent().build();
     }
 }

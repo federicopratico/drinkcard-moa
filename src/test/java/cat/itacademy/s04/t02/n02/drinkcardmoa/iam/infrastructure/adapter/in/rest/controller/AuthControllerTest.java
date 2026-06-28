@@ -5,6 +5,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.comman
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RefreshTokenCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RegisterUserCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.InitiatePasswordResetCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.ResetPasswordCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.LoginUserResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RefreshTokenResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RegisterUserResult;
@@ -46,6 +47,9 @@ class AuthControllerTest {
     @Mock
     private InitiatePasswordResetUseCase initiatePasswordResetUseCase;
 
+    @Mock
+    private ResetPasswordUseCase resetPasswordUseCase;
+
     private AuthController controller;
 
     @BeforeEach
@@ -56,6 +60,7 @@ class AuthControllerTest {
                 refreshAccessTokenUseCase,
                 logoutUseCase,
                 initiatePasswordResetUseCase,
+                resetPasswordUseCase,
                 new AuthMapper()
         );
     }
@@ -215,6 +220,24 @@ class AuthControllerTest {
         assertAll(
                 () -> assertEquals(200, response.getStatusCode().value()),
                 () -> assertEquals("user@email.com", commandCaptor.getValue().email())
+        );
+    }
+
+    @Test
+    void resetPassword_ReturnsNoContent() {
+        ResetPasswordRequest request = new ResetPasswordRequest("raw-password-reset-token", "newPassword123");
+
+        ResponseEntity<Void> response = controller.resetPassword(request);
+
+        ArgumentCaptor<ResetPasswordCommand> commandCaptor =
+                ArgumentCaptor.forClass(ResetPasswordCommand.class);
+
+        verify(resetPasswordUseCase).execute(commandCaptor.capture());
+
+        assertAll(
+                () -> assertEquals(204, response.getStatusCode().value()),
+                () -> assertEquals("raw-password-reset-token", commandCaptor.getValue().rawToken()),
+                () -> assertEquals("newPassword123", commandCaptor.getValue().newPassword())
         );
     }
 }

@@ -41,11 +41,11 @@ public class ResetPasswordService implements ResetPasswordUseCase {
                 .orElseThrow(() -> new InvalidTokenException("Invalid password reset token"));
 
         if (!passwordReset.isUsable(now)) {
-            throw new InvalidTokenException("Invalid password reset token");
+            throw new InvalidTokenException("token is not usable");
         }
 
         User user = userRepository.findUserByEmail(passwordReset.getEmail())
-                .orElseThrow(() -> new InvalidTokenException("Invalid password reset token"));
+                .orElseThrow(() -> new InvalidTokenException("user not found"));
 
         user.changePassword(HashedPassword.from(passwordEncoder.encode(cmd.newPassword())));
         passwordReset.markAsUsed(now);

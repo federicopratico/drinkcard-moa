@@ -16,6 +16,6 @@ public class MailtrapProperties {
     private String token;
     private String senderEmail;
     private URI registrationLinkBaseUrl;
-    private URI PasswordResetLinkBaseUrl;
+    private URI passwordResetLinkBaseUrl;
     private Map<EmailType, String> templates = new EnumMap<>(EmailType.class);
 }
