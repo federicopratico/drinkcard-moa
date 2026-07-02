@@ -2,7 +2,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RefreshTokenCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RefreshTokenResult;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.TokenService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
@@ -60,7 +60,7 @@ class RefreshAccessTokenServiceTest {
             HashedToken.from("hashed-refresh-token");
 
     @Mock
-    private RefreshTokenGenerator refreshTokenGenerator;
+    private OpaqueTokenGenerator opaqueTokenGenerator;
 
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
@@ -80,7 +80,7 @@ class RefreshAccessTokenServiceTest {
         );
 
         service = new RefreshAccessTokenService(
-                refreshTokenGenerator,
+                opaqueTokenGenerator,
                 refreshTokenRepository,
                 userRepository,
                 tokenService,
@@ -93,14 +93,14 @@ class RefreshAccessTokenServiceTest {
         RefreshToken currentRefreshToken = activeRefreshToken();
         User user = activeUser(currentRefreshToken.getUserId());
 
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(currentRefreshToken));
         when(userRepository.findById(currentRefreshToken.getUserId()))
                 .thenReturn(Optional.of(user));
-        when(refreshTokenGenerator.generate()).thenReturn(
-                new RefreshTokenGenerator.GeneratedRefreshToken(
+        when(opaqueTokenGenerator.generate()).thenReturn(
+                new OpaqueTokenGenerator.GeneratedToken(
                         "new-raw-refresh-token",
                         HashedToken.from("new-hashed-refresh-token")
                 )
@@ -158,7 +158,7 @@ class RefreshAccessTokenServiceTest {
 
     @Test
     void execute_WhenRefreshTokenDoesNotExist_ShouldThrowInvalidTokenExceptionAndReleaseLock() {
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.empty());
@@ -176,7 +176,7 @@ class RefreshAccessTokenServiceTest {
     void execute_WhenRefreshTokenIsExpired_ShouldThrowInvalidTokenExceptionAndReleaseLock() {
         RefreshToken expiredToken = expiredRefreshToken();
 
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(expiredToken));
@@ -194,7 +194,7 @@ class RefreshAccessTokenServiceTest {
     void execute_WhenRefreshTokenWasAlreadyReplaced_ShouldRevokeFamilyThenThrowInvalidTokenException() {
         RefreshToken replacedToken = replacedRefreshToken();
 
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(replacedToken));
@@ -215,7 +215,7 @@ class RefreshAccessTokenServiceTest {
     void execute_WhenUserDoesNotExist_ShouldThrowInvalidTokenExceptionAndReleaseLock() {
         RefreshToken currentRefreshToken = activeRefreshToken();
 
-        when(refreshTokenGenerator.hash(RAW_REFRESH_TOKEN))
+        when(opaqueTokenGenerator.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(HASHED_REFRESH_TOKEN);
         when(refreshTokenRepository.findByTokenHash(HASHED_REFRESH_TOKEN))
                 .thenReturn(Optional.of(currentRefreshToken));

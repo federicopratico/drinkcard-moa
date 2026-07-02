@@ -2,7 +2,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.LogoutCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.LogoutUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedToken;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +20,11 @@ public class LogoutService implements LogoutUseCase {
     private static final Logger log = LoggerFactory.getLogger(LogoutService.class);
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final RefreshTokenGenerator refreshTokenGenerator;
+    private final OpaqueTokenGenerator opaqueTokenGenerator;
 
     @Transactional
     public void execute(LogoutCommand command) {
-        HashedToken hashedToken = refreshTokenGenerator.hash(command.refreshToken());
+        HashedToken hashedToken = opaqueTokenGenerator.hash(command.refreshToken());
         Instant now = Instant.now();
 
         refreshTokenRepository.findByTokenHash(hashedToken)

@@ -4,17 +4,13 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.comman
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.LogoutCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RefreshTokenCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.RegisterUserCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.InitiatePasswordResetCommand;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.ResetPasswordCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.LoginUserResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RefreshTokenResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.RegisterUserResult;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.AuthenticateUserUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.LogoutUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RefreshAccessTokenUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.RegisterUserUseCase;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.LoginRequest;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.LogoutRequest;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RefreshTokenRequest;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.RegisterRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.*;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.request.*;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RefreshTokenResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RegisterResponse;
@@ -48,6 +44,12 @@ class AuthControllerTest {
     @Mock
     private LogoutUseCase logoutUseCase;
 
+    @Mock
+    private InitiatePasswordResetUseCase initiatePasswordResetUseCase;
+
+    @Mock
+    private ResetPasswordUseCase resetPasswordUseCase;
+
     private AuthController controller;
 
     @BeforeEach
@@ -57,6 +59,8 @@ class AuthControllerTest {
                 authenticateUserUseCase,
                 refreshAccessTokenUseCase,
                 logoutUseCase,
+                initiatePasswordResetUseCase,
+                resetPasswordUseCase,
                 new AuthMapper()
         );
     }
@@ -199,6 +203,41 @@ class AuthControllerTest {
         assertAll(
                 () -> assertEquals(204, response.getStatusCode().value()),
                 () -> assertEquals("raw-refresh-token", commandCaptor.getValue().refreshToken())
+        );
+    }
+
+    @Test
+    void initiatePasswordReset_ReturnsOk() {
+        InitiatePasswordResetRequest request = new InitiatePasswordResetRequest("user@email.com");
+
+        ResponseEntity<Void> response = controller.initiatePasswordReset(request);
+
+        ArgumentCaptor<InitiatePasswordResetCommand> commandCaptor =
+                ArgumentCaptor.forClass(InitiatePasswordResetCommand.class);
+
+        verify(initiatePasswordResetUseCase).execute(commandCaptor.capture());
+
+        assertAll(
+                () -> assertEquals(200, response.getStatusCode().value()),
+                () -> assertEquals("user@email.com", commandCaptor.getValue().email())
+        );
+    }
+
+    @Test
+    void resetPassword_ReturnsNoContent() {
+        ResetPasswordRequest request = new ResetPasswordRequest("raw-password-reset-token", "newPassword123");
+
+        ResponseEntity<Void> response = controller.resetPassword(request);
+
+        ArgumentCaptor<ResetPasswordCommand> commandCaptor =
+                ArgumentCaptor.forClass(ResetPasswordCommand.class);
+
+        verify(resetPasswordUseCase).execute(commandCaptor.capture());
+
+        assertAll(
+                () -> assertEquals(204, response.getStatusCode().value()),
+                () -> assertEquals("raw-password-reset-token", commandCaptor.getValue().rawToken()),
+                () -> assertEquals("newPassword123", commandCaptor.getValue().newPassword())
         );
     }
 }

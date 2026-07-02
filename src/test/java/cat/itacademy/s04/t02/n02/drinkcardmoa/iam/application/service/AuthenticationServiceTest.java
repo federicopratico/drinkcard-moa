@@ -3,7 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.command.LoginUserCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.LoginUserResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.PasswordEncoder;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.TokenService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
@@ -46,7 +46,7 @@ class AuthenticationServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private RefreshTokenGenerator refreshTokenGenerator;
+    private OpaqueTokenGenerator opaqueTokenGenerator;
 
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
@@ -59,7 +59,7 @@ class AuthenticationServiceTest {
                 tokenService,
                 userRepository,
                 passwordEncoder,
-                refreshTokenGenerator,
+                opaqueTokenGenerator,
                 refreshTokenRepository,
                 new RefreshTokenProperties(
                         30
@@ -81,8 +81,8 @@ class AuthenticationServiceTest {
         when(passwordEncoder.matches(command.password(), user.getHashedPassword().value()))
                 .thenReturn(true);
         when(tokenService.generateToken(user)).thenReturn("new-token");
-        when(refreshTokenGenerator.generate()).thenReturn(
-                new RefreshTokenGenerator.GeneratedRefreshToken(
+        when(opaqueTokenGenerator.generate()).thenReturn(
+                new OpaqueTokenGenerator.GeneratedToken(
                         "raw-refresh-token",
                         HashedToken.from("hashed-refresh-token")
                 )
@@ -109,7 +109,7 @@ class AuthenticationServiceTest {
         verify(passwordEncoder, times(1))
                 .matches(command.password(), user.getHashedPassword().value());
         verify(tokenService, times(1)).generateToken(user);
-        verify(refreshTokenGenerator, times(1)).generate();
+        verify(opaqueTokenGenerator, times(1)).generate();
         verify(refreshTokenRepository, times(1)).save(refreshTokenCaptor.capture());
 
         RefreshToken savedRefreshToken = refreshTokenCaptor.getValue();
@@ -150,7 +150,7 @@ class AuthenticationServiceTest {
         verify(userRepository, times(1)).findUserByEmail(any(Email.class));
         verify(passwordEncoder, never()).matches(any(String.class), any(String.class));
         verify(tokenService, never()).generateToken(any(User.class));
-        verify(refreshTokenGenerator, never()).generate();
+        verify(opaqueTokenGenerator, never()).generate();
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
@@ -177,7 +177,7 @@ class AuthenticationServiceTest {
         verify(passwordEncoder, times(1))
                 .matches(cmd.password(), user.getHashedPassword().value());
         verify(tokenService, never()).generateToken(any(User.class));
-        verify(refreshTokenGenerator, never()).generate();
+        verify(opaqueTokenGenerator, never()).generate();
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
@@ -200,7 +200,7 @@ class AuthenticationServiceTest {
         verify(userRepository, times(1)).findUserByEmail(any(Email.class));
         verify(passwordEncoder, never()).matches(any(String.class), any(String.class));
         verify(tokenService, never()).generateToken(any(User.class));
-        verify(refreshTokenGenerator, never()).generate();
+        verify(opaqueTokenGenerator, never()).generate();
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
@@ -223,7 +223,7 @@ class AuthenticationServiceTest {
         verify(userRepository, times(1)).findUserByEmail(any(Email.class));
         verify(passwordEncoder, never()).matches(any(String.class), any(String.class));
         verify(tokenService, never()).generateToken(any(User.class));
-        verify(refreshTokenGenerator, never()).generate();
+        verify(opaqueTokenGenerator, never()).generate();
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 

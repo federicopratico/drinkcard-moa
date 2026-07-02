@@ -27,7 +27,7 @@ public class AuthenticationService implements AuthenticateUserUseCase {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RefreshTokenGenerator refreshTokenGenerator;
+    private final OpaqueTokenGenerator opaqueTokenGenerator;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenProperties refreshTokenProperties;
 
@@ -44,7 +44,7 @@ public class AuthenticationService implements AuthenticateUserUseCase {
             throw new InvalidCredentialsException("Invalid email or password");
 
         String token = tokenService.generateToken(user);
-        RefreshTokenGenerator.GeneratedRefreshToken generatedRefreshToken = refreshTokenGenerator.generate();
+        OpaqueTokenGenerator.GeneratedToken generatedRefreshToken = opaqueTokenGenerator.generate();
 
         Instant now = Instant.now();
         Instant expiresAt = now.plus(refreshTokenProperties.expirationDays(), ChronoUnit.DAYS);

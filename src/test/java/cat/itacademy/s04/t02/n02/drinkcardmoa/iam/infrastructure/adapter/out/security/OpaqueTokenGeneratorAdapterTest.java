@@ -1,19 +1,19 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.security;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator.GeneratedToken;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedToken;
 import org.junit.jupiter.api.Test;
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator.GeneratedRefreshToken;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RefreshTokenGeneratorAdapterTest {
+class OpaqueTokenGeneratorAdapterTest {
 
-    private final RefreshTokenGeneratorAdapter generator =
-            new RefreshTokenGeneratorAdapter();
+    private final OpaqueTokenGeneratorAdapter generator =
+            new OpaqueTokenGeneratorAdapter();
 
     @Test
     void generate_ShouldReturnRawAndHashedToken() {
-        GeneratedRefreshToken generated = generator.generate();
+        GeneratedToken generated = generator.generate();
 
         assertAll(
                 () -> assertNotNull(generated.rawToken()),
@@ -29,8 +29,8 @@ class RefreshTokenGeneratorAdapterTest {
 
     @Test
     void generate_WhenCalledTwice_ShouldReturnDifferentTokens() {
-        GeneratedRefreshToken first = generator.generate();
-        GeneratedRefreshToken second = generator.generate();
+        GeneratedToken first = generator.generate();
+        GeneratedToken second = generator.generate();
 
         assertAll(
                 () -> assertNotEquals(first.rawToken(), second.rawToken()),
@@ -43,16 +43,16 @@ class RefreshTokenGeneratorAdapterTest {
 
     @Test
     void hash_WhenInputIsTheSame_ShouldBeDeterministic() {
-        HashedToken first = generator.hash("refresh-token");
-        HashedToken second = generator.hash("refresh-token");
+        HashedToken first = generator.hash("opaque-token");
+        HashedToken second = generator.hash("opaque-token");
 
         assertEquals(first, second);
     }
 
     @Test
     void hash_WhenInputChanges_ShouldReturnDifferentHash() {
-        HashedToken first = generator.hash("refresh-token-one");
-        HashedToken second = generator.hash("refresh-token-two");
+        HashedToken first = generator.hash("opaque-token-one");
+        HashedToken second = generator.hash("opaque-token-two");
 
         assertNotEquals(first, second);
     }
@@ -83,6 +83,4 @@ class RefreshTokenGeneratorAdapterTest {
                 () -> generator.hash(" ")
         );
     }
-
-
 }
