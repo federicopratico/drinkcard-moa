@@ -1,6 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.integration;
 
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.RefreshTokenJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
@@ -69,7 +69,7 @@ class LoginEndpointTestIT {
     private JpaRefreshTokenRepository jpaRefreshTokenRepository;
 
     @Autowired
-    private RefreshTokenGenerator refreshTokenGenerator;
+    private OpaqueTokenGenerator opaqueTokenGenerator;
 
     @BeforeEach
     void setUp() {
@@ -109,7 +109,7 @@ class LoginEndpointTestIT {
 
 
         var result = objectMapper.readValue(response.getContentAsString(), LoginResponse.class);
-        String refreshTokenHash = refreshTokenGenerator.hash(result.refreshToken()).asString();
+        String refreshTokenHash = opaqueTokenGenerator.hash(result.refreshToken()).asString();
 
         Optional<RefreshTokenJpaEntity> storedRefreshToken =
                 jpaRefreshTokenRepository.findByTokenHash(refreshTokenHash);

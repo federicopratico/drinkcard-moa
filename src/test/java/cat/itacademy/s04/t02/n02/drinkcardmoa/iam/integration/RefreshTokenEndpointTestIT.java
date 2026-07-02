@@ -1,6 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.integration;
 
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.LoginResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.in.rest.dto.response.RefreshTokenResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.RefreshTokenJpaEntity;
@@ -68,7 +68,7 @@ class RefreshTokenEndpointTestIT {
     private JpaRefreshTokenRepository jpaRefreshTokenRepository;
 
     @Autowired
-    private RefreshTokenGenerator refreshTokenGenerator;
+    private OpaqueTokenGenerator opaqueTokenGenerator;
 
     @BeforeEach
     void setUp() {
@@ -108,7 +108,7 @@ class RefreshTokenEndpointTestIT {
 
         var result = objectMapper.readValue(loginResponse.getContentAsString(), LoginResponse.class);
         String firstRawRefreshToken = result.refreshToken();
-        String firstRefreshTokenHash = refreshTokenGenerator.hash(firstRawRefreshToken).asString();
+        String firstRefreshTokenHash = opaqueTokenGenerator.hash(firstRawRefreshToken).asString();
 
         Optional<RefreshTokenJpaEntity> storedFirstToken =
                 jpaRefreshTokenRepository.findByTokenHash(firstRefreshTokenHash);
@@ -131,7 +131,7 @@ class RefreshTokenEndpointTestIT {
 
         var refreshResult = objectMapper.readValue(refreshResponse.getContentAsString(), RefreshTokenResponse.class);
         String secondRawRefreshToken = refreshResult.refreshToken();
-        String secondRefreshTokenHash = refreshTokenGenerator.hash(secondRawRefreshToken).asString();
+        String secondRefreshTokenHash = opaqueTokenGenerator.hash(secondRawRefreshToken).asString();
 
         RefreshTokenJpaEntity rotatedFirstToken =
                 jpaRefreshTokenRepository.findByTokenHash(firstRefreshTokenHash).orElseThrow();

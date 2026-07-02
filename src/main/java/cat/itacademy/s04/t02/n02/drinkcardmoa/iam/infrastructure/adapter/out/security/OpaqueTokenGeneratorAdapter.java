@@ -1,6 +1,6 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.security;
 
-import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.RefreshTokenGenerator;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.OpaqueTokenGenerator;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedToken;
 import org.springframework.stereotype.Component;
 
@@ -12,14 +12,14 @@ import java.util.Base64;
 import java.util.HexFormat;
 
 @Component
-public class RefreshTokenGeneratorAdapter implements RefreshTokenGenerator {
+public class OpaqueTokenGeneratorAdapter implements OpaqueTokenGenerator {
 
     private static final int TOKEN_BYTES = 32;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Override
-    public GeneratedRefreshToken generate() {
+    public GeneratedToken generate() {
         byte[] bytes = new byte[TOKEN_BYTES];
         secureRandom.nextBytes(bytes);
 
@@ -27,7 +27,7 @@ public class RefreshTokenGeneratorAdapter implements RefreshTokenGenerator {
                 .withoutPadding()
                 .encodeToString(bytes);
 
-        return new GeneratedRefreshToken(rawToken, hash(rawToken));
+        return new GeneratedToken(rawToken, hash(rawToken));
     }
 
     @Override

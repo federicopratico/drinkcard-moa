@@ -24,6 +24,10 @@ public class User {
         return this.status == UserStatus.ACTIVE;
     }
 
+    public void changePassword(HashedPassword hashedPassword) {
+        this.hashedPassword = hashedPassword;
+    }
+
     public static User create(VolunteerID id, FullName fullName, Email email, HashedPassword hashedPassword, Role role) {
         return new User(id, fullName, email, hashedPassword, role, UserStatus.ACTIVE);
     }
