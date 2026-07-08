@@ -28,7 +28,7 @@ class DrinkTicketMapperTest {
         DrinkTicketJpaEntity entity = DrinkTicketJpaEntity.create(
                 drinkTicketId.value(),
                 volunteerId.value(),
-                "BEER",
+                "PILS_BEER",
                 "CONSUMED",
                 createdAt,
                 expiresAt,
@@ -41,7 +41,7 @@ class DrinkTicketMapperTest {
         assertAll(
                 () -> assertEquals(drinkTicketId, drinkTicket.getDrinkTicketId()),
                 () -> assertEquals(volunteerId, drinkTicket.getVolunteerId()),
-                () -> assertEquals(DrinkType.BEER, drinkTicket.getDrinkType()),
+                () -> assertEquals(DrinkType.PILS_BEER, drinkTicket.getDrinkType()),
                 () -> assertEquals(DrinkTicketStatus.CONSUMED, drinkTicket.getStatus()),
                 () -> assertEquals(createdAt, drinkTicket.getCreatedAt()),
                 () -> assertEquals(expiresAt, drinkTicket.getExpiresAt()),
@@ -126,7 +126,7 @@ class DrinkTicketMapperTest {
         DrinkTicket drinkTicket = DrinkTicket.rehydrate(
                 drinkTicketId,
                 volunteerId,
-                DrinkType.BEER,
+                DrinkType.PILS_BEER,
                 DrinkTicketStatus.PENDING,
                 createdAt,
                 expiresAt,
@@ -139,7 +139,7 @@ class DrinkTicketMapperTest {
         assertAll(
                 () -> assertEquals(drinkTicketId.value(), entity.getDrinkTicketId()),
                 () -> assertEquals(volunteerId.value(), entity.getVolunteerId()),
-                () -> assertEquals("BEER", entity.getDrinkType()),
+                () -> assertEquals("PILS_BEER", entity.getDrinkType()),
                 () -> assertEquals("PENDING", entity.getStatus()),
                 () -> assertEquals(createdAt, entity.getCreatedAt()),
                 () -> assertEquals(expiresAt, entity.getExpiresAt()),

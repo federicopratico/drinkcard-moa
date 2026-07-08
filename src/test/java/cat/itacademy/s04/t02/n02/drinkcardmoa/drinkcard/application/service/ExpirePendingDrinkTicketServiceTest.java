@@ -34,7 +34,7 @@ class ExpirePendingDrinkTicketServiceTest {
 
     @Test
     void execute_WhenExpiredPendingTicketsExist_ShouldMarkTicketsAsExpiredAndSaveThem() {
-        DrinkTicket beerTicket = expiredPendingTicket(DrinkType.BEER);
+        DrinkTicket beerTicket = expiredPendingTicket(DrinkType.PILS_BEER);
         DrinkTicket waterTicket = expiredPendingTicket(DrinkType.WATER);
 
         when(drinkTicketRepository.findExpiredPendingTickets(any(Instant.class)))

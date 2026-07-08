@@ -28,7 +28,7 @@ class DrinkTicketControllerMapperTest {
     void toCommand_ShouldMapCreateDrinkTicketRequestToCommand() {
         CreateDrinkTicketRequest request = new CreateDrinkTicketRequest(
                 "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1",
-                "BEER"
+                "PILS_BEER"
         );
 
         CreateDrinkTicketCommand command = mapper.toCommand(request);
@@ -59,7 +59,7 @@ class DrinkTicketControllerMapperTest {
         Instant expiresAt = Instant.parse("2026-05-16T21:30:00Z");
         CreateDrinkTicketResult result = new CreateDrinkTicketResult(
                 "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
-                "BEER",
+                "PILS_BEER",
                 "PENDING",
                 expiresAt
         );
@@ -79,7 +79,7 @@ class DrinkTicketControllerMapperTest {
         ConsumeDrinkTicketResult result = new ConsumeDrinkTicketResult(
                 "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
                 "CONSUMED",
-                "BEER",
+                "PILS_BEER",
                 4
         );
 
@@ -130,7 +130,7 @@ class DrinkTicketControllerMapperTest {
         return new DrinkTicketSummaryResult(
                 "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
                 "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1",
-                "BEER",
+                "PILS_BEER",
                 "CONSUMED",
                 createdAt,
                 expiresAt,
