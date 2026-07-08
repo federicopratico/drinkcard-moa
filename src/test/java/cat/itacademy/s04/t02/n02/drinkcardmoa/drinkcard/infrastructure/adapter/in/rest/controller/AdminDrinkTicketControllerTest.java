@@ -55,7 +55,7 @@ class AdminDrinkTicketControllerTest {
         DrinkTicketSummaryResult drinkTicket = new DrinkTicketSummaryResult(
                 "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
                 volunteerId,
-                "PILS_BEER",
+                "BEER",
                 "CONSUMED",
                 createdAt,
                 expiresAt,

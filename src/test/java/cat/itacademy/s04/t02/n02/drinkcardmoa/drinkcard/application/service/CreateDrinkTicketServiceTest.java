@@ -54,7 +54,7 @@ class CreateDrinkTicketServiceTest {
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
-                "PILS_BEER"
+                "BEER"
         );
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
@@ -80,12 +80,12 @@ class CreateDrinkTicketServiceTest {
         assertAll(
                 () -> assertNotNull(savedDrinkTicket.getDrinkTicketId()),
                 () -> assertEquals(volunteerId, savedDrinkTicket.getVolunteerId()),
-                () -> assertEquals(DrinkType.PILS_BEER, savedDrinkTicket.getDrinkType()),
+                () -> assertEquals(DrinkType.BEER, savedDrinkTicket.getDrinkType()),
                 () -> assertEquals(DrinkTicketStatus.PENDING, savedDrinkTicket.getStatus()),
                 () -> assertNotNull(savedDrinkTicket.getCreatedAt()),
                 () -> assertNotNull(savedDrinkTicket.getExpiresAt()),
                 () -> assertEquals(savedDrinkTicket.getDrinkTicketId().asString(), result.ticketId()),
-                () -> assertEquals("PILS_BEER", result.drinkType()),
+                () -> assertEquals("BEER", result.drinkType()),
                 () -> assertEquals("PENDING", result.status()),
                 () -> assertEquals(savedDrinkTicket.getExpiresAt(), result.expiresAt())
         );
@@ -132,7 +132,7 @@ class CreateDrinkTicketServiceTest {
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
-                "PILS_BEER"
+                "BEER"
         );
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
@@ -154,7 +154,7 @@ class CreateDrinkTicketServiceTest {
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
-                "PILS_BEER"
+                "BEER"
         );
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
@@ -183,7 +183,7 @@ class CreateDrinkTicketServiceTest {
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
-                "PILS_BEER"
+                "BEER"
         );
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
@@ -212,7 +212,7 @@ class CreateDrinkTicketServiceTest {
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
-                "PILS_BEER"
+                "BEER"
         );
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
@@ -230,7 +230,7 @@ class CreateDrinkTicketServiceTest {
 
         assertAll(
                 () -> assertEquals("PENDING", result.status()),
-                () -> assertEquals("PILS_BEER", result.drinkType())
+                () -> assertEquals("BEER", result.drinkType())
         );
 
         verify(drinkTicketRepository).save(any(DrinkTicket.class));
@@ -243,7 +243,7 @@ class CreateDrinkTicketServiceTest {
 
         CreateDrinkTicketCommand command = new CreateDrinkTicketCommand(
                 volunteerId.asString(),
-                "PILS_BEER"
+                "BEER"
         );
 
         when(drinkCardAccountRepository.findByVolunteerId(VolunteerID.from(command.volunteerId())))
