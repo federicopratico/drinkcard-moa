@@ -157,7 +157,7 @@ class ListCurrentVolunteerDrinkTicketsServiceTest {
         return DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 volunteerId,
-                DrinkType.BEER,
+                DrinkType.PILS_BEER,
                 status,
                 createdAt,
                 expiresAt,

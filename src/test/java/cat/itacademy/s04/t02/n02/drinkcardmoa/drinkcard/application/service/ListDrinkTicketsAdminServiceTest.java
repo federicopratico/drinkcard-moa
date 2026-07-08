@@ -165,7 +165,7 @@ class ListDrinkTicketsAdminServiceTest {
         return DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 VolunteerID.generate(),
-                DrinkType.BEER,
+                DrinkType.PILS_BEER,
                 status,
                 createdAt,
                 expiresAt,
