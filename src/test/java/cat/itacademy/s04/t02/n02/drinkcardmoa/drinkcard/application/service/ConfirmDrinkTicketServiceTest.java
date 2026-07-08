@@ -47,7 +47,7 @@ class ConfirmDrinkTicketServiceTest {
     void execute_WhenTicketIsPendingAndVolunteerHasCredits_ShouldConsumeTicketAndCredit() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = createDrinkCardAccountWithCredits(volunteerId);
-        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.PILS_BEER, Instant.now());
+        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER, Instant.now());
 
         ConsumeDrinkTicketCommand command = new ConsumeDrinkTicketCommand(
                 drinkTicket.getDrinkTicketId().asString(),
@@ -84,7 +84,7 @@ class ConfirmDrinkTicketServiceTest {
                 () -> assertEquals("staff-123", savedDrinkTicket.getConsumedByStaffId()),
                 () -> assertEquals(savedDrinkTicket.getDrinkTicketId().asString(), result.ticketId()),
                 () -> assertEquals("CONSUMED", result.status()),
-                () -> assertEquals("PILS_BEER", result.drinkType()),
+                () -> assertEquals("BEER", result.drinkType()),
                 () -> assertEquals(4, result.remainingCredits())
         );
     }
@@ -114,7 +114,7 @@ class ConfirmDrinkTicketServiceTest {
     @Test
     void execute_WhenDrinkCardAccountDoesNotExist_ShouldThrowDrinkCardAccountNotFoundException() {
         VolunteerID volunteerId = VolunteerID.generate();
-        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.PILS_BEER, Instant.now());
+        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER, Instant.now());
 
         ConsumeDrinkTicketCommand command = new ConsumeDrinkTicketCommand(
                 drinkTicket.getDrinkTicketId().asString(),
@@ -148,7 +148,7 @@ class ConfirmDrinkTicketServiceTest {
         DrinkTicket drinkTicket = DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 volunteerId,
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 DrinkTicketStatus.PENDING,
                 createdAt,
                 expiresAt,
@@ -184,7 +184,7 @@ class ConfirmDrinkTicketServiceTest {
         DrinkTicket drinkTicket = DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 volunteerId,
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 DrinkTicketStatus.CONSUMED,
                 Instant.now().minusSeconds(30),
                 Instant.now().plusSeconds(60),
@@ -216,7 +216,7 @@ class ConfirmDrinkTicketServiceTest {
     void execute_WhenDrinkCardAccountHasNoCredits_ShouldThrowInsufficientCreditsException() {
         VolunteerID volunteerId = VolunteerID.generate();
         DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
-        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.PILS_BEER, Instant.now());
+        DrinkTicket drinkTicket = DrinkTicket.pending(volunteerId, DrinkType.BEER, Instant.now());
 
         ConsumeDrinkTicketCommand command = new ConsumeDrinkTicketCommand(
                 drinkTicket.getDrinkTicketId().asString(),

@@ -72,17 +72,17 @@ class DrinkTicketControllerTest {
 
         CreateDrinkTicketResult result = new CreateDrinkTicketResult(
                 "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
-                "PILS_BEER",
+                "BEER",
                 "PENDING",
                 expiresAt
         );
 
-        when(createDrinkTicketUseCase.execute(new CreateDrinkTicketCommand(volunteerId, "PILS_BEER")))
+        when(createDrinkTicketUseCase.execute(new CreateDrinkTicketCommand(volunteerId, "BEER")))
                 .thenReturn(result);
 
         String requestBody = objectMapper.writeValueAsString(new CreateDrinkTicketJson(
                 volunteerId,
-                "PILS_BEER"
+                "BEER"
         ));
 
         mockMvc.perform(post("/api/v1/drink-tickets")
@@ -90,7 +90,7 @@ class DrinkTicketControllerTest {
                         .content(requestBody))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.ticketId").value("7aab22f8-60d3-4700-8ba6-b35e67dfacb6"))
-                .andExpect(jsonPath("$.drinkType").value("PILS_BEER"))
+                .andExpect(jsonPath("$.drinkType").value("BEER"))
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.expiresAt").value("2026-05-16T21:30:00Z"));
 
@@ -102,7 +102,7 @@ class DrinkTicketControllerTest {
         CreateDrinkTicketCommand command = commandCaptor.getValue();
 
         assertEquals(volunteerId, command.volunteerId());
-        assertEquals("PILS_BEER", command.drinkType());
+        assertEquals("BEER", command.drinkType());
     }
 
     @Test
@@ -113,7 +113,7 @@ class DrinkTicketControllerTest {
         ConsumeDrinkTicketResult result = new ConsumeDrinkTicketResult(
                 ticketId,
                 "CONSUMED",
-                "PILS_BEER",
+                "BEER",
                 4
         );
 
@@ -128,7 +128,7 @@ class DrinkTicketControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticketId").value(ticketId))
                 .andExpect(jsonPath("$.status").value("CONSUMED"))
-                .andExpect(jsonPath("$.drinkType").value("PILS_BEER"))
+                .andExpect(jsonPath("$.drinkType").value("BEER"))
                 .andExpect(jsonPath("$.remainingCredits").value(4));
 
         ArgumentCaptor<ConsumeDrinkTicketCommand> commandCaptor =
@@ -150,7 +150,7 @@ class DrinkTicketControllerTest {
         DrinkTicketStatusResult result = new DrinkTicketStatusResult(
                 ticketId,
                 "PENDING",
-                "PILS_BEER",
+                "BEER",
                 expiresAt,
                 null
         );
@@ -162,7 +162,7 @@ class DrinkTicketControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticketId").value(ticketId))
                 .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.drinkType").value("PILS_BEER"))
+                .andExpect(jsonPath("$.drinkType").value("BEER"))
                 .andExpect(jsonPath("$.expiresAt").value("2026-05-16T21:30:00Z"))
                 .andExpect(jsonPath("$.consumedAt").doesNotExist());
 
@@ -187,7 +187,7 @@ class DrinkTicketControllerTest {
         DrinkTicketSummaryResult drinkTicket = new DrinkTicketSummaryResult(
                 "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
                 authenticatedVolunteerId,
-                "PILS_BEER",
+                "BEER",
                 "CONSUMED",
                 createdAt,
                 expiresAt,
@@ -222,7 +222,7 @@ class DrinkTicketControllerTest {
                 .andExpect(jsonPath("$.totalPages").value(3))
                 .andExpect(jsonPath("$.content[0].drinkTicketId").value(drinkTicket.drinkTicketId()))
                 .andExpect(jsonPath("$.content[0].volunteerId").value(authenticatedVolunteerId))
-                .andExpect(jsonPath("$.content[0].drinkType").value("PILS_BEER"))
+                .andExpect(jsonPath("$.content[0].drinkType").value("BEER"))
                 .andExpect(jsonPath("$.content[0].status").value("CONSUMED"))
                 .andExpect(jsonPath("$.content[0].createdAt").value("2026-05-19T20:00:00Z"))
                 .andExpect(jsonPath("$.content[0].expiresAt").value("2026-05-19T20:01:30Z"))

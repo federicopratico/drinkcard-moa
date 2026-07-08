@@ -18,7 +18,7 @@ class DrinkTicketTest {
     @Test
     void pending_ShouldCreatePendingDrinkTicketWithInitialValues() {
         VolunteerID volunteerId = VolunteerID.generate();
-        DrinkType drinkType = DrinkType.PILS_BEER;
+        DrinkType drinkType = DrinkType.BEER;
 
         Instant createdAt = Instant.now();
         DrinkTicket ticket = DrinkTicket.pending(volunteerId, drinkType, createdAt);
@@ -75,7 +75,7 @@ class DrinkTicketTest {
         DrinkTicket ticket = DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 VolunteerID.generate(),
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 DrinkTicketStatus.PENDING,
                 expiresAt,
                 createdAt,
@@ -94,7 +94,7 @@ class DrinkTicketTest {
         DrinkTicket ticket = DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 VolunteerID.generate(),
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 DrinkTicketStatus.PENDING,
                 createdAt,
                 expiresAt,
@@ -113,7 +113,7 @@ class DrinkTicketTest {
         DrinkTicket ticket = DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 VolunteerID.generate(),
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 DrinkTicketStatus.PENDING,
                 createdAt,
                 expiresAt,
@@ -126,7 +126,7 @@ class DrinkTicketTest {
 
     @Test
     void isConsumed_WhenStatusIsPending_ShouldReturnFalse() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.PILS_BEER, Instant.now());
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
 
         assertFalse(ticket.isConsumed());
     }
@@ -136,7 +136,7 @@ class DrinkTicketTest {
         DrinkTicket ticket = DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 VolunteerID.generate(),
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 DrinkTicketStatus.CONSUMED,
                 Instant.now().plusSeconds(90),
                 Instant.now(),
@@ -149,7 +149,7 @@ class DrinkTicketTest {
 
     @Test
     void markAsExpired_WhenTicketIsPending_ShouldMarkTicketAsExpired() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.PILS_BEER, Instant.now());
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
 
         ticket.markAsExpired();
 
@@ -158,7 +158,7 @@ class DrinkTicketTest {
 
     @Test
     void markAsExpired_WhenTicketIsConsumed_ShouldThrowInvalidDrinkTicketStateException() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.PILS_BEER, Instant.now());
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
         ticket.consume("staff-123", Instant.now());
 
         assertThrows(
@@ -172,7 +172,7 @@ class DrinkTicketTest {
         DrinkTicket ticket = DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 VolunteerID.generate(),
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 DrinkTicketStatus.EXPIRED,
                 Instant.now().minusSeconds(1),
                 Instant.now().minusSeconds(120),
@@ -188,7 +188,7 @@ class DrinkTicketTest {
 
     @Test
     void consume_WhenTicketIsPending_ShouldMarkTicketAsConsumed() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.PILS_BEER, Instant.now());
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
         Instant consumedAt = Instant.now();
         String staffId = "staff-123";
 
@@ -203,7 +203,7 @@ class DrinkTicketTest {
 
     @Test
     void consume_WhenTicketIsConsumed_ShouldThrowInvalidDrinkTicketStateException() {
-        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.PILS_BEER, Instant.now());
+        DrinkTicket ticket = DrinkTicket.pending(VolunteerID.generate(), DrinkType.BEER, Instant.now());
         ticket.consume("staff-123", Instant.now());
 
         assertThrows(
@@ -217,7 +217,7 @@ class DrinkTicketTest {
         DrinkTicket ticket = DrinkTicket.rehydrate(
                 DrinkTicketID.generate(),
                 VolunteerID.generate(),
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 DrinkTicketStatus.EXPIRED,
                 Instant.now().minusSeconds(1),
                 Instant.now().minusSeconds(120),

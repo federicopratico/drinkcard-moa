@@ -39,7 +39,7 @@ class GetDrinkTicketStatusServiceTest {
         Instant createdAt = Instant.now();
         DrinkTicket drinkTicket = DrinkTicket.pending(
                 VolunteerID.generate(),
-                DrinkType.PILS_BEER,
+                DrinkType.BEER,
                 createdAt
         );
 
@@ -57,7 +57,7 @@ class GetDrinkTicketStatusServiceTest {
         assertAll(
                 () -> assertEquals(drinkTicket.getDrinkTicketId().asString(), result.ticketId()),
                 () -> assertEquals(DrinkTicketStatus.PENDING.name(), result.status()),
-                () -> assertEquals(DrinkType.PILS_BEER.name(), result.drinkType()),
+                () -> assertEquals(DrinkType.BEER.name(), result.drinkType()),
                 () -> assertEquals(createdAt.plusSeconds(90), result.expiresAt()),
                 () -> assertNull(result.consumedAt())
         );
