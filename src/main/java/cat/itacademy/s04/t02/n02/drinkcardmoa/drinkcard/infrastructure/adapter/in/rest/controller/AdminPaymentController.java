@@ -1,20 +1,22 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.AddDrinkCardCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.AddDrinkCardUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListPaymentsAdminUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.AddDrinkCardRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.AddDrinkCardResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.AdminPaymentControllerMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 
@@ -24,6 +26,7 @@ import java.time.Instant;
 public class AdminPaymentController {
 
     private final ListPaymentsAdminUseCase listPaymentsAdminUseCase;
+    private final AddDrinkCardUseCase addDrinkCardUseCase;
     private final AdminPaymentControllerMapper mapper;
 
     @GetMapping
@@ -50,5 +53,12 @@ public class AdminPaymentController {
         PageResult<PaymentSummaryResult> result = listPaymentsAdminUseCase.execute(query);
 
         return ResponseEntity.ok(mapper.toResponse(result));
+    }
+
+    @PostMapping("/add-drink-card")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AddDrinkCardResponse> addDrinkCardManually (@Valid @RequestBody AddDrinkCardRequest request) {
+        AddDrinkCardResponse result = mapper.toResponse(addDrinkCardUseCase.execute(new AddDrinkCardCommand(request.volunteerId())));
+        return ResponseEntity.ok(result);
     }
 }

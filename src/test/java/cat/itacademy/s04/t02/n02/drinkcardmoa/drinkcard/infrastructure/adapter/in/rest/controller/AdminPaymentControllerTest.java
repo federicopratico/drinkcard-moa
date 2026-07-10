@@ -1,8 +1,13 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.controller;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.command.AddDrinkCardCommand;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.AddDrinkCardResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.AddDrinkCardUseCase;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.usecase.ListPaymentsAdminUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.request.AddDrinkCardRequest;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.AddDrinkCardResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.mapper.AdminPaymentControllerMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
@@ -33,12 +38,16 @@ class AdminPaymentControllerTest {
     @Mock
     private ListPaymentsAdminUseCase listPaymentsAdminUseCase;
 
+    @Mock
+    private AddDrinkCardUseCase addDrinkCardUseCase;
+
     private AdminPaymentController controller;
 
     @BeforeEach
     void setUp() {
         controller = new AdminPaymentController(
                 listPaymentsAdminUseCase,
+                addDrinkCardUseCase,
                 new AdminPaymentControllerMapper()
         );
     }
@@ -124,6 +133,52 @@ class AdminPaymentControllerTest {
                 int.class,
                 int.class,
                 String.class
+        );
+
+        PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
+
+        assertAll(
+                () -> assertNotNull(preAuthorize),
+                () -> assertEquals("hasRole('ADMIN')", preAuthorize.value())
+        );
+    }
+
+    @Test
+    void addDrinkCardManually_WhenUseCaseSucceeds_ShouldReturnAddDrinkCardResponse() {
+        String volunteerId = "4f0a8db1-63a7-4997-944c-9f2f6b82e6d1";
+        AddDrinkCardResult result = new AddDrinkCardResult(
+                volunteerId,
+                5,
+                BigDecimal.TEN
+        );
+
+        when(addDrinkCardUseCase.execute(new AddDrinkCardCommand(volunteerId))).thenReturn(result);
+
+        ResponseEntity<AddDrinkCardResponse> response = controller.addDrinkCardManually(
+                new AddDrinkCardRequest(volunteerId)
+        );
+
+        ArgumentCaptor<AddDrinkCardCommand> commandCaptor = ArgumentCaptor.forClass(AddDrinkCardCommand.class);
+        verify(addDrinkCardUseCase).execute(commandCaptor.capture());
+
+        AddDrinkCardResponse body = response.getBody();
+        AddDrinkCardCommand command = commandCaptor.getValue();
+
+        assertAll(
+                () -> assertEquals(200, response.getStatusCode().value()),
+                () -> assertNotNull(body),
+                () -> assertEquals(volunteerId, body.volunteerId()),
+                () -> assertEquals(5, body.credits()),
+                () -> assertEquals(0, BigDecimal.TEN.compareTo(body.amount())),
+                () -> assertEquals(volunteerId, command.volunteerId())
+        );
+    }
+
+    @Test
+    void addDrinkCardManually_ShouldRequireAdminRole() throws NoSuchMethodException {
+        Method method = AdminPaymentController.class.getMethod(
+                "addDrinkCardManually",
+                AddDrinkCardRequest.class
         );
 
         PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
