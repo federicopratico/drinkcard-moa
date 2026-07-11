@@ -12,7 +12,17 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.P
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkCardAccountStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.UserNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullName;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.application.port.out.TurnRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.domain.exception.NoTurnTodayException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -45,6 +55,12 @@ class AddDrinkCardServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private TurnRepository turnRepository;
+
     @InjectMocks
     private AddDrinkCardService service;
 
@@ -54,6 +70,7 @@ class AddDrinkCardServiceTest {
         DrinkCardAccount account = activeAccount(volunteerId, 2, Instant.now().minus(2, ChronoUnit.DAYS));
 
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(account));
+        stubVolunteerHasTurnToday(volunteerId);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(drinkCardAccountRepository.save(any(DrinkCardAccount.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -147,6 +164,41 @@ class AddDrinkCardServiceTest {
         verifyNoInteractions(drinkCardAccountRepository, paymentRepository);
     }
 
+    @Test
+    void execute_WhenVolunteerHasNoTurnToday_ThrowsNoTurnTodayExceptionAndDoesNotSave() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount account = activeAccount(volunteerId, 2, Instant.now().minus(2, ChronoUnit.DAYS));
+
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(account));
+        when(userRepository.findById(volunteerId)).thenReturn(Optional.of(user(volunteerId)));
+        when(turnRepository.existsByEmailAndDate(any(Email.class), any())).thenReturn(false);
+
+        assertThrows(
+                NoTurnTodayException.class,
+                () -> service.execute(new AddDrinkCardCommand(volunteerId.asString()))
+        );
+
+        verify(paymentRepository, never()).save(any(Payment.class));
+        verify(drinkCardAccountRepository, never()).save(any(DrinkCardAccount.class));
+    }
+
+    @Test
+    void execute_WhenUserDoesNotExist_ThrowsUserNotFoundExceptionAndDoesNotSave() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount account = activeAccount(volunteerId, 2, Instant.now().minus(2, ChronoUnit.DAYS));
+
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId)).thenReturn(Optional.of(account));
+        when(userRepository.findById(volunteerId)).thenReturn(Optional.empty());
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> service.execute(new AddDrinkCardCommand(volunteerId.asString()))
+        );
+
+        verify(paymentRepository, never()).save(any(Payment.class));
+        verify(drinkCardAccountRepository, never()).save(any(DrinkCardAccount.class));
+    }
+
     private DrinkCardAccount activeAccount(VolunteerID volunteerId, int credits, Instant lastPurchaseTimestamp) {
         return DrinkCardAccount.rehydrate(
                 1L,
@@ -155,6 +207,23 @@ class AddDrinkCardServiceTest {
                 lastPurchaseTimestamp,
                 Instant.now().minus(5, ChronoUnit.DAYS),
                 DrinkCardAccountStatus.ACTIVE
+        );
+    }
+
+    private void stubVolunteerHasTurnToday(VolunteerID volunteerId) {
+        User user = user(volunteerId);
+        when(userRepository.findById(volunteerId)).thenReturn(Optional.of(user));
+        when(turnRepository.existsByEmailAndDate(any(Email.class), any())).thenReturn(true);
+    }
+
+    private User user(VolunteerID volunteerId) {
+        return User.rehydrate(
+                volunteerId,
+                FullName.from("Jane", "Doe"),
+                Email.from("jane@example.com"),
+                HashedPassword.from("hashed_password"),
+                Role.VOLUNTEER,
+                UserStatus.ACTIVE
         );
     }
 }

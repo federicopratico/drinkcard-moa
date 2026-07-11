@@ -18,6 +18,11 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.RefillD
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkCardAccount;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.UserNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.application.port.out.TurnRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.domain.exception.NoTurnTodayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.integration.support.locks.LockRegistry;
@@ -25,7 +30,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
@@ -39,6 +46,10 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
     final TransactionTemplate transactionTemplate;
     final PaymentProperties paymentProperties;
     private final LockRegistry lockRegistry;
+    private final UserRepository userRepository;
+    private final TurnRepository turnRepository;
+
+    private static final ZoneId FESTIVAL_ZONE = ZoneId.of("Europe/Rome");
 
     @Override
     public CreatePaymentCheckoutResult execute(CreatePaymentCheckoutCommand cmd) {
@@ -124,7 +135,22 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
             if (!account.canPurchaseCard(purchaseTimestamp)) {
                 throw new PurchaseLimitExceededException("DrinkCardAccount has exceeded the purchase limit for today.");
             }
+
+            validateVolunteerHasTurnToday(volunteerId, purchaseTimestamp);
         });
+    }
+
+    private void validateVolunteerHasTurnToday(String volunteerId, Instant purchaseTimestamp) {
+        User user = userRepository.findById(VolunteerID.from(volunteerId))
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + volunteerId));
+
+        LocalDate today = purchaseTimestamp.atZone(FESTIVAL_ZONE).toLocalDate();
+
+        if (!turnRepository.existsByEmailAndDate(user.getEmail(), today)) {
+            throw new NoTurnTodayException(
+                    "Volunteer " + user.getEmail().asString() + " has no turn scheduled for " + today + " and cannot purchase a drink card."
+            );
+        }
     }
 
     private CreatePaymentCheckoutResult toPaymentCheckoutResult(Payment payment) {

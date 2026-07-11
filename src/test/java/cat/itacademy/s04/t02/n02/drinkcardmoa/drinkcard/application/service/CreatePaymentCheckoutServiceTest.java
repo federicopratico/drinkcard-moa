@@ -18,7 +18,16 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.config.PaymentProperties;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.testhelper.PaymentTestBuilder;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.FullName;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.HashedPassword;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.application.port.out.TurnRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.domain.exception.NoTurnTodayException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,6 +84,12 @@ class CreatePaymentCheckoutServiceTest {
     @Mock
     private Lock lock;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private TurnRepository turnRepository;
+
     private CreatePaymentCheckoutService service;
 
     @BeforeEach
@@ -92,7 +107,9 @@ class CreatePaymentCheckoutServiceTest {
                 drinkCardAccountRepository,
                 transactionTemplate,
                 paymentProperties,
-                lockRegistry
+                lockRegistry,
+                userRepository,
+                turnRepository
         );
     }
 
@@ -108,6 +125,7 @@ class CreatePaymentCheckoutServiceTest {
         doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
+        stubVolunteerHasTurnToday(volunteerId);
         when(paymentRepository.findByIdempotencyKey(any()))
                 .thenReturn(Optional.of(existingPayment));
 
@@ -138,6 +156,7 @@ class CreatePaymentCheckoutServiceTest {
                 .thenReturn(Optional.empty());
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
+        stubVolunteerHasTurnToday(volunteerId);
         when(paymentGateway.createHostedCheckout(any(HostedCheckoutRequest.class)))
                 .thenReturn(hostedCheckout);
         when(paymentRepository.save(any(Payment.class)))
@@ -199,6 +218,7 @@ class CreatePaymentCheckoutServiceTest {
                 .thenReturn(Optional.of(concurrentlySavedPayment));
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
+        stubVolunteerHasTurnToday(volunteerId);
         when(paymentGateway.createHostedCheckout(any(HostedCheckoutRequest.class)))
                 .thenReturn(hostedCheckout(Instant.now()));
         when(paymentRepository.save(any(Payment.class)))
@@ -231,6 +251,7 @@ class CreatePaymentCheckoutServiceTest {
                 .thenReturn(Optional.empty());
         when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
                 .thenReturn(Optional.of(drinkCardAccount));
+        stubVolunteerHasTurnToday(volunteerId);
         when(paymentGateway.createHostedCheckout(any(HostedCheckoutRequest.class)))
                 .thenReturn(hostedCheckout(Instant.now()));
         when(paymentRepository.save(any(Payment.class))).thenThrow(exception);
@@ -321,6 +342,32 @@ class CreatePaymentCheckoutServiceTest {
         verify(paymentRepository, never()).findByIdempotencyKey(any());
     }
 
+    @Test
+    void execute_WhenVolunteerHasNoTurnToday_ThrowsNoTurnTodayException() {
+        VolunteerID volunteerId = VolunteerID.generate();
+        DrinkCardAccount drinkCardAccount = DrinkCardAccount.create(volunteerId);
+        User user = User.rehydrate(
+                volunteerId,
+                FullName.from("Jane", "Doe"),
+                Email.from("jane@example.com"),
+                HashedPassword.from("hashed_password"),
+                Role.VOLUNTEER,
+                UserStatus.ACTIVE
+        );
+
+        doAnswer(executeWithoutResultCallback()).when(transactionTemplate).executeWithoutResult(any());
+        when(drinkCardAccountRepository.findByVolunteerId(volunteerId))
+                .thenReturn(Optional.of(drinkCardAccount));
+        when(userRepository.findById(volunteerId)).thenReturn(Optional.of(user));
+        when(turnRepository.existsByEmailAndDate(any(Email.class), any())).thenReturn(false);
+
+        assertThrows(NoTurnTodayException.class, () -> service.execute(command(volunteerId)));
+
+        verify(paymentGateway, never()).createHostedCheckout(any());
+        verify(paymentRepository, never()).save(any());
+        verify(paymentRepository, never()).findByIdempotencyKey(any());
+    }
+
     private CreatePaymentCheckoutCommand command(VolunteerID volunteerId) {
         return new CreatePaymentCheckoutCommand(
                 volunteerId.asString(),
@@ -334,6 +381,19 @@ class CreatePaymentCheckoutServiceTest {
                 PaymentTestBuilder.DEFAULT_PROVIDER_CHECKOUT_URL,
                 providerCreatedAt
         );
+    }
+
+    private void stubVolunteerHasTurnToday(VolunteerID volunteerId) {
+        User user = User.rehydrate(
+                volunteerId,
+                FullName.from("Jane", "Doe"),
+                Email.from("jane@example.com"),
+                HashedPassword.from("hashed_password"),
+                Role.VOLUNTEER,
+                UserStatus.ACTIVE
+        );
+        when(userRepository.findById(volunteerId)).thenReturn(Optional.of(user));
+        when(turnRepository.existsByEmailAndDate(any(Email.class), any())).thenReturn(true);
     }
 
     @SuppressWarnings("unchecked")

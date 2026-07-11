@@ -11,12 +11,19 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.RefillD
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkCardAccount;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.Card;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.exception.UserNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.application.port.out.TurnRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.domain.exception.NoTurnTodayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +31,10 @@ public class AddDrinkCardService implements AddDrinkCardUseCase {
 
     private final DrinkCardAccountRepository drinkCardAccountRepository;
     private final PaymentRepository paymentRepository;
+    private final UserRepository userRepository;
+    private final TurnRepository turnRepository;
+
+    private static final ZoneId FESTIVAL_ZONE = ZoneId.of("Europe/Rome");
 
     @Override
     @Transactional
@@ -40,6 +51,17 @@ public class AddDrinkCardService implements AddDrinkCardUseCase {
 
         if(!account.canPurchaseCard(now)) {
             throw new PurchaseLimitExceededException("Purchase limit exceeded for the provided Id: " + cmd.volunteerId());
+        }
+
+        User user = userRepository.findById(volunteerIdObj)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + cmd.volunteerId()));
+
+        LocalDate today = now.atZone(FESTIVAL_ZONE).toLocalDate();
+
+        if (!turnRepository.existsByEmailAndDate(user.getEmail(), today)) {
+            throw new NoTurnTodayException(
+                    "Volunteer " + user.getEmail().asString() + " has no turn scheduled for " + today + " and cannot receive a drink card."
+            );
         }
 
 
