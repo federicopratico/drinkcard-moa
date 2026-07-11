@@ -16,6 +16,8 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserS
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.infrastructure.adapter.out.persistence.entity.TurnJpaEntity;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.infrastructure.adapter.out.persistence.repository.JpaTurnRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +34,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -77,19 +82,25 @@ class AdminPaymentEndpointTestIT {
     @Autowired
     private JpaPaymentRepository jpaPaymentRepository;
 
+    @Autowired
+    private JpaTurnRepository jpaTurnRepository;
+
     private String adminToken;
     private String volunteerToken;
     private String volunteerId;
+    private String volunteerEmail;
 
     @BeforeEach
     void setUp() {
         SecurityContextHolder.clearContext();
         jpaPaymentRepository.deleteAll();
         jpaDrinkCardAccountRepository.deleteAll();
+        jpaTurnRepository.deleteAll();
         jpaUserRepository.deleteAll();
 
         String adminId = VolunteerID.generate().asString();
         volunteerId = VolunteerID.generate().asString();
+        volunteerEmail = "volunteer@add-card.test";
 
         jpaUserRepository.save(userEntity(
                 adminId,
@@ -103,13 +114,15 @@ class AdminPaymentEndpointTestIT {
                 volunteerId,
                 "Volunteer",
                 "User",
-                "volunteer@add-card.test",
+                volunteerEmail,
                 "VOLUNTEER",
                 "ACTIVE"
         ));
 
+        seedTurnForToday(volunteerEmail);
+
         adminToken = tokenService.generateToken(user(adminId, "Admin", "User", "admin@add-card.test", Role.ADMIN, UserStatus.ACTIVE));
-        volunteerToken = tokenService.generateToken(user(volunteerId, "Volunteer", "User", "volunteer@add-card.test", Role.VOLUNTEER, UserStatus.ACTIVE));
+        volunteerToken = tokenService.generateToken(user(volunteerId, "Volunteer", "User", volunteerEmail, Role.VOLUNTEER, UserStatus.ACTIVE));
     }
 
     @Test
@@ -202,6 +215,21 @@ class AdminPaymentEndpointTestIT {
         assertEquals(0, jpaPaymentRepository.count());
     }
 
+    @Test
+    void addDrinkCard_WhenVolunteerHasNoTurnToday_ReturnsUnprocessableEntity() throws Exception {
+        seedAccount(volunteerId, 0, Instant.now().minus(2, ChronoUnit.DAYS), "ACTIVE");
+        jpaTurnRepository.deleteAll();
+
+        mockMvc.perform(post("/api/v1/admin/payments/add-drink-card")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(addDrinkCardJson(volunteerId)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.status").value(422));
+
+        assertEquals(0, jpaPaymentRepository.count());
+    }
+
     private void seedAccount(String volunteerId, int credits, Instant lastPurchaseTimestamp, String status) {
         jpaDrinkCardAccountRepository.save(DrinkCardAccountJpaEntity.create(
                 volunteerId,
@@ -209,6 +237,15 @@ class AdminPaymentEndpointTestIT {
                 lastPurchaseTimestamp,
                 Instant.now().minus(5, ChronoUnit.DAYS),
                 status
+        ));
+    }
+
+    private void seedTurnForToday(String email) {
+        jpaTurnRepository.save(TurnJpaEntity.create(
+                UUID.randomUUID(),
+                email,
+                LocalDate.now(ZoneId.of("Europe/Rome")),
+                Instant.now()
         ));
     }
 

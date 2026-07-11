@@ -13,7 +13,12 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.o
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.PaymentJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaDrinkCardAccountRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaPaymentRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.infrastructure.adapter.out.persistence.repository.JpaUserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.domain.exception.NoTurnTodayException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.infrastructure.adapter.out.persistence.entity.TurnJpaEntity;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.infrastructure.adapter.out.persistence.repository.JpaTurnRepository;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,11 +35,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -101,16 +108,28 @@ class CreatePaymentCheckoutServiceIT {
     private JpaPaymentRepository jpaPaymentRepository;
 
     @Autowired
+    private JpaUserRepository jpaUserRepository;
+
+    @Autowired
+    private JpaTurnRepository jpaTurnRepository;
+
+    @Autowired
     private LockRegistry lockRegistry;
 
     private VolunteerID volunteerId;
+    private String volunteerEmail;
 
     @BeforeEach
     void setUp() {
         wireMock.resetAll();
         jpaPaymentRepository.deleteAll();
         jpaDrinkCardAccountRepository.deleteAll();
+        jpaTurnRepository.deleteAll();
+        jpaUserRepository.deleteAll();
         volunteerId = VolunteerID.generate();
+        volunteerEmail = "volunteer-" + volunteerId.asString() + "@festival.test";
+        seedVolunteerUser(volunteerId, volunteerEmail);
+        seedTurnForToday(volunteerEmail);
     }
 
     @Test
@@ -265,6 +284,22 @@ class CreatePaymentCheckoutServiceIT {
         }
     }
 
+    @Test
+    void execute_WhenVolunteerHasNoTurnToday_ThrowsAndDoesNotCallGateway() {
+        seedActiveAccount(volunteerId, twoDaysAgo());
+        jpaTurnRepository.deleteAll();
+
+        CreatePaymentCheckoutCommand command = new CreatePaymentCheckoutCommand(
+                volunteerId.asString(),
+                REDIRECT_URL
+        );
+
+        assertThrows(NoTurnTodayException.class, () -> service.execute(command));
+
+        assertEquals(0, jpaPaymentRepository.count());
+        wireMock.verify(0, postRequestedFor(urlEqualTo("/v0.1/checkouts")));
+    }
+
     private void seedActiveAccount(VolunteerID volunteerId, Instant lastPurchase) {
         DrinkCardAccountJpaEntity account = DrinkCardAccountJpaEntity.create(
                 volunteerId.asString(),
@@ -274,6 +309,27 @@ class CreatePaymentCheckoutServiceIT {
                 "ACTIVE"
         );
         jpaDrinkCardAccountRepository.save(account);
+    }
+
+    private void seedVolunteerUser(VolunteerID volunteerId, String email) {
+        jpaUserRepository.save(UserJpaEntity.create(
+                volunteerId.asString(),
+                "Volunteer",
+                "Test",
+                email,
+                "hashed_password",
+                "VOLUNTEER",
+                "ACTIVE"
+        ));
+    }
+
+    private void seedTurnForToday(String email) {
+        jpaTurnRepository.save(TurnJpaEntity.create(
+                UUID.randomUUID(),
+                email,
+                LocalDate.now(ZoneId.of("Europe/Rome")),
+                Instant.now()
+        ));
     }
 
     private void stubSumUpCheckoutCreation(String providerCheckoutId, String checkoutUrl) {

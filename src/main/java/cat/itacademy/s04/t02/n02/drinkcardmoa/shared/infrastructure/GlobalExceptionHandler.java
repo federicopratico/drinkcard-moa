@@ -15,6 +15,9 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.DrinkCa
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.exception.DomainException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.InsufficientCreditsException;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.exception.PaymentNotFoundException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.domain.exception.NoTurnTodayException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.domain.exception.TurnAlreadyExistsException;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.turn.domain.exception.TurnNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -24,6 +27,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +48,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String required = ex.getRequiredType() == null ? "expected type" : ex.getRequiredType().getSimpleName();
+        return error(HttpStatus.BAD_REQUEST, "Invalid value for parameter '" + ex.getName() + "': expected " + required);
     }
 
     @ExceptionHandler(UserConflictException.class)
@@ -152,6 +167,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ActiveDrinkTicketAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleActiveDrinkTicket(ActiveDrinkTicketAlreadyExistsException e) {
         return error(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    @ExceptionHandler(TurnAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleTurnAlreadyExists(TurnAlreadyExistsException ex) {
+        return error(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(TurnNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTurnNotFound(TurnNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(NoTurnTodayException.class)
+    public ResponseEntity<Map<String, Object>> handleNoTurnToday(NoTurnTodayException ex) {
+        return error(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String message) {
