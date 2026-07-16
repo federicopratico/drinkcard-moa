@@ -91,11 +91,14 @@ public class DrinkTicketJpaAdapter implements DrinkTicketRepository {
     }
 
     private Specification<DrinkTicketJpaEntity> toSpecification(DrinkTicketSearchCriteria criteria) {
-        return JpaSpecificationBuilder.<DrinkTicketJpaEntity>builder()
+        var spec = JpaSpecificationBuilder.<DrinkTicketJpaEntity>builder()
                 .equal("volunteerId", criteria.volunteerId() == null ? null : criteria.volunteerId().value())
-                .equal("status", criteria.status() == null ? null : criteria.status().name())
                 .greaterThanOrEqualTo("createdAt", criteria.from())
-                .lessThanOrEqualTo("createdAt", criteria.to())
-                .build();
+                .lessThanOrEqualTo("createdAt", criteria.to());
+
+        if (criteria.status() != null) {
+            spec.equal("status", criteria.status().name());
+        }
+        return spec.build();
     }
 }

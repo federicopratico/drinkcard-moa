@@ -1,7 +1,12 @@
 spring:
+  flyway:
+    user: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/festival}
     driver-class-name: org.postgresql.Driver
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
 
   jpa:
     hibernate:
