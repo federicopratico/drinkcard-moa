@@ -2,6 +2,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.DrinkCardDirectory;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.query.UserSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
@@ -35,6 +36,9 @@ class ListUserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private DrinkCardDirectory drinkCardDirectory;
 
     @InjectMocks
     private ListUsersService listUsersService;

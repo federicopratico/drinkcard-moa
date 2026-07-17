@@ -24,6 +24,7 @@ public class GetAdminStatsService implements GetAdminStatsUseCase {
     private final PaymentRepository paymentRepository;
     private final VolunteerDirectory volunteerDirectory;
     private final DrinkTicketRepository drinkTicketRepository;
+
     @Override
     @Transactional(readOnly = true)
     public AdminStatsResult execute() {

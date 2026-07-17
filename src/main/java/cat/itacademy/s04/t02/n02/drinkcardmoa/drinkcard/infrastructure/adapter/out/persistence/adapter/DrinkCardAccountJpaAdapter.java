@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,6 +83,14 @@ public class DrinkCardAccountJpaAdapter implements DrinkCardAccountRepository {
     @Override
     public long countActiveCards() {
         return jpaDrinkCardAccountRepository.countByStatus(DrinkCardAccountStatus.ACTIVE.name());
+    }
+
+    @Override
+    public List<DrinkCardAccount> findAllById(Collection<VolunteerID> ids) {
+        return jpaDrinkCardAccountRepository.findAllByVolunteerIdIn(ids.stream().map(VolunteerID::asString).toList())
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 
     private Specification<DrinkCardAccountJpaEntity> toSpecification(DrinkCardAccountSearchCriteria criteria) {
