@@ -3,6 +3,7 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 
 import java.math.BigDecimal;
@@ -16,4 +17,5 @@ public interface PaymentRepository {
     PageResult<Payment> searchAdminPayments(PaymentSearchCriteria criteria);
     PageResult<Payment> searchVolunteerPayments(PaymentSearchCriteria criteria);
     BigDecimal sumSuccessfulPaymentsAmount();
+    BigDecimal countPayments(PaymentStatus status);
 }

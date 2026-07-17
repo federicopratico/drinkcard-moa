@@ -14,11 +14,4 @@ public record PaymentSummaryResponse(
         Instant paidAt,
         Instant createdAt
 ) {
-
-    public record VolunteerInfo(
-            String id,
-            String firstName,
-            String lastName,
-            String email
-    ) {}
 }

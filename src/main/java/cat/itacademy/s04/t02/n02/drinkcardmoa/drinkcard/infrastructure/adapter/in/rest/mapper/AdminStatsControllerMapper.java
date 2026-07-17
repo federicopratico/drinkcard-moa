@@ -11,7 +11,10 @@ public class AdminStatsControllerMapper {
         return new AdminStatsResponse(
                 result.totalAvailableCredits(),
                 result.totalSuccessfulPaymentsAmount(),
-                result.totalActiveCards()
+                result.totalSuccessfulPayments(),
+                result.totalActiveCards(),
+                result.drinkConsumptions(),
+                result.topVolunteers()
         );
     }
 }

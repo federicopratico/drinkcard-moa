@@ -11,6 +11,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.i
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.CreatePaymentCheckoutResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentStatusResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.PaymentSummaryResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.in.rest.dto.response.VolunteerInfo;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import org.springframework.stereotype.Component;
@@ -50,7 +51,7 @@ public class PaymentControllerMapper {
     public PaymentSummaryResponse toResponse(PaymentSummaryResult result) {
         return new PaymentSummaryResponse(
                 result.paymentId(),
-                new PaymentSummaryResponse.VolunteerInfo(
+                new VolunteerInfo(
                         result.volunteerId(),
                         result.volunteerFirstName(),
                         result.volunteerLastName(),

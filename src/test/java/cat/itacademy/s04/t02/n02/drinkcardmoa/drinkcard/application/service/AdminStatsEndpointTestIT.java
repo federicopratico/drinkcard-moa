@@ -1,8 +1,12 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkTicket;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkType;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.DrinkCardAccountJpaEntity;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.DrinkTicketJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.PaymentJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaDrinkCardAccountRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaDrinkTicketRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaPaymentRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.TokenService;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
@@ -48,6 +52,8 @@ class AdminStatsEndpointTestIT {
             .withDatabaseName("festival_test")
             .withUsername("postgres")
             .withPassword("postgres");
+    @Autowired
+    private JpaDrinkTicketRepository jpaDrinkTicketRepository;
 
     @DynamicPropertySource
     static void configureDatasource(DynamicPropertyRegistry registry) {
@@ -93,9 +99,18 @@ class AdminStatsEndpointTestIT {
 
     @Test
     void getStats_WhenAdmin_ReturnsAggregatedTotals() throws Exception {
-        String v1 = VolunteerID.generate().asString();
-        String v2 = VolunteerID.generate().asString();
-        String v3 = VolunteerID.generate().asString();
+        var vId1 = VolunteerID.generate();
+        var vId2 = VolunteerID.generate();
+        var vId3 = VolunteerID.generate();
+
+
+        var v1 = vId1.asString();
+        var v2 = vId2.asString();
+        var v3 = vId3.asString();
+
+        seedVolunteerUser(vId1, "v1@me.com");
+        seedVolunteerUser(vId2, "v2@me.com");
+        seedVolunteerUser(vId3, "v3@me.com");
 
         seedAccount(v1, 3, "ACTIVE");
         seedAccount(v2, 7, "ACTIVE");
@@ -106,12 +121,29 @@ class AdminStatsEndpointTestIT {
         seedPayment(UUID.fromString(v1), new BigDecimal("99.99"), "PENDING");
         seedPayment(UUID.fromString(v2), new BigDecimal("42.00"), "FAILED");
 
+        seedTicket(UUID.fromString(v1), "CONSUMED", DrinkType.BOA);
+        seedTicket(UUID.fromString(v1), "CONSUMED", DrinkType.BOA);
+        seedTicket(UUID.fromString(v2), "CONSUMED", DrinkType.PILS_BEER);
+
+        seedTicket(UUID.fromString(v3), "PENDING", DrinkType.BOA);
+
         mockMvc.perform(get("/api/v1/admin/stats")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalAvailableCredits").value(14))
                 .andExpect(jsonPath("$.totalSuccessfulPaymentsAmount").value(25.50))
-                .andExpect(jsonPath("$.totalActiveCards").value(2));
+                .andExpect(jsonPath("$.totalSuccessfulPayments").value(2))
+                .andExpect(jsonPath("$.totalActiveCards").value(2))
+                .andExpect(jsonPath("$.drinkConsumptions.size()").value(2))
+                .andExpect(jsonPath("$.drinkConsumptions[0].drinkType").value("BOA"))
+                .andExpect(jsonPath("$.drinkConsumptions[0].drinkTicketsCount").value(2))
+                .andExpect(jsonPath("$.drinkConsumptions[1].drinkType").value("PILS_BEER"))
+                .andExpect(jsonPath("$.drinkConsumptions[1].drinkTicketsCount").value(1))
+                .andExpect(jsonPath("$.topVolunteers.size()").value(2))
+                .andExpect(jsonPath("$.topVolunteers.[0].volunteer.email").value("v1@me.com"))
+                .andExpect(jsonPath("$.topVolunteers.[0].drinkTicketsCount").value(2))
+                .andExpect(jsonPath("$.topVolunteers.[1].volunteer.email").value("v2@me.com"))
+                .andExpect(jsonPath("$.topVolunteers.[1].drinkTicketsCount").value(1));
     }
 
     @Test
@@ -121,6 +153,8 @@ class AdminStatsEndpointTestIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalAvailableCredits").value(0))
                 .andExpect(jsonPath("$.totalSuccessfulPaymentsAmount").value(0))
+                .andExpect(jsonPath("$.topVolunteers.size()").value(0))
+                .andExpect(jsonPath("$.drinkConsumptions.size()").value(0))
                 .andExpect(jsonPath("$.totalActiveCards").value(0));
     }
 
@@ -145,6 +179,32 @@ class AdminStatsEndpointTestIT {
                 Instant.now().minus(5, ChronoUnit.DAYS),
                 status
         ));
+    }
+
+    private void seedVolunteerUser(VolunteerID volunteerId, String email) {
+        jpaUserRepository.save(UserJpaEntity.create(
+                volunteerId.asString(),
+                "Volunteer",
+                "Test",
+                email,
+                "hashed_password",
+                "VOLUNTEER",
+                "ACTIVE"
+        ));
+    }
+
+    private void seedTicket(UUID volunteerId, String status, DrinkType drinkType) {
+        var ticket = DrinkTicketJpaEntity.create(
+                UUID.randomUUID(),
+                volunteerId,
+                drinkType.name(),
+                status,
+                Instant.now().minus(2, ChronoUnit.DAYS),
+                Instant.now().minus(5, ChronoUnit.DAYS),
+                Instant.now().plus(1, ChronoUnit.DAYS),
+                null
+        );
+        jpaDrinkTicketRepository.save(ticket);
     }
 
     private void seedPayment(UUID volunteerId, BigDecimal amount, String status) {

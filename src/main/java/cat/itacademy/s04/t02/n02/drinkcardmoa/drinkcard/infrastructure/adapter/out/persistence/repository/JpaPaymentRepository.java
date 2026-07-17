@@ -16,4 +16,7 @@ public interface JpaPaymentRepository extends JpaRepository<PaymentJpaEntity, UU
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM PaymentJpaEntity p WHERE p.status = 'SUCCESS'")
     BigDecimal sumSuccessfulPaymentsAmount();
+
+    @Query("SELECT COUNT(p) FROM PaymentJpaEntity p WHERE p.status = :status")
+    BigDecimal countByStatus(String status);
 }

@@ -4,6 +4,7 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.Pay
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentID;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.PaymentJpaEntity;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.mapper.PaymentMapper;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.repository.JpaPaymentRepository;
@@ -103,6 +104,11 @@ public class PaymentJpaAdapter implements PaymentRepository {
     public BigDecimal sumSuccessfulPaymentsAmount() {
         BigDecimal result = jpaPaymentRepository.sumSuccessfulPaymentsAmount();
         return result == null ? BigDecimal.ZERO : result;
+    }
+
+    @Override
+    public BigDecimal countPayments(PaymentStatus status) {
+        return jpaPaymentRepository.countByStatus(status.name());
     }
 
     private Specification<PaymentJpaEntity> toSpecification(PaymentSearchCriteria criteria) {

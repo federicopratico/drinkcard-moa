@@ -2,7 +2,9 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.DrinkTicketSearchCriteria;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkConsumption;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkTicket;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.TopVolunteer;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkTicketID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkTicketStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.entity.DrinkTicketJpaEntity;
@@ -65,6 +67,16 @@ public class DrinkTicketJpaAdapter implements DrinkTicketRepository {
     @Override
     public PageResult<DrinkTicket> searchVolunteerDrinkTickets(DrinkTicketSearchCriteria criteria) {
         return searchDrinkTickets(criteria);
+    }
+
+    @Override
+    public List<TopVolunteer> getTopConsumer(int limit) {
+        return jpaDrinkTicketRepository.getTopByStatus(DrinkTicketStatus.CONSUMED.name(), PageRequest.of(0, limit)).getContent();
+    }
+
+    @Override
+    public List<DrinkConsumption> getConsumptionStats() {
+        return jpaDrinkTicketRepository.getConsumptionStats();
     }
 
     private PageResult<DrinkTicket> searchDrinkTickets(DrinkTicketSearchCriteria criteria) {
