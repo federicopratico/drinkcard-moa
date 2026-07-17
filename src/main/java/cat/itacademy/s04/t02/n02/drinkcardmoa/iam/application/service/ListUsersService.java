@@ -2,20 +2,24 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.service;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.query.ListUsersQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.dto.result.UserSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.in.usecase.ListUsersUseCase;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.DrinkCardDirectory;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.UserRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.application.port.out.query.UserSearchCriteria;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.aggregate.User;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Email;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.Role;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.PageSort;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.pagination.PageSortParser;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class ListUsersService implements ListUsersUseCase {
 
     private static final String DEFAULT_SORT_BY = "email";
@@ -32,18 +36,20 @@ public class ListUsersService implements ListUsersUseCase {
     );
 
     private final UserRepository userRepository;
-
-    public ListUsersService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final DrinkCardDirectory drinkCardDirectory;
 
     @Override
     public PageResult<UserSummaryResult> execute(ListUsersQuery query) {
 
         UserSearchCriteria criteria = toSearchCriteria(query);
 
-        return userRepository.searchUsers(criteria)
-                .map(UserSummaryResult::from);
+        var users =  userRepository.searchUsers(criteria);
+
+        var drinkCards = drinkCardDirectory.findAllByVolunteerIds(users.content().stream().map(User::getId).toList());
+        return users.map(user -> {
+            var drinkCard = drinkCards.get(user.getId().asString());
+            return UserSummaryResult.from(user, drinkCard);
+        });
     }
 
     private UserSearchCriteria toSearchCriteria(ListUsersQuery query) {

@@ -5,6 +5,8 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.DrinkCardAccount;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface DrinkCardAccountRepository {
@@ -14,4 +16,5 @@ public interface DrinkCardAccountRepository {
     PageResult<DrinkCardAccount> searchDrinkCardAccounts(DrinkCardAccountSearchCriteria criteria);
     long sumAvailableCredits();
     long countActiveCards();
+    List<DrinkCardAccount> findAllById(Collection<VolunteerID> ids);
 }

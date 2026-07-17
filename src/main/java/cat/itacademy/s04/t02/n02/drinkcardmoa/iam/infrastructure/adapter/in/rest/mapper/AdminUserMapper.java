@@ -33,7 +33,8 @@ public class AdminUserMapper {
                 result.fullName(),
                 result.email(),
                 result.role(),
-                result.status()
+                result.status(),
+                result.drinkCard()
         );
     }
 

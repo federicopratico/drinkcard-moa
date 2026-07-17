@@ -59,7 +59,8 @@ class AdminUserControllerTest {
                 "Volunteer User",
                 "volunteer@userId.com",
                 "VOLUNTEER",
-                "ACTIVE"
+                "ACTIVE",
+                null
         );
 
         when(listUsersUseCase.execute(new ListUsersQuery(null, null, null, 0, 20, "email,asc")))
@@ -162,7 +163,8 @@ class AdminUserControllerTest {
                 "Admin User",
                 "admin@userId.com",
                 "ADMIN",
-                "ACTIVE"
+                "ACTIVE",
+                null
         );
 
         when(getUserByIdUseCase.execute(new GetUserByIdQuery(userId)))

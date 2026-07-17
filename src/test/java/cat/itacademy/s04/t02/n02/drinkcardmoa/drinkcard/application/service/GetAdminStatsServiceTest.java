@@ -2,7 +2,9 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.AdminStatsResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkTicketRepository;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.VolunteerDirectory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,6 +19,12 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class GetAdminStatsServiceTest {
+
+    @Mock
+    private VolunteerDirectory volunteerDirectory;
+
+    @Mock
+    private DrinkTicketRepository drinkTicketRepository;
 
     @Mock
     private DrinkCardAccountRepository drinkCardAccountRepository;
