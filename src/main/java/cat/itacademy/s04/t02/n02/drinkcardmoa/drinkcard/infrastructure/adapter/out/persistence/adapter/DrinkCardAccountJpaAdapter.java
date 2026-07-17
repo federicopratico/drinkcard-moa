@@ -1,6 +1,7 @@
 package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.persistence.adapter;
 
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.DrinkCardAccountSearchCriteria;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.DrinkCardAccountStatus;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.DrinkCardAccountRepository;
@@ -71,6 +72,16 @@ public class DrinkCardAccountJpaAdapter implements DrinkCardAccountRepository {
                 page.getTotalElements(),
                 page.getTotalPages()
         );
+    }
+
+    @Override
+    public long sumAvailableCredits() {
+        return jpaDrinkCardAccountRepository.sumAvailableCredits();
+    }
+
+    @Override
+    public long countActiveCards() {
+        return jpaDrinkCardAccountRepository.countByStatus(DrinkCardAccountStatus.ACTIVE.name());
     }
 
     private Specification<DrinkCardAccountJpaEntity> toSpecification(DrinkCardAccountSearchCriteria criteria) {

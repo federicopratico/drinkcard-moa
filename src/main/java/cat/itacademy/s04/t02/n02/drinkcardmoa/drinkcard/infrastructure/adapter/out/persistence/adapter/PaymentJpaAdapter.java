@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -97,6 +98,12 @@ public class PaymentJpaAdapter implements PaymentRepository {
         );
     }
 
+
+    @Override
+    public BigDecimal sumSuccessfulPaymentsAmount() {
+        BigDecimal result = jpaPaymentRepository.sumSuccessfulPaymentsAmount();
+        return result == null ? BigDecimal.ZERO : result;
+    }
 
     private Specification<PaymentJpaEntity> toSpecification(PaymentSearchCriteria criteria) {
         return JpaSpecificationBuilder.<PaymentJpaEntity>builder()
