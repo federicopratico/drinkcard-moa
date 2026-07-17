@@ -5,6 +5,7 @@ import java.time.Instant;
 
 public record PaymentSummaryResponse(
         String paymentId,
+        VolunteerInfo volunteer,
         String volunteerId,
         BigDecimal amount,
         String status,
@@ -13,4 +14,11 @@ public record PaymentSummaryResponse(
         Instant paidAt,
         Instant createdAt
 ) {
+
+    public record VolunteerInfo(
+            String id,
+            String firstName,
+            String lastName,
+            String email
+    ) {}
 }

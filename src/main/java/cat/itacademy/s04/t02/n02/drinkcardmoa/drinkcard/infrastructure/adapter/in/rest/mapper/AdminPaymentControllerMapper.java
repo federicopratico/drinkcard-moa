@@ -31,6 +31,12 @@ public class AdminPaymentControllerMapper {
     private PaymentSummaryResponse toResponse(PaymentSummaryResult result) {
         return new PaymentSummaryResponse(
                 result.paymentId(),
+                new PaymentSummaryResponse.VolunteerInfo(
+                        result.volunteerId(),
+                        result.volunteerFirstName(),
+                        result.volunteerLastName(),
+                        result.volunteerEmail()
+                ),
                 result.volunteerId(),
                 result.amount(),
                 result.status(),

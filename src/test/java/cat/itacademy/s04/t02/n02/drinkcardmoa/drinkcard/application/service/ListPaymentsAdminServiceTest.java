@@ -3,6 +3,8 @@ package cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.service;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.query.ListPaymentsAdminQuery;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.in.dto.result.PaymentSummaryResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.PaymentRepository;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.VolunteerDirectory;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.dto.VolunteerProfile;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.query.PaymentSearchCriteria;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.aggregate.Payment;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.domain.model.valueobject.PaymentID;
@@ -21,11 +23,13 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +38,9 @@ class ListPaymentsAdminServiceTest {
 
     @Mock
     private PaymentRepository paymentRepository;
+
+    @Mock
+    private VolunteerDirectory volunteerDirectory;
 
     @InjectMocks
     private ListPaymentsAdminService service;
@@ -46,6 +53,11 @@ class ListPaymentsAdminServiceTest {
 
         when(paymentRepository.searchAdminPayments(org.mockito.ArgumentMatchers.any(PaymentSearchCriteria.class)))
                 .thenReturn(new PageResult<>(List.of(payment), 0, 20, 1, 1));
+        when(volunteerDirectory.findAllByIds(anyCollection()))
+                .thenReturn(Map.of(
+                        payment.getVolunteerId(),
+                        new VolunteerProfile(payment.getVolunteerId(), "Ada", "Lovelace", "ada@example.com")
+                ));
 
         PageResult<PaymentSummaryResult> result = service.execute(
                 new ListPaymentsAdminQuery(null, null, null, null, -1, 0, null)
@@ -69,7 +81,33 @@ class ListPaymentsAdminServiceTest {
                 () -> assertEquals(1, result.content().size()),
                 () -> assertEquals(payment.getPaymentId().asString(), paymentResult.paymentId()),
                 () -> assertEquals(payment.getVolunteerId().asString(), paymentResult.volunteerId()),
-                () -> assertEquals(payment.getStatus().name(), paymentResult.status())
+                () -> assertEquals(payment.getStatus().name(), paymentResult.status()),
+                () -> assertEquals("Ada", paymentResult.volunteerFirstName()),
+                () -> assertEquals("Lovelace", paymentResult.volunteerLastName()),
+                () -> assertEquals("ada@example.com", paymentResult.volunteerEmail())
+        );
+    }
+
+    @Test
+    void execute_WhenVolunteerNotFoundInDirectory_ShouldReturnNullVolunteerFields() {
+        Payment payment = PaymentTestBuilder.aPayment()
+                .withStatus(PaymentStatus.SUCCESS)
+                .build();
+
+        when(paymentRepository.searchAdminPayments(org.mockito.ArgumentMatchers.any(PaymentSearchCriteria.class)))
+                .thenReturn(new PageResult<>(List.of(payment), 0, 20, 1, 1));
+        when(volunteerDirectory.findAllByIds(anyCollection())).thenReturn(Map.of());
+
+        PageResult<PaymentSummaryResult> result = service.execute(
+                new ListPaymentsAdminQuery(null, null, null, null, 0, 20, null)
+        );
+
+        PaymentSummaryResult paymentResult = result.content().getFirst();
+        assertAll(
+                () -> assertEquals(payment.getVolunteerId().asString(), paymentResult.volunteerId()),
+                () -> assertEquals("unknown", paymentResult.volunteerFirstName()),
+                () -> assertEquals("unknown", paymentResult.volunteerLastName()),
+                () -> assertEquals("unknown", paymentResult.volunteerEmail())
         );
     }
 
@@ -81,6 +119,7 @@ class ListPaymentsAdminServiceTest {
 
         when(paymentRepository.searchAdminPayments(org.mockito.ArgumentMatchers.any(PaymentSearchCriteria.class)))
                 .thenReturn(new PageResult<>(List.of(), 2, 10, 0, 0));
+        when(volunteerDirectory.findAllByIds(anyCollection())).thenReturn(Map.of());
 
         service.execute(new ListPaymentsAdminQuery(
                 volunteerId.asString(),
