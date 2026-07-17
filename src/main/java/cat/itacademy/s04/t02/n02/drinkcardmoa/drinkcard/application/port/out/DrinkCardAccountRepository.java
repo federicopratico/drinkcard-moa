@@ -12,4 +12,6 @@ public interface DrinkCardAccountRepository {
     Optional<DrinkCardAccount> findByVolunteerId(VolunteerID volunteerID);
     boolean existsByVolunteerId(VolunteerID volunteerID);
     PageResult<DrinkCardAccount> searchDrinkCardAccounts(DrinkCardAccountSearchCriteria criteria);
+    long sumAvailableCredits();
+    long countActiveCards();
 }

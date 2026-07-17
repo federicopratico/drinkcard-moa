@@ -19,7 +19,7 @@ public record PaymentSummaryResult(
         Instant paidAt,
         Instant createdAt
 ) {
-    private static final String UNKNOWN = "unknown";
+    public static final String UNKNOWN = "unknown";
 
     public static PaymentSummaryResult from(Payment payment) {
         return from(payment, null);
