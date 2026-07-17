@@ -205,6 +205,9 @@ class PaymentControllerTest {
         PaymentSummaryResult payment = new PaymentSummaryResult(
                 "7aab22f8-60d3-4700-8ba6-b35e67dfacb6",
                 authenticatedVolunteerId,
+                null,
+                null,
+                null,
                 BigDecimal.valueOf(10),
                 "SUCCESS",
                 "checkout-id",

@@ -8,6 +8,8 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.iam.domain.model.valueobject.UserS
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.application.dto.PageResult;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.shared.domain.VolunteerID;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
@@ -17,4 +19,5 @@ public interface UserRepository {
     boolean existsByEmail(Email email);
     PageResult<User> searchUsers(UserSearchCriteria criteria);
     Optional<User> findById(VolunteerID volunteerID);
+    List<User> findAllById(Collection<VolunteerID> volunteerIDs);
 }

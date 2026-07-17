@@ -136,6 +136,9 @@ class PaymentControllerMapperTest {
         return new PaymentSummaryResult(
                 "payment-123",
                 "volunteer-123",
+                "Ada",
+                "Lovelace",
+                "ada@example.com",
                 BigDecimal.valueOf(10),
                 "SUCCESS",
                 "checkout-id",

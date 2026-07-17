@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,6 +78,18 @@ public class UserJpaAdapter implements UserRepository {
     public Optional<User> findById(VolunteerID volunteerID) {
         return jpaUserRepository.findById(volunteerID.asString())
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public List<User> findAllById(Collection<VolunteerID> volunteerIDs) {
+        if (volunteerIDs == null || volunteerIDs.isEmpty()) {
+            return List.of();
+        }
+        List<String> ids = volunteerIDs.stream().map(VolunteerID::asString).toList();
+        return jpaUserRepository.findAllById(ids)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 
     private Specification<UserJpaEntity> toSpecification(UserSearchCriteria criteria) {
