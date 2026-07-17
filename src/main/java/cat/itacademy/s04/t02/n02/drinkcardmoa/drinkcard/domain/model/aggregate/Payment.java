@@ -19,7 +19,7 @@ public class Payment {
     private String providerCheckoutUrl;
     private Instant paidAt;
     private final Instant createdAt;
-    private final Instant expiresAt;
+    private Instant expiresAt;
     private Instant providerCreatedAt;
 
 
@@ -128,6 +128,9 @@ public class Payment {
         this.status = PaymentStatus.FAILED;
     }
 
+    public void extendExpiration(Instant expiration) {
+        this.expiresAt = expiration;
+    }
 
     public void markAsExpired() {
         if(this.status != PaymentStatus.PENDING)

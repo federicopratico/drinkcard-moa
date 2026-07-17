@@ -18,4 +18,5 @@ public interface PaymentRepository {
     PageResult<Payment> searchVolunteerPayments(PaymentSearchCriteria criteria);
     BigDecimal sumSuccessfulPaymentsAmount();
     BigDecimal countPayments(PaymentStatus status);
+    void delete(Payment existingPayment);
 }
