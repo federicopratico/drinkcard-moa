@@ -111,6 +111,11 @@ public class PaymentJpaAdapter implements PaymentRepository {
         return jpaPaymentRepository.countByStatus(status.name());
     }
 
+    @Override
+    public void delete(Payment existingPayment) {
+        jpaPaymentRepository.delete(mapper.toEntity(existingPayment));
+    }
+
     private Specification<PaymentJpaEntity> toSpecification(PaymentSearchCriteria criteria) {
         return JpaSpecificationBuilder.<PaymentJpaEntity>builder()
                 .equal("volunteerId", criteria.volunteerId() == null ? null : criteria.volunteerId().value())

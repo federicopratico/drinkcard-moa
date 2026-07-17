@@ -69,7 +69,11 @@ public class CreatePaymentCheckoutService implements CreatePaymentCheckoutUseCas
             Payment existingPayment = findExistingPayment(key);
 
             if (existingPayment != null) {
-                return toPaymentCheckoutResult(existingPayment);
+                if (existingPayment.getExpiresAt().isBefore(purchaseTimestamp)) {
+                    paymentRepository.delete(existingPayment);
+                } else {
+                    return toPaymentCheckoutResult(existingPayment);
+                }
             }
 
             Card card = Card.newCard();

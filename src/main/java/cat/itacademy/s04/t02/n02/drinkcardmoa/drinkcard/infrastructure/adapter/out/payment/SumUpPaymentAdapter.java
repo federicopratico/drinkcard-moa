@@ -7,9 +7,14 @@ import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.application.port.out.pay
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.payment.dto.SumUpCheckoutStatusResponse;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.payment.dto.SumUpCreateCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.payment.dto.SumUpCreateCheckoutResponse;
+import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.adapter.out.payment.dto.SumUpUpdateCheckoutRequest;
 import cat.itacademy.s04.t02.n02.drinkcardmoa.drinkcard.infrastructure.config.SumUpProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestClient;
 
+import java.time.Instant;
+
+@Slf4j
 public class SumUpPaymentAdapter implements PaymentGateway {
 
     private final RestClient restClient;
